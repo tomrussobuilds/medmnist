@@ -499,7 +499,7 @@ class ModelTrainer:
         
     def _validate_epoch(self) -> float:
         """Performs a validation cycle and returns the accuracy."""
-                # Validation
+        # Validation
         self.model.eval()
         correct = total = 0
         with torch.no_grad():
@@ -956,7 +956,7 @@ def main() -> None:
     )
     logger.info("Training & evaluation completed successfully!")
 
-    # Final Report
+    # Excel Report
     report = build_training_report(
         val_accuracies=val_accuracies,
         macro_f1=macro_f1,
