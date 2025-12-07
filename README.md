@@ -3,7 +3,7 @@
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-orange)
 ![TorchVision](https://img.shields.io/badge/TorchVision-0.15%2B-red)
-![Torchaudio](https://img.shields.io/badge/Torchaudio-2.0%2B-yellow)
+
 
 
 **97.22% Test Accuracy • 96.95 Macro F1 • Single pretrained ResNet-18 • 28×28 images**
