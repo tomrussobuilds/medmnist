@@ -119,6 +119,47 @@ The script will:
 - Save the best model → models/resnet18_bloodmnist_best.pth
 - Generate figures, confusion matrix, Excel report → figures/ and reports/
 
+### Command Line Arguments (argparse)
+You can now fully configure training from the command line.
+
+Available arguments
+Argument	Type	Default	Description
+--epochs	int	60	Max training epochs
+--batch_size	int	128	Batch size
+--lr	float	0.008	Initial learning rate
+--seed	int	42	Reproducibility seed
+--mixup_alpha	float	0.001	MixUp regularization strength
+--patience	int	15	Early stopping patience
+--no_tta	flag	disabled	Disable Test-Time Augmentation
+
+Examples:
+
+Run without TTA
+
+```bash
+python train_bloodmnist.py --no_tta
+```
+Train for 100 epochs
+
+```bash
+python train_bloodmnist.py --epochs 100
+```
+Lower LR for finer tuning
+
+```bash
+python train_bloodmnist.py --lr 0.001
+```
+Disable MixUp
+
+```bash
+python train_bloodmnist.py --mixup_alpha 0
+```
+Custom batch size & seed
+
+```bash
+python train_bloodmnist.py --barch_size 64 --seed 123
+```
+
 ### Reproducibility
 
 Everything is deterministic (seed 42). Run the script twice → same validation curve, same final accuracy.
