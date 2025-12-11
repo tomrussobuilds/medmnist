@@ -944,7 +944,7 @@ def main() -> None:
     cfg = Config(
         seed=args.seed,
         batch_size=args.batch_size,
-        learning_rate= args.lr,
+        learning_rate=args.lr,
         epochs=args.epochs,
         patience=args.patience,
         mixup_alpha=args.mixup_alpha,
@@ -955,20 +955,20 @@ def main() -> None:
     kill_duplicate_processes()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logger.info(f"Using device: {device}")
-    logger.info(f"Hyperparameters: LR={cfg.learning_rate}, Batch={cfg.batch_size}, Epochs={cfg.epochs}, "
-                f"MixUp={cfg.mixup_alpha}, Seed={cfg.seed}, TTA={'Enabled' if cfg.use_tta else 'Disabled'}"
+    logger.info(
+        f"Hyperparameters: LR={cfg.learning_rate}, Batch={cfg.batch_size}, Epochs={cfg.epochs}, "
+        f"MixUp={cfg.mixup_alpha}, Seed={cfg.seed}, TTA={'Enabled' if cfg.use_tta else 'Disabled'}"
     )
 
     # Dataset
     data = load_bloodmnist(NPZ_PATH)
-    logger.info(f"Dataset loaded → Train:{len(data.X_train)} | "
-                f"Val:{len(data.X_val)} | "
-                f"Test:{len(data.X_test)}"
+    logger.info(
+        f"Dataset loaded → Train:{len(data.X_train)} | "
+        f"Val:{len(data.X_val)} | "
+        f"Test:{len(data.X_test)}"
     )
 
-    # Random samples (only the first time)
-    # Can comment out this line if you're not interested in visualizing samples,
-    # but it's useful for dataset exploration
+    # Optional visualization
     show_sample_images(data)
 
     # DataLoader
@@ -979,7 +979,7 @@ def main() -> None:
 
     # Training
     logger.info("Starting training".center(60, "="))
-    
+
     trainer = ModelTrainer(
         model=model,
         train_loader=train_loader,
@@ -993,7 +993,7 @@ def main() -> None:
     model.load_state_dict(torch.load(best_path, map_location=device))
     logger.info(f"Best model loaded from {best_path}")
 
-    # Final report
+    # Final evaluation
     macro_f1, test_acc = generate_all_reports(
         model=model,
         test_loader=test_loader,
@@ -1004,13 +1004,7 @@ def main() -> None:
         use_tta=cfg.use_tta,
     )
 
-    logger.info(f"FINAL RESULT → Test Accuracy: {test_acc:.4f} | "
-                f"Macro F1: {macro_f1:.4f} | "
-                f"Best Val: {max(val_accuracies):.4f}"
-    )
-    logger.info("Training & evaluation completed successfully!")
-
-    # Excel Report
+    # Build Excel report
     report = build_training_report(
         val_accuracies=val_accuracies,
         macro_f1=macro_f1,
@@ -1020,15 +1014,19 @@ def main() -> None:
         cfg=cfg
     )
 
+    # Clean single final log
     logger.info(
-        f"FINAL RESULT → Test Accuracy: {report.test_accuracy:.4f} | "
+        f"FINAL RESULTS → "
+        f"Test Accuracy: {report.test_accuracy:.4f} | "
         f"Macro F1: {report.test_macro_f1:.4f} | "
-        f"Best Val: {report.best_val_accuracy:.4f}"
+        f"Best Val Accuracy: {report.best_val_accuracy:.4f}"
     )
+    logger.info("Training & evaluation completed successfully!")
 
     # Save Excel
     excel_path = REPORTS_DIR / "training_report.xlsx"
     report.save(excel_path)
+
 
 # =========================================================================== #
 #                               ENTRY POINT
