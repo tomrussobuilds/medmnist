@@ -38,6 +38,9 @@ sys.dont_write_bytecode = True
 #                               CONFIG & CONSTANTS
 # =========================================================================== #
 
+# Global tracking for the current session's log file
+log_file: Path | None = None
+
 def get_base_dir() -> Path:
     """Return the base directory of the script or the Current Working Directory (CWD).
 
@@ -60,9 +63,22 @@ MODELS_DIR: Final[Path] = PROJECT_ROOT / "models"
 LOG_DIR: Final[Path] = PROJECT_ROOT / "logs"
 REPORTS_DIR: Final[Path] = PROJECT_ROOT / "reports"
 
-# Ensure all necessary directories exist
-for d in (DATASET_DIR, FIGURES_DIR, MODELS_DIR, LOG_DIR, REPORTS_DIR):
-    d.mkdir(parents=True, exist_ok=True)
+ALL_DIRS: Final[list[Path]] = [
+    DATASET_DIR,
+    FIGURES_DIR,
+    MODELS_DIR,
+    LOG_DIR,
+    REPORTS_DIR
+]
+
+def setup_directories(directories: list[Path]) -> None:
+    """
+    Ensure that all specified directories exist, creating them if necessary.
+    """
+    for directory in directories:
+        directory.mkdir(parents=True, exist_ok=True)
+
+setup_directories(ALL_DIRS)
 
 # Dataset details
 NPZ_PATH: Final[Path] = DATASET_DIR / "bloodmnist.npz"
