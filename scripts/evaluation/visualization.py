@@ -78,8 +78,11 @@ def show_predictions(dataset: BloodMNISTData,
             color=color, fontsize=10
         )
         plt.axis("off")
+    
+    model_title = cfg.model_name if cfg else "Model"
+    dataset_title = cfg.dataset_name if (cfg and hasattr(cfg, 'dataset_name')) else "Dataset"
 
-    plt.suptitle(f"Test Predictions — {cfg.model_name} on {cfg.dataset_name}", fontsize=16)
+    plt.suptitle(f"Test Predictions — {model_title} on {dataset_title}", fontsize=16)
     plt.tight_layout()
 
     if save_path:
@@ -94,7 +97,8 @@ def show_predictions(dataset: BloodMNISTData,
 def plot_training_curves(
         train_losses: Sequence[float],
         val_accuracies: Sequence[float],
-        out_path: Path
+        out_path: Path,
+        cfg: Config | None = None
 ) -> None:
     """
     Plots the training loss and validation accuracy curves on a dual-axis plot.
@@ -155,7 +159,12 @@ def plot_confusion_matrix(
     plt.close()
     logger.info(f"Confusion matrix saved → {out_path}")
 
-def save_training_curves(train_losses: Sequence[float], val_accuracies: Sequence[float], out_dir: Path) -> None:
+def save_training_curves(
+        train_losses: Sequence[float],
+        val_accuracies: Sequence[float],
+        out_dir: Path,
+        cfg: Config | None = None
+    ) -> None:
     """Plots and saves training curves and their raw data to disk."""
     plot_training_curves(train_losses, val_accuracies, out_dir / "training_curves.png")
 
@@ -167,7 +176,18 @@ def save_training_curves(train_losses: Sequence[float], val_accuracies: Sequence
     )
     logger.info(f"Training curves data saved → {out_dir / 'training_curves.npz'}")
 
-def save_sample_predictions(data: BloodMNISTData, all_preds: np.ndarray, out_path: Path) -> None:
+def save_sample_predictions(
+        data: BloodMNISTData,
+        all_preds: np.ndarray,
+        out_path: Path,
+        cfg: Config | None = None
+    ) -> None:
     """Generates and saves a figure showing sample predictions."""
-    show_predictions(data, all_preds, n=12, save_path=out_path)
+    show_predictions(
+        data,
+        all_preds,
+        n=12,
+        save_path=out_path,
+        cfg=cfg
+    )
     logger.info(f"Sample predictions figure saved → {out_path}")
