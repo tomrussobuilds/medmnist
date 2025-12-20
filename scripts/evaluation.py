@@ -401,8 +401,8 @@ def create_structured_report(
 
     return TrainingReport(
         timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        model="ResNet-18 (28×28 adapted, ImageNet pretrained)",
-        dataset="BloodMNIST",
+        model=cfg.model_name,
+        dataset=cfg.dataset_name,
         best_val_accuracy=max(val_accuracies),
         test_accuracy=test_acc,
         test_macro_f1=macro_f1,
