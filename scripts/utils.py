@@ -22,11 +22,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
 from typing import Final
-from dataclasses import dataclass
 
 # =========================================================================== #
 #                                Third-Party Imports
 # =========================================================================== #
+from pydantic import BaseModel, Field, ConfigDict
 import psutil
 import numpy as np
 import torch
@@ -111,18 +111,22 @@ def _get_num_workers_config() -> int:
     return 0 if is_docker_reproducible else 4
 
 # Training hyperparameters configuration
-@dataclass(frozen=True)
-class Config:
-    """Configuration class for training hyperparameters."""
+class Config(BaseModel):
+    """Configuration class for training hyperparameters using Pydantic validation."""
+    model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+            frozen=True
+    )
     seed: int = 42
-    batch_size: int = 128
-    num_workers: int = _get_num_workers_config()
-    epochs: int = 60
-    patience: int = 15
-    learning_rate: float = 0.008
-    momentum: float = 0.9
-    weight_decay: float = 5e-4
-    mixup_alpha: float = 0.002
+    batch_size: int = Field(default=128, gt=0)
+    num_workers: int = Field(default_factory=_get_num_workers_config)
+    epochs: int = Field(default=60, gt=0)
+    patience: int = Field(default=15, ge=0)
+    learning_rate: float = Field(default=0.008, gt=0)
+    momentum: float = Field(default=0.9, ge=0.0, le=1.0)
+    weight_decay: float = Field(default=5e-4, ge=0.0)
+    mixup_alpha: float = Field(default=0.002, ge=0.0)
     use_tta: bool = True
 
 def set_seed(seed: int) -> None:
