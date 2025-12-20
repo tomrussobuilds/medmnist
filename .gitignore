@@ -49,10 +49,9 @@ runs/
 # ========================
 # Project-specific folders
 # ========================
-figures/
-reports/
-models/
-med_mnist/
+figures/*
+reports/*
+models/*
 dataset/
 data/
 
@@ -63,6 +62,7 @@ data/
 !figures/confusion_matrix_resnet18.png
 !figures/training_curves.png
 !figures/sample_predictions.png
+
 
 # ========================
 # OS files
