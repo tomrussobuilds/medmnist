@@ -166,10 +166,19 @@ The pipeline is containerized using the included `Dockerfile`.
 | **Fast Mode (Default)** | `docker run bloodmnist_image` | 4 | Best performance on CPU, **Not fully deterministic** |
 | **Strict Reproducibility** | `-e DOCKER_REPRODUCIBILITY_MODE=TRUE` | 0 | **100% Deterministic** (bit-per-bit), but slower |
 
+Build the image locally using the provided Dockerfile. This ensures all dependencies and environment are correctly configured.
+
+```bash
+sudo docker build -t bloodmnist_image .
+```
+
 Run in Strict Reproducibility Mode (Recommended for testing):
 
 ```bash
-docker run -it --rm -e DOCKER_REPRODUCIBILITY_MODE=TRUE bloodmnist_image
+sudo docker run -it --rm \
+  -e DOCKER_REPRODUCIBILITY_MODE=TRUE \
+  -v $(pwd)/dataset:/app/dataset \
+  bloodmnist_image
 ```
 
 ### Command Line Arguments (argparse)

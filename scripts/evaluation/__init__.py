@@ -8,7 +8,7 @@ and structured experiment reporting.
 # =========================================================================== #
 #                                Standard Imports                             #
 # =========================================================================== #
-from typing import Tuple, List, Final
+from typing import Tuple, List
 import logging
 
 # =========================================================================== #
