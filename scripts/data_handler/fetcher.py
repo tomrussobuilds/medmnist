@@ -96,14 +96,20 @@ def ensure_dataset_npz(
     logger.info(f"Downloading {metadata.name} from {metadata.url}")
     target_npz.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = target_npz.with_suffix(".tmp")
-    
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        "Accept": "application/octet-stream"
+    }
+
     for attempt in range(1, retries + 1):
         try:
-            with requests.get(metadata.url, timeout=60, stream=True) as r:
+            with requests.get(metadata.url, headers=headers, timeout=60, stream=True) as r:
                 r.raise_for_status()
                 with open(tmp_path, "wb") as f:
                     for chunk in r.iter_content(chunk_size=8192):
-                        f.write(chunk)
+                        if chunk:
+                            f.write(chunk)
 
             if not _is_valid(tmp_path):
                 raise ValueError("Downloaded file failed MD5 or header validation")
@@ -115,13 +121,19 @@ def ensure_dataset_npz(
         except Exception as e:
             if tmp_path.exists():
                 tmp_path.unlink()
+            
+            if hasattr(e, 'response') and e.response is not None and e.response.status_code == 429:
+                actual_delay = delay * (attempt ** 2)
+                logger.warning(f"Rate limited (429). Waiting {actual_delay}s before retrying...")
+            else:
+                actual_delay = delay
 
             if attempt == retries:
                 logger.error(f"Failed to download {metadata.name} after {retries} attempts")
                 raise RuntimeError(f"Could not download {metadata.name}") from e
 
-            logger.warning(f"Attempt {attempt}/{retries} failed: {e}. Retrying in {delay}s...")
-            time.sleep(delay)
+            logger.warning(f"Attempt {attempt}/{retries} failed: {e}. Retrying in {actual_delay}s...")
+            time.sleep(actual_delay)
 
     raise RuntimeError("Unexpected error in dataset download logic.")
 

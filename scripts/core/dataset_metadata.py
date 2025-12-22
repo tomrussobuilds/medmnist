@@ -73,7 +73,7 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         name="dermamnist",
         display_name="DermaMNIST",
         md5_checksum="0744692d530f8e62bc4730caddabc09d",
-        url="https://zenodo.org/record/5208230/files/dermamnist.npz?download=1",
+        url="https://zenodo.org/records/5208230/files/dermamnist.npz",
         path=DATASET_DIR / "dermamnist.npz",
         classes=[
             "actinic keratoses",
