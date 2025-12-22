@@ -250,7 +250,7 @@ python main.py --dataset dermamnist --lr 0.005 --epochs 100
 If you use this repository in academic work or derivative projects:
 
 ```bibtex
-@misc{bloodmnist_resnet18,
+@misc{medmnist_resnet18,
   title  = {MedMNIST Classification with Adapted ResNet-18},
   author = {Tommaso Russo},
   year   = {2025},
