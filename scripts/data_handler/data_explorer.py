@@ -69,8 +69,8 @@ def show_sample_images(
     plt.figure(figsize=(9, 9))
     
     # Denormalization constants from Config
-    mean = torch.tensor(cfg.mean).view(-1, 1, 1)
-    std = torch.tensor(cfg.std).view(-1, 1, 1)
+    mean = torch.tensor(cfg.dataset.mean).view(-1, 1, 1)
+    std = torch.tensor(cfg.dataset.std).view(-1, 1, 1)
 
     for i in range(actual_samples):
         # Convert tensor to numpy and denormalize for proper visualization

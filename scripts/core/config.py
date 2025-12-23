@@ -1,23 +1,38 @@
 """
-Configuration and Command-Line Interface Module
+Unified Configuration and Command-Line Interface (CLI) Orchestrator
 
-This module defines the training hyperparameters using Pydantic for validation
-and type safety. It also provides the argument parsing logic for the 
-command-line interface (CLI).
+This module serves as the central authority for experimental reproducibility. 
+It leverages Pydantic for strict type validation and hierarchical nesting of 
+configuration groups (System, Training, Augmentation, and Dataset).
+
+Key Features:
+    * Hierarchical Config: Separates hardware/path logic from model hyperparameters.
+    * Type Safety: Enforces runtime validation of types and value ranges (e.g., ge=0).
+    * CLI Mapping: Provides a seamless factory method to instantiate immutable 
+      Config objects directly from argparse namespaces.
+    * Reproducibility: Integrates with global seeding and environment-aware 
+      worker allocation.
 """
 # =========================================================================== #
-#                                Standard Imports
+#                                Standard Imports                             #
 # =========================================================================== #
 import os
 import argparse
+import torch
+from pathlib import Path
 
 # =========================================================================== #
-#                                Third-Party Imports
+#                                Third-Party Imports                          #
 # =========================================================================== #
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 # =========================================================================== #
-#                                HELPER FUNCTIONS
+#                                Internal Imports                             #
+# =========================================================================== #
+from .system import detect_best_device
+
+# =========================================================================== #
+#                                HELPER FUNCTIONS                            #
 # =========================================================================== #
 
 def _get_num_workers_config() -> int:
@@ -34,21 +49,44 @@ def _get_num_workers_config() -> int:
     return 0 if is_docker_reproducible else 4
 
 # =========================================================================== #
-#                                CONFIGURATION
+#                                SUB-CONFIGURATIONS                           #
 # =========================================================================== #
 
-class Config(BaseModel):
-    """Configuration class for training hyperparameters using Pydantic validation."""
+class SystemConfig(BaseModel):
+    """Sub-configuration for system paths and hardware settings."""
     model_config = ConfigDict(
-            extra="forbid",
-            validate_assignment=True,
-            frozen=True
+        frozen=True,
+        extra="forbid"
+    )
+    device: str = Field(default_factory=detect_best_device)
+    data_dir: Path = Field(default=Path("data"))
+    output_dir: Path = Field(default=Path("data"))
+    save_model: bool = True
+    log_interval: int = Field(default=10, gt=0)
+
+    @field_validator("device")
+    @classmethod
+    def validate_hardware_availability(cls, v: str) -> str:
+        """
+        SSOT Validation: Ensures the requested device actually exists on this system.
+        If the requested accelerator (cuda/mps) is unavailable, it self-corrects to 'cpu'.
+        """
+        requested = v.lower()
+        if "cuda" in requested and not torch.cuda.is_available():
+            return "cpu"
+        if "mps" in requested and not torch.backends.mps.is_available():
+            return "cpu"
+        return requested
+
+class TrainingConfig(BaseModel):
+    """Sub-configuration for core training hyperparameters."""
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid"
     )
     
-    # Core Hyperparameters
     seed: int = 42
     batch_size: int = Field(default=128, gt=0)
-    num_workers: int = Field(default_factory=_get_num_workers_config)
     epochs: int = Field(default=60, gt=0)
     patience: int = Field(default=15, ge=0)
     learning_rate: float = Field(default=0.008, gt=0)
@@ -57,40 +95,67 @@ class Config(BaseModel):
     mixup_alpha: float = Field(default=0.002, ge=0.0)
     use_tta: bool = True
     cosine_fraction: float = Field(default=0.5, ge=0.0, le=1.0)
+
+
+class AugmentationConfig(BaseModel):
+    """Sub-configuration for data augmentation parameters."""
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid"
+    )
     
-    # Data Augmentation Parameters
     hflip: float = Field(default=0.5, ge=0.0, le=1.0)
     rotation_angle: int = Field(default=10, ge=0, le=180)
     jitter_val: float = Field(default=0.2, ge=0.0)
 
-    model_name: str = "ResNet-18 Adapted"
+
+class DatasetConfig(BaseModel):
+    """Sub-configuration for dataset-specific metadata and sampling."""
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid"
+    )
+    
     dataset_name: str = "BloodMNIST"
-
-    # Dataset Metadata (to be populated from DATASET_REGISTRY)
-    normalization_info : str =  "N/A"
-    in_channels : int = 3
-    num_classes : int = 8
-    mean: tuple[float, ...] = (0.5, 0.5, 0.5)
-    std: tuple[float, ...] = (0.5, 0.5, 0.5)
-
-    # Dataset Limits & Sampling
     max_samples: int | None = Field(default=20000, gt=0)
     use_weighted_sampler: bool = True
+    in_channels: int = 3
+    num_classes: int = 8
+    mean: tuple[float, ...] = (0.5, 0.5, 0.5)
+    std: tuple[float, ...] = (0.5, 0.5, 0.5)
+    normalization_info: str = "N/A"
+
+# =========================================================================== #
+#                                MAIN CONFIGURATION                          #
+# =========================================================================== #
+
+class Config(BaseModel):
+    """Main configuration class that orchestrates sub-configs and CLI factory."""
+    model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+            frozen=True
+    )
+    
+    # Nested configurations - Explicit access required (e.g., cfg.training.seed)
+    system: SystemConfig = Field(default_factory=SystemConfig)
+    training: TrainingConfig = Field(default_factory=TrainingConfig)
+    augmentation: AugmentationConfig = Field(default_factory=AugmentationConfig)
+    dataset: DatasetConfig = Field(default_factory=DatasetConfig)
+    
+    num_workers: int = Field(default_factory=_get_num_workers_config)
+    model_name: str = "ResNet-18 Adapted"
+    pretrained: bool = True
 
     @field_validator("num_workers")
     @classmethod
     def check_cpu_count(cls, v: int) -> int:
         cpu_count = os.cpu_count() or 1
-        if v > cpu_count:
-            return cpu_count
-        return v
+        return min(v, cpu_count)
 
     @classmethod
     def from_args(cls, args: argparse.Namespace):
-        """
-        Factory method to create a Config instance from CLI arguments
-        and the central DATASET_REGISTRY.
-        """
+        """Factory method to create a Config instance from CLI arguments."""
         from .dataset_metadata import DATASET_REGISTRY
 
         dataset_key = args.dataset.lower()
@@ -98,161 +163,44 @@ class Config(BaseModel):
             raise ValueError(f"Dataset '{args.dataset}' not found in DATASET_REGISTRY.")
         
         ds_meta = DATASET_REGISTRY[dataset_key]
-
-        val_max = getattr(args, 'max_samples', 20000)
-        final_max = val_max if val_max > 0 else None
+        final_max = args.max_samples if args.max_samples > 0 else None
         
         return cls(
             model_name=args.model_name,
-            dataset_name=ds_meta.name,
-            in_channels=ds_meta.in_channels,
-            seed=args.seed,
-            batch_size=args.batch_size,
-            learning_rate=args.lr,
-            momentum=args.momentum,
-            weight_decay=args.weight_decay,
-            epochs=args.epochs,
-            patience=args.patience,
-            mixup_alpha=args.mixup_alpha,
-            use_tta=args.use_tta,
-            hflip=args.hflip,
-            rotation_angle=args.rotation_angle,
-            jitter_val=args.jitter_val,
-            max_samples=final_max,
-            use_weighted_sampler=getattr(args, 'use_weighted_sampler', True),
-            num_classes=len(ds_meta.classes),
-            mean=ds_meta.mean,
-            std=ds_meta.std,
-            normalization_info=f"Mean={ds_meta.mean}, Std={ds_meta.std}",
+            pretrained=args.pretrained,
+            num_workers=args.num_workers,
+            system=SystemConfig(
+                device=args.device,
+                data_dir=Path(args.data_dir),
+                output_dir=Path(args.output_dir),
+                save_model=args.save_model,
+                log_interval=args.log_interval
+            ),
+            training=TrainingConfig(
+                seed=args.seed,
+                batch_size=args.batch_size,
+                learning_rate=args.lr,
+                momentum=args.momentum,
+                weight_decay=args.weight_decay,
+                epochs=args.epochs,
+                patience=args.patience,
+                mixup_alpha=args.mixup_alpha,
+                use_tta=args.use_tta,
+                cosine_fraction=args.cosine_fraction
+            ),
+            augmentation=AugmentationConfig(
+                hflip=args.hflip,
+                rotation_angle=args.rotation_angle,
+                jitter_val=args.jitter_val
+            ),
+            dataset=DatasetConfig(
+                dataset_name=ds_meta.name,
+                max_samples=final_max,
+                use_weighted_sampler=getattr(args, 'use_weighted_sampler', True),
+                in_channels=ds_meta.in_channels,
+                num_classes=len(ds_meta.classes),
+                mean=ds_meta.mean,
+                std=ds_meta.std,
+                normalization_info=f"Mean={ds_meta.mean}, Std={ds_meta.std}"
+            )
         )
-
-# =========================================================================== #
-#                                ARGUMENT PARSING
-# =========================================================================== #
-
-def parse_args() -> argparse.Namespace:
-    """
-    Configure and analyze command line arguments for the training script.
-
-    Returns:
-        argparse.Namespace: An object containing all parsed command line arguments.
-    """
-    from .dataset_metadata import DATASET_REGISTRY
-
-    parser = argparse.ArgumentParser(
-        description="MedMNIST training pipeline based on adapted ResNet-18.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
-    
-    default_cfg = Config()
-
-    # Group: Training Hyperparameters
-    train_group = parser.add_argument_group("Training Hyperparameters")
-    
-    train_group.add_argument(
-        '--epochs',
-        type=int,
-        default=default_cfg.epochs
-    )
-    train_group.add_argument(
-        '--batch_size',
-        type=int,
-        default=default_cfg.batch_size
-    )
-    train_group.add_argument(
-        '--lr', '--learning_rate',
-        type=float,
-        default=default_cfg.learning_rate
-    )
-    train_group.add_argument(
-        '--seed',
-        type=int,
-        default=default_cfg.seed
-    )
-    train_group.add_argument(
-        '--patience',
-        type=int,
-        default=default_cfg.patience
-    )
-    train_group.add_argument(
-        '--momentum',
-        type=float,
-        default=default_cfg.momentum
-    )
-    train_group.add_argument(
-        '--weight_decay',
-        type=float,
-        default=default_cfg.weight_decay
-    )
-    train_group.add_argument(
-        '--cosine_fraction',
-        type=float,
-        default=default_cfg.cosine_fraction,
-        help="Fraction of total epochs to apply cosine annealing before switching to ReduceLROnPlateau."
-    )
-    # Group: Regularization & Augmentation
-    aug_group = parser.add_argument_group("Regularization & Augmentation")
-    
-    aug_group.add_argument(
-        '--mixup_alpha',
-        type=float,
-        default=default_cfg.mixup_alpha
-    )
-    aug_group.add_argument(
-        '--no_tta',
-        action='store_false',
-        dest='use_tta',
-        default=default_cfg.use_tta,
-        help="Disable TTA during final evaluation."
-    )
-    aug_group.add_argument(
-        '--hflip',
-        type=float,
-        default=default_cfg.hflip
-    )
-    aug_group.add_argument(
-        '--rotation_angle',
-        type=int,
-        default=default_cfg.rotation_angle
-    )
-    aug_group.add_argument(
-        '--jitter_val',
-        type=float,
-        default=default_cfg.jitter_val
-    )
-
-    # Group: Dataset Selection and Configuration
-    dataset_group = parser.add_argument_group("Dataset Configuration")
-
-    dataset_group.add_argument(
-        '--dataset',
-        type=str,
-        default="bloodmnist",
-        choices=DATASET_REGISTRY.keys(),
-        help="Target MedMNIST dataset."
-    )
-    dataset_group.add_argument(
-        '--max_samples',
-        type=int,
-        default=20000,
-        help="Max training samples (None for full dataset)."
-    )
-    dataset_group.add_argument(
-        '--balanced',
-        action='store_true',
-        dest='use_weighted_sampler',
-        default=True,
-        help="Use WeightedRandomSampler to handle class imbalance."
-    )
-
-    # Group: Model Selection
-    model_group = parser.add_argument_group("Model Configuration")
-
-    model_group.add_argument(
-        '--model_name',
-        type=str,
-        default="ResNet-18 Adapted",
-        help="Architecture identifier."
-    )
-
-    return parser.parse_args()

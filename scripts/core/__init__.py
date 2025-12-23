@@ -8,7 +8,7 @@ system management, project constants and the dynamic dataset registry.
 # =========================================================================== #
 #                                Configuration
 # =========================================================================== #
-from .config import Config, parse_args
+from .config import Config
 
 # =========================================================================== #
 #                                Constants & Paths
@@ -37,9 +37,15 @@ from .logger import Logger
 
 from .system import (
     set_seed, 
-    get_device, 
+    detect_best_device, 
     md5_checksum, 
     validate_npz_keys, 
     kill_duplicate_processes,
-    ensure_single_instance
+    ensure_single_instance,
+    get_cuda_name
 )
+
+# =========================================================================== #
+#                                Command Line Interface
+# =========================================================================== #
+from .cli import parse_args

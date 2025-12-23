@@ -32,7 +32,7 @@ from scripts.core import Config
 class MedMNISTDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
     """
     Enhanced PyTorch Dataset for MedMNIST data. Supports:
-    - Lazy loading from disk (RAM efficient)
+    - Selective RAM loading (balanced efficiency)
     - Subsampling with fixed seed (deterministic)
     - Automatic handling of RGB/Grayscale
     """
@@ -55,48 +55,49 @@ class MedMNISTDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
         self.path = path
         self.transform = transform
         self.split = split
-        self.split_key = f"{split}_images"
         
-        # Load labels and manage subsampling immediately
+        # Load the specific split into RAM to avoid slow I/O during training
         with np.load(path) as data:
-            # Note: label key is usually 'train_labels', yours had a space in the snippet
-            label_key = f"{split}_labels"
-            full_labels = data[label_key].ravel().astype(np.int64)
+            # np.array() forces the data into RAM, releasing the file handle
+            full_images = np.array(data[f"{split}_images"])
+            full_labels = data[f"{split}_labels"].ravel().astype(np.int64)
+            
             total_available = len(full_labels)
-
             indices = np.arange(total_available)
+            
+            # Manage deterministic subsampling
             if max_samples and max_samples < total_available:
-                rng = np.random.default_rng(cfg.seed)
+                rng = np.random.default_rng(cfg.training.seed)
                 rng.shuffle(indices)
                 self.indices = indices[:max_samples]
             else:
                 self.indices = indices
             
+            # Store only the required subset in memory
+            self.images = full_images[self.indices]
             self.labels = full_labels[self.indices]
-
-        # We set data_archive to None and open it only in __getitem__ or 
-        # use a lazy property to ensure it's worker-safe.
-        self.data_archive = None
 
     def __len__(self) -> int:
         return len(self.indices)
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
-        # Lazy initialization for worker safety
-        if self.data_archive is None:
-            self.data_archive = np.load(self.path)
-
-        actual_idx = self.indices[idx]
-        img = self.data_archive[self.split_key][actual_idx]
+        """
+        Retrieves a sample from the dataset. 
+        Access is now O(1) as data is pre-loaded in RAM.
+        """
+        img = self.images[idx]
         label = self.labels[idx]
 
+        # Apply transformation pipeline
         if self.transform:
             img = self.transform(img)
         else:
+            # Fallback tensor conversion
             img = img.astype(np.float32) / 255.0
-            if img.ndim == 2:
-                img = torch.from_numpy(img).unsqueeze(0)
-            else:
-                img = torch.from_numpy(img).permute(2, 0, 1)
+            img = torch.from_numpy(img)
+            if img.ndim == 2:  # Grayscale
+                img = img.unsqueeze(0)
+            else:  # RGB
+                img = img.permute(2, 0, 1)
 
         return img, torch.tensor(label, dtype=torch.long)

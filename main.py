@@ -33,7 +33,7 @@ import torch
 #                                Internal Imports                             #
 # =========================================================================== #
 from scripts.core import (
-    Config, Logger, parse_args, set_seed, kill_duplicate_processes, get_device, 
+    Config, Logger, parse_args, set_seed, kill_duplicate_processes, get_cuda_name, 
     DATASET_REGISTRY, RunPaths, setup_static_directories, ensure_single_instance
 )
 from scripts.data_handler import (
@@ -61,7 +61,7 @@ def main() -> None:
     cfg = Config.from_args(args)
     
     # Initialize Seed
-    set_seed(cfg.seed)
+    set_seed(cfg.training.seed)
 
     # Setup base project structure
     setup_static_directories()
@@ -70,32 +70,45 @@ def main() -> None:
     lock_path = Path("/tmp/medmnist_training.lock")
 
     # Initialize dynamic paths for the current run
-    paths = RunPaths(cfg.model_name, cfg.dataset_name)
+    paths = RunPaths(
+        dataset_slug=cfg.dataset.dataset_name,
+        model_name=cfg.model_name,
+        base_dir=cfg.system.output_dir
+    )
     
     # Setup logger with run-specific file
     Logger.setup(
         name=paths.project_id,
         log_dir=paths.logs
     )
-    legacy_logger = logging.getLogger("medmnist_pipeline")
     run_logger = logging.getLogger(paths.project_id)
-    legacy_logger.handlers = run_logger.handlers
-    legacy_logger.setLevel(run_logger.level)
     
-    ensure_single_instance(lock_file=lock_path, logger=run_logger)
-    kill_duplicate_processes(logger=run_logger)
-    device = get_device(logger=run_logger)
+    ensure_single_instance(
+        lock_file=lock_path,
+        logger=run_logger
+    )
+    kill_duplicate_processes(
+        logger=run_logger
+    )
+
+    device_str = cfg.system.device
+    device = torch.device(device_str)
+    run_logger.info(f"Execution Device: {device_str.upper()}")
+    if args.device.lower() != device_str:
+        run_logger.warning(
+            f"Hardware Fallback: Requested '{args.device}', but using '{device_str}'"
+        )
     
     run_logger.info(f"Run Directory initialized: {paths.root}")
     run_logger.info(
-        f"Hyperparameters: LR={cfg.learning_rate:.4f}, Momentum={cfg.momentum:.2f}, "
-        f"Batch={cfg.batch_size}, Epochs={cfg.epochs}, MixUp={cfg.mixup_alpha}, "
-        f"TTA={'Enabled' if cfg.use_tta else 'Disabled'}"
+        f"Hyperparameters: LR={cfg.training.learning_rate:.4f}, Momentum={cfg.training.momentum:.2f}, "
+        f"Batch={cfg.training.batch_size}, Epochs={cfg.training.epochs}, MixUp={cfg.training.mixup_alpha}, "
+        f"TTA={'Enabled' if cfg.training.use_tta else 'Disabled'}"
     )
 
     # Retrieve dataset metadata from registry
-    ds_meta = DATASET_REGISTRY[cfg.dataset_name.lower()]
-    run_logger.info(f"Dataset selected: {cfg.dataset_name} with {cfg.num_classes} classes.")
+    ds_meta = DATASET_REGISTRY[cfg.dataset.dataset_name.lower()]
+    run_logger.info(f"Dataset selected: {cfg.dataset.dataset_name} with {cfg.dataset.num_classes} classes.")
 
     # 3. Data Loading and Preparation
     # 'data' is now a metadata container for Lazy Loading
@@ -154,7 +167,7 @@ def main() -> None:
         device=device,
         paths=paths,
         cfg=cfg,
-        use_tta=cfg.use_tta,
+        use_tta=cfg.training.use_tta,
         aug_info=aug_info
     )
 

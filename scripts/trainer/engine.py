@@ -123,8 +123,8 @@ def train_one_epoch(
     progress_bar = tqdm(train_loader, desc=f"Training", leave=False)
     
     # Determine if MixUp should be applied this epoch
-    cosine_limit = int(cfg.cosine_fraction * cfg.epochs)
-    current_alpha = cfg.mixup_alpha if epoch <= cosine_limit else 0.0
+    cosine_limit = int(cfg.training.cosine_fraction * cfg.training.epochs)
+    current_alpha = cfg.training.mixup_alpha if epoch <= cosine_limit else 0.0
     
     for inputs, targets in progress_bar:
         inputs, targets = inputs.to(device), targets.to(device)
