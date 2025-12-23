@@ -85,8 +85,8 @@ def show_predictions(images: np.ndarray,
         pred_label = int(preds[idx])
 
         if cfg and hasattr(cfg, 'mean') and hasattr(cfg, 'std'):
-            mean = np.array(cfg.mean)
-            std = np.array(cfg.std)
+            mean = np.array(cfg.augmentation.mean)
+            std = np.array(cfg.augmentation.std)
             img = img * std + mean
             img = np.clip(img, 0, 1)
 
@@ -112,7 +112,12 @@ def show_predictions(images: np.ndarray,
 
     if save_path:
         save_path.parent.mkdir(parents=True, exist_ok=True)
-        plt.savefig(save_path, dpi=200, bbox_inches="tight", facecolor="white")
+        plt.savefig(
+            save_path,
+            dpi=200,
+            bbox_inches="tight",
+            facecolor="white"
+        )
         logger.info(f"Sample predictions saved to {save_path}")
     else:
         plt.show()

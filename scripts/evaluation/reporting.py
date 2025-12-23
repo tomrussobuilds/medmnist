@@ -112,18 +112,18 @@ def create_structured_report(
     return TrainingReport(
         timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         model=cfg.model_name,
-        dataset=cfg.dataset_name,
+        dataset=cfg.dataset.dataset_name,
         best_val_accuracy=max(val_accuracies) if val_accuracies else 0.0,
         test_accuracy=test_acc,
         test_macro_f1=macro_f1,
         epochs_trained=len(train_losses),
-        learning_rate=cfg.learning_rate,
-        batch_size=cfg.batch_size,
+        learning_rate=cfg.training.learning_rate,
+        batch_size=cfg.training.batch_size,
         augmentations=aug_info,
-        normalization=cfg.normalization_info,
+        normalization=cfg.training.normalization_info,
         model_path=str(best_path),
         log_path=str(log_path),
-        seed=cfg.seed,
+        seed=cfg.training.seed,
     )
 
 def save_report_as_yaml(
@@ -152,7 +152,12 @@ def save_report_as_yaml(
         cleaned_data = clean_config(config_data)
         
         with open(yaml_path, 'w', encoding='utf-8') as yaml_file:
-            yaml.dump(cleaned_data, yaml_file, default_flow_style=False, sort_keys=False)
+            yaml.dump(
+                cleaned_data,
+                yaml_file,
+                default_flow_style=False,
+                sort_keys=False
+            )
 
         logger.info(f"Configuration saved to YAML at → {yaml_path}")
         return yaml_path

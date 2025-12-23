@@ -65,8 +65,8 @@ class ModelTrainer:
         self.val_loader = val_loader
         self.device = device
         self.cfg = cfg
-        self.epochs = cfg.epochs
-        self.patience = cfg.patience
+        self.epochs = cfg.training.epochs
+        self.patience = cfg.training.patience
 
         # Loss function
         self.criterion = nn.CrossEntropyLoss()
@@ -74,13 +74,13 @@ class ModelTrainer:
         # Optimizer
         self.optimizer = optim.SGD(
             model.parameters(),
-            lr=cfg.learning_rate,
-            momentum=cfg.momentum,
-            weight_decay=cfg.weight_decay
+            lr=cfg.training.learning_rate,
+            momentum=cfg.training.momentum,
+            weight_decay=cfg.training.weight_decay
         )
         
         # Schedulers
-        self.cosine_limit = int(cfg.cosine_fraction * cfg.epochs)
+        self.cosine_limit = int(cfg.training.cosine_fraction * cfg.training.epochs)
         self.cosine_scheduler = CosineAnnealingLR(
             self.optimizer,
             T_max=self.cosine_limit,

@@ -59,16 +59,16 @@ def get_dataloaders(
         **dataset_params,
         split="train",
         transform=train_transform,
-        max_samples=cfg.max_samples,
+        max_samples=cfg.dataset.max_samples,
     )
 
     # Calculate proportional samples for validation and test
     # If max_samples is set, we take a fraction (e.g., 10%) for val/test
     # If None, val_samples remains None to use the full original splits
-    if cfg.max_samples is not None:
+    if cfg.dataset.max_samples is not None:
         # Using a 10% ratio of the training samples
         # Example: 20,000 train -> 2,000 val and 2,000 test
-        val_samples = max(1, int(cfg.max_samples * 0.10))
+        val_samples = max(1, int(cfg.dataset.max_samples * 0.10))
     else:
         val_samples = None
 
@@ -89,7 +89,7 @@ def get_dataloaders(
     sampler = None
     shuffle = True
 
-    if cfg.use_weighted_sampler:
+    if cfg.dataset.use_weighted_sampler:
         # Ensure labels are a flat 1D array of integers
         labels = train_ds.labels.flatten()
         classes, counts = np.unique(labels, return_counts=True)
@@ -121,17 +121,17 @@ def get_dataloaders(
     # 5. Create DataLoaders
     train_loader = DataLoader(
         train_ds,
-        batch_size=cfg.batch_size,
+        batch_size=cfg.training.batch_size,
         shuffle=shuffle,
         sampler=sampler,
         num_workers=cfg.num_workers,
         pin_memory=pin_memory,
         worker_init_fn=init_fn,
-        persistent_workers=(cfg.num_workers > 0)
+        persistent_workers=False
     )
 
     common_params = {
-        "batch_size": cfg.batch_size,
+        "batch_size": cfg.training.batch_size,
         "shuffle": False,
         "num_workers": cfg.num_workers,
         "pin_memory": pin_memory,

@@ -50,13 +50,35 @@ def set_seed(seed: int) -> None:
         torch.backends.cudnn.benchmark = False
 
 
-def get_device(logger: logging.Logger) -> torch.device:
+def detect_best_device() -> str:
     """
-    Determines the appropriate device (CUDA or CPU) for computation.
+    Detects the most performant hardware accelerator available on the current system.
+
+    This is a pure utility function designed to provide dynamic default values 
+    for the configuration system without side effects (like logging). It checks 
+    for NVIDIA GPUs (CUDA) first, followed by Apple Silicon (MPS), and 
+    defaults to CPU if no accelerators are found.
+
+    Returns:
+        str: The identifier of the best available device ('cuda', 'mps', or 'cpu').
     """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logger.info(f"Computing on: {device}")
-    return device 
+    if torch.cuda.is_available():
+        return "cuda"
+    
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        return "mps"
+
+    return "cpu"
+
+
+def get_cuda_name() -> str:
+    """
+    Returns the human-readable name of the primary GPU.
+
+    Returns:
+        str: GPU model name or empty string if CUDA is unavailable.
+    """
+    return torch.cuda.get_device_name(0) if torch.cuda.is_available() else ""
 
 
 def md5_checksum(path: Path) -> str:
@@ -68,6 +90,7 @@ def md5_checksum(path: Path) -> str:
         for chunk in iter(lambda: f.read(8192), b""):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
+
 
 def validate_npz_keys(data: np.lib.npyio.NpzFile) -> None:
     """
@@ -88,6 +111,7 @@ def validate_npz_keys(data: np.lib.npyio.NpzFile) -> None:
     missing = required_keys - set(data.files)
     if missing:
         raise ValueError(f"NPZ file is missing required keys: {missing}")
+
 
 def kill_duplicate_processes(logger: logging.Logger, script_name: Optional[str] = None) -> None:
     """

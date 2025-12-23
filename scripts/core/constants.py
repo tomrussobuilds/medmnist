@@ -11,7 +11,7 @@ between raw datasets and timestamped experiment outputs.
 # =========================================================================== #
 import time
 from pathlib import Path
-from typing import Final, List
+from typing import Final, List, Optional
 
 # =========================================================================== #
 #                                PATH CALCULATIONS                            #
@@ -21,7 +21,7 @@ def get_project_root() -> Path:
     """
     Returns the absolute path to the project root directory.
     
-    The root is assumed to be due livelli sopra la cartella dove risiede questo file.
+    The root is assumed to be two levels above the directory where this file resides.
     """
     try:
         # Resolves: scripts/core/constants.py -> scripts/core/ -> scripts/ -> root/
@@ -39,7 +39,7 @@ PROJECT_ROOT: Final[Path] = get_project_root()
 # Input: Where raw datasets are stored
 DATASET_DIR: Final[Path] = (PROJECT_ROOT / "dataset").resolve()
 
-# Output: Root directory for all experiment results
+# Output: Default root directory for all experiment results
 OUTPUTS_ROOT: Final[Path] = (PROJECT_ROOT / "outputs").resolve()
 
 # Directories that must exist at startup
@@ -53,23 +53,29 @@ class RunPaths:
     """
     Manages experiment-specific directories to prevent overwriting results.
     
-    Each training session gets a unique directory under 'outputs/' based on 
-    the timestamp, dataset, and model name.
+    Each training session gets a unique directory based on the timestamp, 
+    dataset slug, and model name.
     """
-    def __init__(self, dataset_slug: str, model_name: str):
+    def __init__(self, dataset_slug: str, model_name: str, base_dir: Optional[Path] = None):
         """
         Args:
-            dataset_slug (str): Unique identifier for the dataset (from DATASET_REGISTRY).
-            model_name (str): Human-readable model name (from Config).
+            dataset_slug (str): Unique identifier for the dataset.
+            model_name (str): Human-readable model name.
+            base_dir (Path, optional): Base directory for outputs. Defaults to OUTPUTS_ROOT.
         """
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         
-        self.model_slug : Final[str] = model_name.lower().replace(" ", "_").replace("-", "_")
-        self.ds_slug: Final[str] = dataset_slug
+        # Consistent slugification
+        self.model_slug: Final[str] = model_name.lower().replace(" ", "_").replace("-", "_")
+        self.ds_slug: Final[str] = dataset_slug.lower()
         self.project_id: Final[str] = f"{self.ds_slug}_{self.model_slug}"
         self.run_id: Final[str] = f"{timestamp}_{self.project_id}"
         
-        self.root: Final[Path] = OUTPUTS_ROOT / self.run_id
+        # Use provided base_dir (from Config/CLI) or fallback to global constant
+        base = base_dir if base_dir is not None else OUTPUTS_ROOT
+        self.root: Final[Path] = base / self.run_id
+        
+        # Sub-directories
         self.figures: Final[Path] = self.root / "figures"
         self.models: Final[Path] = self.root / "models"
         self.reports: Final[Path] = self.root / "reports"
@@ -96,6 +102,6 @@ class RunPaths:
 # =========================================================================== #
 
 def setup_static_directories() -> None:
-    """Ensures the core project structure is present."""
+    """Ensures the core project structure is present at startup."""
     for directory in STATIC_DIRS:
         directory.mkdir(parents=True, exist_ok=True)

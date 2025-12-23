@@ -47,13 +47,13 @@ def get_augmentations_description(cfg: Config) -> str:
     Used for logging and run traceability.
     """ 
     augs = [
-        f"HFlip(p={cfg.hflip})",
-        f"Rotation({cfg.rotation_angle}°)",
-        f"Jitter(v={cfg.jitter_val})",
+        f"HFlip(p={cfg.augmentation.hflip})",
+        f"Rotation({cfg.augmentation.rotation_angle}°)",
+        f"Jitter(v={cfg.augmentation.jitter_val})",
         f"ResizedCrop({IMG_SIZE}, scale=(0.9, 1.0))"
     ]
-    if cfg.mixup_alpha > 0:
-        augs.append(f"MixUp(α={cfg.mixup_alpha})")
+    if cfg.training.mixup_alpha > 0:
+        augs.append(f"MixUp(α={cfg.training.mixup_alpha})")
     
     return ", ".join(augs)
 
@@ -93,12 +93,12 @@ def get_pipeline_transforms(
     # Training pipeline: Focus on robust generalization
     train_transform = transforms.Compose([
         transforms.ToPILImage(),
-        transforms.RandomHorizontalFlip(p=cfg.hflip),
-        transforms.RandomRotation(cfg.rotation_angle),
+        transforms.RandomHorizontalFlip(p=cfg.augmentation.hflip),
+        transforms.RandomRotation(cfg.augmentation.rotation_angle),
         transforms.ColorJitter(
-            brightness=cfg.jitter_val,
-            contrast=cfg.jitter_val,
-            saturation=cfg.jitter_val if is_rgb else 0.0,
+            brightness=cfg.augmentation.jitter_val,
+            contrast=cfg.augmentation.jitter_val,
+            saturation=cfg.augmentation.jitter_val if is_rgb else 0.0,
         ),
         # Using a subtle scale range to preserve medical feature proportions
         transforms.RandomResizedCrop(IMG_SIZE, scale=(0.9, 1.0)),
