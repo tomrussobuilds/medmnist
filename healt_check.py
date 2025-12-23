@@ -60,16 +60,25 @@ def health_check() -> None:
                 num_classes=len(ds_meta.classes),
                 mean=ds_meta.mean,
                 std=ds_meta.std,
-
-                seed=42, batch_size=32, learning_rate=0.001, momentum=0.9,
-                weight_decay=0.0, epochs=1, patience=1, mixup_alpha=0.0,
-                use_tta=False, hflip=0.5, rotation_angle=0, jitter_val=0.0,
-                normalization_info=""
+                seed=42,
+                batch_size=32,
+                learning_rate=0.001,
+                momentum=0.9,
+                weight_decay=0.0,
+                epochs=1,
+                patience=1,
+                mixup_alpha=0.0,
+                use_tta=False,
+                hflip=0.5,
+                rotation_angle=0,
+                jitter_val=0.0,
+                normalization_info="",
             )
 
             data = load_medmnist(ds_meta)
             
-            logger.info(f"Loaded successfully: Train={data.X_train.shape}, Val={data.X_val.shape}, Test={data.X_test.shape}")
+            logger.info(f"Loaded successfully: Train={data.X_train.shape}, "
+                        f"Val={data.X_val.shape}, Test={data.X_test.shape}")
             logger.info(f"Channels: {ds_meta.in_channels} | Classes: {num_classes_val}")
 
             sample_output_path = log_dir / f"samples_{ds_meta.name}.png"

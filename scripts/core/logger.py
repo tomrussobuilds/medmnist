@@ -86,7 +86,7 @@ class Logger:
                 filename, 
                 maxBytes=self.max_bytes, 
                 backupCount=self.backup_count,
-                encoding='utf-8' # Ensure UTF-8 for cross-platform stability
+                encoding='utf-8'
             )
             file_h.setFormatter(formatter)
             self.logger.addHandler(file_h)

@@ -97,14 +97,17 @@ class ModelTrainer:
         )
 
         # Early Stopping and Checkpointing
-        self.best_acc: float = 0.0
+        self.best_acc: float = -1.0
         self.epochs_no_improve: int = 0
         
-        model_filename = f"best_model_{cfg.model_name.lower().replace(' ', '_')}.pth"
+        model_filename = "best_model.pth"
+
         if output_dir:
             self.best_path = output_dir / model_filename
         else:
             self.best_path = Path(model_filename)
+        if output_dir:
+            output_dir.mkdir(parents=True, exist_ok=True)
         
         # History tracking
         self.train_losses: List[float] = []
@@ -146,6 +149,7 @@ class ModelTrainer:
             if val_acc > self.best_acc:
                 self.best_acc = val_acc
                 self.epochs_no_improve = 0
+                self.best_path.parent.mkdir(parents=True, exist_ok=True)
                 torch.save(self.model.state_dict(), self.best_path)
                 logger.info(f"New best model! Val Acc: {val_acc:.4f} ↑ Checkpoint saved.")
             else:

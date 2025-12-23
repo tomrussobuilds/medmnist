@@ -64,6 +64,12 @@ def show_predictions(images: np.ndarray,
         save_path (Path | None): Path to save the figure. If None, the plot is shown.
         cfg (Config | None): Configuration object for title metadata.
     """
+    if images is None or len(images) == 0:
+        logger.warning(
+            "No images available for show_predictions. Skipping plot."
+        )
+        return
+    
     if n > len(images):
         n = len(images)
     
@@ -71,18 +77,24 @@ def show_predictions(images: np.ndarray,
     cols = 4
 
     plt.figure(figsize=(12, 3 * rows))
-    indices = np.random.choice(len(images), n, replace=False)
+    indices = np.arange(n)
 
     for i, idx in enumerate(indices):
-        img = images[idx]
+        img = images[idx].copy()
         true_label = int(true_labels[idx])
         pred_label = int(preds[idx])
+
+        if cfg and hasattr(cfg, 'mean') and hasattr(cfg, 'std'):
+            mean = np.array(cfg.mean)
+            std = np.array(cfg.std)
+            img = img * std + mean
+            img = np.clip(img, 0, 1)
 
         plt.subplot(rows, cols, i+1)
         
         # Support for grayscale (H, W) or RGB (H, W, C)
-        if img.ndim == 2:
-            plt.imshow(img, cmap='gray')
+        if img.ndim == 2 or (img.ndim == 3 and img.shape[-1] == 1):
+            plt.imshow(img.squeeze(), cmap='gray')
         else:
             plt.imshow(img)
             

@@ -11,66 +11,55 @@ to verify:
 """
 
 # =========================================================================== #
-#                                Standard Imports
+#                                Standard Imports                             #
 # =========================================================================== #
 import logging
-from dataclasses import replace
-
-# =========================================================================== #
-#                                Third-Party Imports
-# =========================================================================== #
 import torch
+import argparse
 
 # =========================================================================== #
-#                                Internal Imports
+#                                Internal Imports                             #
 # =========================================================================== #
 from scripts.core import (
     Config, Logger, set_seed, DATASET_REGISTRY, RunPaths, 
     setup_static_directories
 )
 from scripts.data_handler import (
-    load_medmnist, get_dataloaders, get_augmentations_transforms
+    load_medmnist, get_dataloaders, get_augmentations_description
 )
 from scripts.models import get_model
 from scripts.trainer import ModelTrainer
 from scripts.evaluation import run_final_evaluation
 
 # =========================================================================== #
-#                               SMOKE TEST EXECUTION
+#                               SMOKE TEST EXECUTION                          #
 # =========================================================================== #
 
-def run_smoke_test() -> None:
+def run_smoke_test(args: argparse.Namespace) -> None:
     """
     Orchestrates a lightweight version of the main pipeline to ensure 
     code stability and prevent regression bugs.
     """
-    # 1. Minimal Configuration Setup
-    dataset_key = "bloodmnist"
+    # 1. Setup Config
+    # Create Config from CLI args using your Pydantic factory
+    cfg = Config.from_args(args)
+
+    # Use model_copy to override values because the Config class is 'frozen=True'
+    cfg = cfg.model_copy(update={
+        "epochs": 1,
+        "max_samples": 16,
+        "batch_size": 4,
+        "use_weighted_sampler": False,
+        "num_workers": 0
+    })
+    
+    dataset_key = args.dataset.lower()
     ds_meta = DATASET_REGISTRY[dataset_key]
 
     # 2. Environment Initialization
     setup_static_directories()
-    
-    # Define cfg
-    cfg = Config(
-        model_name="ResNet-18 Adapted",
-        dataset_name=ds_meta.name,
-        seed=42,
-        batch_size=4,
-        num_classes=len(ds_meta.classes),
-        in_channels=ds_meta.in_channels,
-        mean=ds_meta.mean,
-        std=ds_meta.std,
-        epochs=1,
-        patience=1,
-        learning_rate=0.001,
-        momentum=0.9,
-        weight_decay=0.0,
-        use_tta=True,
-        normalization_info="Smoke Test Normalization",
-    )
 
-    # Define paths
+    # Define execution paths
     paths = RunPaths(f"SMOKE_TEST_{cfg.model_name}", cfg.dataset_name)
 
     # Setup Logger
@@ -81,31 +70,17 @@ def run_smoke_test() -> None:
     run_logger = logging.getLogger(paths.project_id)
     
     run_logger.info("\n" + "="*60)
-    run_logger.info("INITIALIZING SMOKE TEST".center(60))
+    run_logger.info(f"INITIALIZING SMOKE TEST - {cfg.dataset_name.upper()}".center(60))
     run_logger.info("="*60 + "\n")
 
-    # Initialize Seed
     set_seed(cfg.seed)
-    
     device = torch.device("cpu")
     
     run_logger.info("Starting Smoke Test: Environment verified.")
 
-    # 3. Data Loading and Mocking
+    # 3. Data Loading (Lazy Metadata)
     data = load_medmnist(ds_meta)
-    
-    run_logger.info("Mocking data subsets for rapid testing...")
-    data = replace(
-        data,
-        X_train=data.X_train[:16],
-        y_train=data.y_train[:16],
-        X_val=data.X_val[:8],
-        y_val=data.y_val[:8],
-        X_test=data.X_test[:8],
-        y_test=data.y_test[:8]
-    )
-
-    # Re-initialize dataloaders with the mocked data
+    run_logger.info(f"Generating DataLoaders with max_samples={cfg.max_samples}...")
     train_loader, val_loader, test_loader = get_dataloaders(data, cfg)
 
     # 4. Model Factory Check
@@ -123,19 +98,33 @@ def run_smoke_test() -> None:
         output_dir=paths.models
     )
     
+    # The trainer returns the exact path where it saved the checkpoint
     best_path, train_losses, val_accuracies = trainer.train()
 
     # 6. Final Evaluation & Visualization Verification
     run_logger.info("Running final evaluation and reporting...")
-    model.load_state_dict(torch.load(best_path, map_location=device, weights_only=True))
-    
-    aug_info = get_augmentations_transforms(cfg)
 
+    # Verification: Ensure the file was actually written before loading
+    if not best_path.exists():
+        run_logger.error(f"Checkpoint missing! Expected at: {best_path}")
+        raise FileNotFoundError(
+            f"Checkpoint not found in: {best_path}"
+        )
+    
+    # Load the best weights using the path provided by the trainer
+    model.load_state_dict(
+        torch.load(best_path, map_location=device, weights_only=True)
+    )
+    run_logger.info(f"Successfully loaded checkpoint from {best_path.name}")
+    
+    aug_info = get_augmentations_description(cfg)
+
+    # Note: test_images/labels=None triggers the batch extraction logic
     macro_f1, test_acc = run_final_evaluation(
         model=model,
         test_loader=test_loader,
-        test_images=data.X_test,
-        test_labels=data.y_test,
+        test_images=None, 
+        test_labels=None, 
         class_names=ds_meta.classes,
         train_losses=train_losses,
         val_accuracies=val_accuracies,
@@ -151,13 +140,16 @@ def run_smoke_test() -> None:
 
 
 # =========================================================================== #
-#                               ENTRY POINT
+#                               ENTRY POINT                                   #
 # =========================================================================== #
 
 if __name__ == "__main__":
+    from scripts.core import parse_args
+    cli_args = parse_args()
     try:
-        run_smoke_test()
+        # We pass the parsed arguments to the smoke test function
+        run_smoke_test(args=cli_args)
     except Exception as e:
-        # Usiamo il logging di base come fallback se run_logger non fosse inizializzato
+        # Fallback to basic logging if run_logger initialization fails
         logging.error(f"SMOKE TEST FAILED: {str(e)}", exc_info=True)
         raise

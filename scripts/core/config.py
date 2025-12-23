@@ -14,7 +14,7 @@ import argparse
 # =========================================================================== #
 #                                Third-Party Imports
 # =========================================================================== #
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 # =========================================================================== #
 #                                HELPER FUNCTIONS
@@ -70,8 +70,20 @@ class Config(BaseModel):
     normalization_info : str =  "N/A"
     in_channels : int = 3
     num_classes : int = 8
-    mean: tuple[float, float, float] = (0.5, 0.5, 0.5)
-    std: tuple[float, float, float] = (0.5, 0.5, 0.5)
+    mean: tuple[float, ...] = (0.5, 0.5, 0.5)
+    std: tuple[float, ...] = (0.5, 0.5, 0.5)
+
+    # Dataset Limits & Sampling
+    max_samples: int | None = Field(default=20000, gt=0)
+    use_weighted_sampler: bool = True
+
+    @field_validator("num_workers")
+    @classmethod
+    def check_cpu_count(cls, v: int) -> int:
+        cpu_count = os.cpu_count() or 1
+        if v > cpu_count:
+            return cpu_count
+        return v
 
     @classmethod
     def from_args(cls, args: argparse.Namespace):
@@ -86,6 +98,9 @@ class Config(BaseModel):
             raise ValueError(f"Dataset '{args.dataset}' not found in DATASET_REGISTRY.")
         
         ds_meta = DATASET_REGISTRY[dataset_key]
+
+        val_max = getattr(args, 'max_samples', 20000)
+        final_max = val_max if val_max > 0 else None
         
         return cls(
             model_name=args.model_name,
@@ -103,6 +118,8 @@ class Config(BaseModel):
             hflip=args.hflip,
             rotation_angle=args.rotation_angle,
             jitter_val=args.jitter_val,
+            max_samples=final_max,
+            use_weighted_sampler=getattr(args, 'use_weighted_sampler', True),
             num_classes=len(ds_meta.classes),
             mean=ds_meta.mean,
             std=ds_meta.std,
@@ -203,8 +220,8 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=default_cfg.jitter_val
     )
-    
-    # Group: Dataset Selection
+
+    # Group: Dataset Selection and Configuration
     dataset_group = parser.add_argument_group("Dataset Configuration")
 
     dataset_group.add_argument(
@@ -213,6 +230,19 @@ def parse_args() -> argparse.Namespace:
         default="bloodmnist",
         choices=DATASET_REGISTRY.keys(),
         help="Target MedMNIST dataset."
+    )
+    dataset_group.add_argument(
+        '--max_samples',
+        type=int,
+        default=20000,
+        help="Max training samples (None for full dataset)."
+    )
+    dataset_group.add_argument(
+        '--balanced',
+        action='store_true',
+        dest='use_weighted_sampler',
+        default=True,
+        help="Use WeightedRandomSampler to handle class imbalance."
     )
 
     # Group: Model Selection

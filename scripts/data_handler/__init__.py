@@ -22,7 +22,7 @@ from .data_explorer import (
 )
 
 from .transforms import (
-    get_augmentations_transforms,
+    get_augmentations_description,
     get_pipeline_transforms,
     worker_init_fn
 )

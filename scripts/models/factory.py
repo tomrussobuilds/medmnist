@@ -54,10 +54,8 @@ def get_model(
     # Normalize model name for robust matching
     model_name_lower = cfg.model_name.lower()
     
-    # FIXED: Normalize the dataset name to lowercase to match DATASET_REGISTRY keys
     dataset_key = cfg.dataset_name.lower()
     
-    # FIXED: Use the normalized key for the check and class count retrieval
     if dataset_key not in DATASET_REGISTRY:
         available_datasets = ", ".join(DATASET_REGISTRY.keys())
         error_msg = (

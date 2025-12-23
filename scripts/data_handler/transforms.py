@@ -8,20 +8,20 @@ and Grayscale datasets dynamically.
 """
 
 # =========================================================================== #
-#                                Standard Imports
+#                                Standard Imports                             #
 # =========================================================================== #
 import random
 from typing import Tuple, Final
 
 # =========================================================================== #
-#                                Third-Party Imports
+#                                Third-Party Imports                          #
 # =========================================================================== #
 import numpy as np
 import torch
 from torchvision import transforms
 
 # =========================================================================== #
-#                                Internal Imports
+#                                Internal Imports                             #
 # =========================================================================== #
 from scripts.core import Config
 
@@ -29,7 +29,7 @@ from scripts.core import Config
 # =========================================================================== #
 #                             TRANSFORMATION PIPELINES                        #
 # =========================================================================== #
-# Standard costants
+# Standard constants
 IMG_SIZE: Final[int] = 28
 
 # Normalization values for ImageNet (RGB)
@@ -41,33 +41,45 @@ GRAY_MEAN: Final[Tuple[float]] = (0.5,)
 GRAY_STD: Final[Tuple[float]] = (0.5,)
 
 
-def get_augmentations_transforms(cfg: Config) -> str:
+def get_augmentations_description(cfg: Config) -> str:
     """
     Generates a descriptive string of the augmentations using values from Config.
+    Used for logging and run traceability.
     """ 
-    return (
-        f"RandomHorizontalFlip({cfg.hflip}), "
-        f"RandomRotation({cfg.rotation_angle}), "
-        f"ColorJitter ({cfg.jitter_val}), "
-        f"RandomResizedCrop(28, scale=(0.9, 1.0)), "
-        f"MixUp(alpha={cfg.mixup_alpha})"
-    )
+    augs = [
+        f"HFlip(p={cfg.hflip})",
+        f"Rotation({cfg.rotation_angle}°)",
+        f"Jitter(v={cfg.jitter_val})",
+        f"ResizedCrop({IMG_SIZE}, scale=(0.9, 1.0))"
+    ]
+    if cfg.mixup_alpha > 0:
+        augs.append(f"MixUp(α={cfg.mixup_alpha})")
+    
+    return ", ".join(augs)
 
 
 def worker_init_fn(worker_id: int):
     """
     Initializes random number generators (PRNGs) for each DataLoader worker.
+    Crucial for maintaining augmentation diversity and reproducibility 
+    when using multiple workers for lazy-loading.
     """
-    worker_seed = torch.initial_seed() % 2**32
+    # Create a seed unique to the worker but based on the global initial seed
+    base_seed = torch.initial_seed() % 2**32
+    worker_seed = base_seed + worker_id
     
     np.random.seed(worker_seed)
     random.seed(worker_seed) 
     torch.manual_seed(worker_seed)
 
 
-def get_pipeline_transforms(cfg: Config, is_rgb: bool = True) -> Tuple[transforms.Compose, transforms.Compose]:
+def get_pipeline_transforms(
+        cfg: Config,
+        is_rgb: bool = True
+    ) -> Tuple[transforms.Compose, transforms.Compose]:
     """
     Defines the transformation pipelines for training and evaluation.
+    
     Args:
         cfg: Configuration object with augmentation parameters.
         is_rgb: Boolean indicating if the dataset is RGB or Grayscale.
@@ -78,6 +90,7 @@ def get_pipeline_transforms(cfg: Config, is_rgb: bool = True) -> Tuple[transform
     mean = RGB_MEAN if is_rgb else GRAY_MEAN
     std = RGB_STD if is_rgb else GRAY_STD
 
+    # Training pipeline: Focus on robust generalization
     train_transform = transforms.Compose([
         transforms.ToPILImage(),
         transforms.RandomHorizontalFlip(p=cfg.hflip),
@@ -87,11 +100,13 @@ def get_pipeline_transforms(cfg: Config, is_rgb: bool = True) -> Tuple[transform
             contrast=cfg.jitter_val,
             saturation=cfg.jitter_val if is_rgb else 0.0,
         ),
+        # Using a subtle scale range to preserve medical feature proportions
         transforms.RandomResizedCrop(IMG_SIZE, scale=(0.9, 1.0)),
         transforms.ToTensor(),
         transforms.Normalize(mean=mean, std=std),
     ])
     
+    # Validation/Inference pipeline: Strict consistency
     val_transform = transforms.Compose([
         transforms.ToPILImage(),
         transforms.ToTensor(),

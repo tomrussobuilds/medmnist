@@ -2,7 +2,7 @@
 Dataset Fetching and Loading Module
 
 This module handles the physical retrieval of any MedMNIST dataset, including
-robust download logic, MD5 verification, and loading into structured containers.
+robust download logic, MD5 verification, and metadata preparation for lazy loading.
 """
 
 # =========================================================================== #
@@ -33,14 +33,61 @@ from scripts.core import (
 
 @dataclass(frozen=True)
 class MedMNISTData:
-    """A generic container for MedMNIST dataset splits stored as NumPy arrays."""
-    X_train: np.ndarray
-    y_train: np.ndarray
-    X_val: np.ndarray
-    y_val: np.ndarray
-    X_test: np.ndarray
-    y_test: np.ndarray
+    """
+    Metadata container for a MedMNIST dataset.
+    Stores path and format info instead of raw arrays to save RAM.
+    """
     path: Path
+    name: str
+    is_rgb: bool
+    num_classes: int
+
+# =========================================================================== #
+#                                HELPERS                                      #
+# =========================================================================== #
+
+def _is_valid_npz(path: Path, expected_md5: str) -> bool:
+    """Checks file existence, header (ZIP/NPZ), and MD5 checksum."""
+    if not path.exists():
+        return False
+    try:
+        # Check for ZIP header (NPZ files are ZIP archives)
+        with open(path, "rb") as f:
+            if f.read(2) != b"PK":
+                return False
+    except IOError:
+        return False
+        
+    return md5_checksum(path) == expected_md5
+
+
+def _stream_download(url: str, tmp_path: Path):
+    """Executes the streaming GET request and writes to a temporary file."""
+    headers = {
+        "User-Agent": "Wget/1.0",
+        "Accept": "application/octet-stream",
+        "Accept-Encoding": "identity",
+    }
+    
+    with requests.get(
+        url,
+        headers=headers,
+        timeout=60,
+        stream=True,
+        allow_redirects=True
+    ) as r:
+        r.raise_for_status()
+
+        content_type = r.headers.get("Content-Type", "")
+        if 'text/html' in content_type:
+            raise ValueError(
+                "Downloaded file is an HTML page, not the expected NPZ file."
+            )
+
+        with open(tmp_path, "wb") as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
 
 
 # =========================================================================== #
@@ -67,22 +114,8 @@ def ensure_dataset_npz(
     """
     target_npz = metadata.path
 
-    def _is_valid(path: Path) -> bool:
-        """Checks file existence, header (ZIP/NPZ), and MD5 checksum."""
-        if not path.exists():
-            return False
-        try:
-            # Check for ZIP header (NPZ files are ZIP archives)
-            with open(path, "rb") as f:
-                if f.read(2) != b"PK":
-                    return False
-        except IOError:
-            return False
-            
-        return md5_checksum(path) == metadata.md5_checksum
-    
-    # 1. Check if valid file already exists
-    if _is_valid(target_npz):
+    # 1. Validation of existing file
+    if _is_valid_npz(target_npz, metadata.md5_checksum):
         logger.info(f"Valid dataset '{metadata.name}' found at: {target_npz}")
         return target_npz
 
@@ -91,43 +124,25 @@ def ensure_dataset_npz(
         logger.warning(f"Corrupted dataset found, deleting: {target_npz}")
         target_npz.unlink()
 
-    # 3. Download logic with streaming
+    # 3. Download logic with retries
     logger.info(f"Downloading {metadata.name} from {metadata.url}")
     target_npz.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = target_npz.with_suffix(".tmp")
 
-    headers = {
-        "User-Agent": "Wget/1.0",
-        "Accept": "application/octet-stream",
-        "Accept-Encoding": "identity",
-    }
-
     for attempt in range(1, retries + 1):
         try:
-            with requests.get(
-                metadata.url,
-                headers=headers,
-                timeout=60,
-                stream=True,
-                allow_redirects=True
-                ) as r:
-                r.raise_for_status()
+            _stream_download(metadata.url, tmp_path)
 
-                content_type = r.headers.get("Content-Type", "")
-                if 'text/html' in content_type:
-                    raise ValueError("Downloaded file is an HTML page, not the expected NPZ file.")
-
-                with open(tmp_path, "wb") as f:
-                    for chunk in r.iter_content(chunk_size=8192):
-                        if chunk:
-                            f.write(chunk)
-
-            if not _is_valid(tmp_path):
+            if not _is_valid_npz(tmp_path, metadata.md5_checksum):
                 actual_md5 = md5_checksum(tmp_path)
-                logger.error(f"MD5 mismatch: expected {metadata.md5_checksum}, got {actual_md5}")
+                logger.error(
+                    f"MD5 mismatch: expected {metadata.md5_checksum}, "
+                    f"got {actual_md5}"
+                )
                 raise ValueError("Downloaded file failed MD5 or header validation")
-
-            tmp_path.replace(target_npz) # Atomic move
+            
+            # Atomic move
+            tmp_path.replace(target_npz)
             logger.info(f"Successfully downloaded and verified: {metadata.name}")
             return target_npz
 
@@ -135,17 +150,24 @@ def ensure_dataset_npz(
             if tmp_path.exists():
                 tmp_path.unlink()
             
-            if hasattr(e, 'response') and e.response is not None and e.response.status_code == 429:
+            # Backoff calculation
+            if (hasattr(e, 'response') and e.response is not None 
+                and e.response.status_code == 429):
                 actual_delay = delay * (attempt ** 2)
-                logger.warning(f"Rate limited (429). Waiting {actual_delay}s before retrying...")
+                logger.warning(
+                    f"Rate limited (429). Waiting {actual_delay}s before retrying..."
+                    )
             else:
                 actual_delay = delay
 
             if attempt == retries:
-                logger.error(f"Failed to download {metadata.name} after {retries} attempts")
+                logger.error(f"Download failed after {retries} attempts")
                 raise RuntimeError(f"Could not download {metadata.name}") from e
 
-            logger.warning(f"Attempt {attempt}/{retries} failed: {e}. Retrying in {actual_delay}s...")
+            logger.warning(
+                f"Attempt {attempt}/{retries} failed: {e}. "
+                f"Retrying in {actual_delay}s..."
+            )
             time.sleep(actual_delay)
 
     raise RuntimeError("Unexpected error in dataset download logic.")
@@ -153,21 +175,21 @@ def ensure_dataset_npz(
 
 def load_medmnist(metadata: DatasetMetadata) -> MedMNISTData:
     """
-    Ensures the dataset is present and loads it from the NPZ file.
+    Ensures the dataset is present and returns its metadata container.
     """
     path = ensure_dataset_npz(metadata)
 
-    logger.info(f"Loading {metadata.name} into memory...")
-
     with np.load(path) as data:
         validate_npz_keys(data)
+
+        train_shape = data["train_images"].shape
+        is_rgb = (len(train_shape) == 4 and train_shape[-1] == 3)
+
+        num_classes = len(np.unique(data["train_labels"]))
         
         return MedMNISTData(
-            X_train=np.array(data["train_images"]),
-            X_val=np.array(data["val_images"]),
-            X_test=np.array(data["test_images"]),
-            y_train=data["train_labels"].ravel(),
-            y_val=data["val_labels"].ravel(),
-            y_test=data["test_labels"].ravel(),
-            path=path
+            path=path,
+            name=metadata.name,
+            is_rgb=is_rgb,
+            num_classes=num_classes
         )

@@ -159,7 +159,7 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         std=(0.5, 0.5, 0.5),
         in_channels=1,
     ),
-    "organamnist": DatasetMetadata(
+    "organmnist": DatasetMetadata(
         name="organamnist",
         display_name="OrganAMNIST",
         md5_checksum="866b832ed4eeba67bfb9edee1d5544e6",

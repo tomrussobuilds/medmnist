@@ -103,7 +103,6 @@ def evaluate_model(
 
     with torch.no_grad():
         for inputs, targets in test_loader:
-            # Targets are needed as NumPy array for metrics calculation later
             targets_np = targets.cpu().numpy()
 
             if use_tta:

@@ -30,14 +30,14 @@ from pathlib import Path
 import torch
 
 # =========================================================================== #
-#                                Internal Imports
+#                                Internal Imports                             #
 # =========================================================================== #
 from scripts.core import (
     Config, Logger, parse_args, set_seed, kill_duplicate_processes, get_device, 
     DATASET_REGISTRY, RunPaths, setup_static_directories, ensure_single_instance
 )
 from scripts.data_handler import (
-    load_medmnist, get_dataloaders, show_sample_images, get_augmentations_transforms
+    load_medmnist, get_dataloaders, show_sample_images, get_augmentations_description
 )
 from scripts.models import get_model
 from scripts.trainer import ModelTrainer
@@ -56,6 +56,7 @@ def main() -> None:
     
     # 1. Configuration Setup
     args = parse_args()
+    
     # Initialize configuration from command-line arguments
     cfg = Config.from_args(args)
     
@@ -66,9 +67,8 @@ def main() -> None:
     setup_static_directories()
 
     # 2. Environment Initialization
-    lock_path = Path("/tmp/bloodmnist_training.lock")
+    lock_path = Path("/tmp/medmnist_training.lock")
 
-    
     # Initialize dynamic paths for the current run
     paths = RunPaths(cfg.model_name, cfg.dataset_name)
     
@@ -82,7 +82,7 @@ def main() -> None:
     legacy_logger.handlers = run_logger.handlers
     legacy_logger.setLevel(run_logger.level)
     
-    ensure_single_instance(lock_file=lock_path,logger=run_logger)
+    ensure_single_instance(lock_file=lock_path, logger=run_logger)
     kill_duplicate_processes(logger=run_logger)
     device = get_device(logger=run_logger)
     
@@ -98,22 +98,22 @@ def main() -> None:
     run_logger.info(f"Dataset selected: {cfg.dataset_name} with {cfg.num_classes} classes.")
 
     # 3. Data Loading and Preparation
+    # 'data' is now a metadata container for Lazy Loading
     data = load_medmnist(ds_meta)
+
+    # Create DataLoaders
+    train_loader, val_loader, test_loader = get_dataloaders(data, cfg)
     
     # Optional: Visual check of samples (saved to run-specific figures directory)
+    # Updated to use loader instead of raw X_train for Lazy Loading compatibility
     show_sample_images(
-        images=data.X_train,
-        labels=data.y_train,
+        loader=train_loader,
         classes=ds_meta.classes,
         save_path=paths.figures / "dataset_samples.png",
         cfg=cfg
     )
 
-    # Create DataLoaders
-    train_loader, val_loader, test_loader = get_dataloaders(data, cfg)
-
     # 4. Model Initialization (Factory Pattern)
-    # Corrected: Passing both device and cfg as required by our __init__.py factory
     model = get_model(device=device, cfg=cfg)
 
     # 5. Training Execution
@@ -125,23 +125,29 @@ def main() -> None:
         val_loader=val_loader,
         device=device,
         cfg=cfg,
-        output_dir=paths.models # Save checkpoints to the run-specific directory
+        output_dir=paths.models
     )
     best_path, train_losses, val_accuracies = trainer.train()
 
     # Load the best weights found during training
-    model.load_state_dict(torch.load(best_path, map_location=device))
+    model.load_state_dict(
+        torch.load(
+            best_path,
+            map_location=device,
+            weights_only=True
+        )
+    )
     run_logger.info(f"Loaded best checkpoint weights from: {best_path}")
 
     # 6. Final Evaluation (Metrics & Plots)
-    # Get augmentation info string for reporting
-    aug_info = get_augmentations_transforms(cfg)
+    aug_info = get_augmentations_description(cfg)
 
+    # test_images and test_labels set to None to trigger Lazy extraction from loader
     macro_f1, test_acc = run_final_evaluation(
         model=model,
         test_loader=test_loader,
-        test_images=data.X_test,
-        test_labels=data.y_test,
+        test_images=None,
+        test_labels=None,
         class_names=ds_meta.classes,
         train_losses=train_losses,
         val_accuracies=val_accuracies,
