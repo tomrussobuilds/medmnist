@@ -26,12 +26,25 @@ from .system import (
 from .logger import Logger
 from .constants import RunPaths, setup_static_directories
 
+
+# =========================================================================== #
+#                              Root Orchestrator                              #
+# =========================================================================== #
+
 class RootOrchestrator:
     """
-    Orchestrates the low-level initialization of the project's core services.
+    High-level lifecycle controller for the experiment environment.
     
-    It manages the transition from a static Config object to a live runtime 
-    environment by setting up paths, logging, and system-level locks.
+    The RootOrchestrator serves as the Single Source of Truth (SSOT) for the 
+    transition between static configuration (Pydantic models) and the live 
+    execution state. It enforces system-level constraints, manages directory 
+    atomicity, and synchronizes telemetry (logging) across the pipeline.
+
+    Responsibilities:
+        - Enforcement of execution exclusivity (Kernel-level locking).
+        - Management of run-specific filesystem hierarchies.
+        - Global RNG synchronization for bit-perfect reproducibility.
+        - Hardware abstraction and stateful weight restoration.
     """
     
     def __init__(self, cfg):
@@ -45,17 +58,18 @@ class RootOrchestrator:
 
     def initialize_core_services(self) -> RunPaths:
         """
-        Triggers the sequence of core service initializations.
+        Triggers the deterministic sequence of core service initializations.
 
-        Steps include:
-        1. Setting global seeds for reproducibility.
-        2. Ensuring project-level static directory structures.
-        3. Initializing unique RunPaths for the current session.
-        4. Configuring the logging system with run-specific handlers.
-        5. Enforcing single-instance execution and process cleanup.
+        This method synchronizes the environment following a strict order of 
+        operations:
+            1. RNG Seeding: Locks global state for reproducibility.
+            2. Static Layout: Ensures baseline project structure.
+            3. Path Mapping: Generates unique session-specific workspace.
+            4. Telemetry: Hot-swaps logger to file-persistent handlers.
+            5. Guarding: Acquires system locks and purges zombie processes.
 
         Returns:
-            RunPaths: The initialized path orchestrator for the current run.
+            RunPaths: The verified path orchestrator for the current session.
         """
         # 1. Reproducibility setup
         set_seed(self.cfg.training.seed)
@@ -92,25 +106,25 @@ class RootOrchestrator:
         return self.paths
     
     def get_device(self):
-        """Hides string conversion -> torch.device"""
+        """Hides string conversion -> torch.device abstraction."""
         return to_device_obj(self.cfg.system.device)
     
-    def load_weights(self, model, path):
-        """Coordinates weights load using session logger."""
+    def load_weights(self, model, path: Path):
+        """Coordinates atomic weight loading using the session logger."""
         device = self.get_device()
         load_model_weights(model, path, device)
         self.run_logger.info(
-            f"Checkpoint weights loaded: {path.name}"
+            f"Checkpoint weights successfully restored from: {path.name}"
         )
     
     def load_raw_dataset(self, path: Path) -> np.lib.npyio.NpzFile:
-        """Load a NPZ file and validate keys."""
+        """Loads and validates MedMNIST NPZ archives for structural integrity."""
         data = np.load(path)
         validate_npz_keys(data)
         return data
 
     def _log_initial_status(self) -> None:
-        """Logs the baseline environment configuration."""
+        """Logs the verified baseline environment configuration."""
         device_str = self.cfg.system.device
         self.run_logger.info(f"Execution Device: {device_str.upper()}")
         
