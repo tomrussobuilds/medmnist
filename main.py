@@ -70,7 +70,7 @@ def main() -> None:
         )
 
         # --- 3. Model & Training Execution ---
-        run_logger.info(f" Starting Pipeline: {cfg.model.model_type} ".center(60, "#"))
+        run_logger.info(f" Starting Pipeline: {cfg.model_name} ".center(60, "#"))
 
         model   = get_model(device=device, cfg=cfg)
         trainer = ModelTrainer(
@@ -111,7 +111,7 @@ def main() -> None:
             f"{' PIPELINE EXECUTION SUMMARY ':^60}\n"
             f"{'-'*60}\n"
             f"  » Dataset:      {cfg.dataset.dataset_name}\n"
-            f"  » Architecture: {cfg.model.model_type}\n"
+            f"  » Architecture: {cfg.model_name}\n"
             f"  » Test Acc:     {test_acc:>8.2%}\n"
             f"  » Macro F1:     {macro_f1:>8.4f}\n"
             f"  » Artifacts:    {paths.root}\n"
