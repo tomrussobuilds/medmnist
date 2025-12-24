@@ -13,7 +13,7 @@
 ## 📌 Table of Contents
 * [🚀 Getting Started](#-getting-started)
 * [✨ Key Features](#-key-features)
-* [🏗 Architecture Details](#-architecture-details:-resnet-18-for-28x28)
+* [🏗 Architecture Details: ResNet-18 for 28x28](#-architecture-details:-resnet-18-for-28x28)
 * [📁 Project Structure](#-project-structure)
 * [⚙️ Requirements & Installation](#️-requirements--installation)
 * [💻 Usage (Local )](#-usage-local)
