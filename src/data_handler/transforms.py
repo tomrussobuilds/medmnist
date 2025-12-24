@@ -46,16 +46,19 @@ def get_augmentations_description(cfg: Config) -> str:
     Generates a descriptive string of the augmentations using values from Config.
     Used for logging and run traceability.
     """ 
-    augs = [
-        f"HFlip(p={cfg.augmentation.hflip})",
-        f"Rotation({cfg.augmentation.rotation_angle}°)",
-        f"Jitter(v={cfg.augmentation.jitter_val})",
-        f"ResizedCrop({IMG_SIZE}, scale=(0.9, 1.0))"
-    ]
-    if cfg.training.mixup_alpha > 0:
-        augs.append(f"MixUp(α={cfg.training.mixup_alpha})")
+    params = {
+        "HFlip": cfg.augmentation.hflip,
+        "Rotation": f"{cfg.augmentation.rotation_angle}°",
+        "Jitter": cfg.augmentation.jitter_val,
+        "ResizedCrop": f"{IMG_SIZE} (0.9, 1.0)"
+    }
+
+    descr = [f"{k}({v})" for k, v in params.items()]
     
-    return ", ".join(augs)
+    if cfg.training.mixup_alpha > 0:
+        descr.append(f"MixUp(α={cfg.training.mixup_alpha})")
+    
+    return ", ".join(descr)
 
 
 def worker_init_fn(worker_id: int):
@@ -64,13 +67,13 @@ def worker_init_fn(worker_id: int):
     Crucial for maintaining augmentation diversity and reproducibility 
     when using multiple workers for lazy-loading.
     """
-    # Create a seed unique to the worker but based on the global initial seed
-    base_seed = torch.initial_seed() % 2**32
-    worker_seed = base_seed + worker_id
-    
-    np.random.seed(worker_seed)
-    random.seed(worker_seed) 
-    torch.manual_seed(worker_seed)
+    worker_info = torch.utils.data.get_worker_info()
+    base_seed = worker_info.seed if worker_info else torch.initial_seed()
+    seed = (base_seed + worker_id) % 2**32
+
+    np.random.seed(seed)
+    random.seed(seed) 
+    torch.manual_seed(seed)
 
 def get_pipeline_transforms(
         cfg: Config,
@@ -78,22 +81,21 @@ def get_pipeline_transforms(
     ) -> Tuple[v2.Compose, v2.Compose]:
     """
     Defines the transformation pipelines for training and evaluation.
-    
-    Args:
-        cfg: Configuration object with augmentation parameters.
-        is_rgb: Boolean indicating if the dataset is RGB or Grayscale.
-    
-    Returns:
-        Tuple[transforms.Compose, transforms.Compose]: (train_transform, val_transform)
     """
-    mean = RGB_MEAN if is_rgb else GRAY_MEAN
-    std = RGB_STD if is_rgb else GRAY_STD
+    stats = {
+        True:  {"mean": RGB_MEAN, "std": RGB_STD},
+        False: {"mean": GRAY_MEAN, "std": GRAY_STD} 
+    }[is_rgb]
 
+    def get_base_ops():
+        return [
+            v2.ToImage(),
+            v2.ToDtype(torch.float32, scale=True),
+        ]
+        
     # Training pipeline: Focus on robust generalization
     train_transform = v2.Compose([
-        # Sostituiamo ToPILImage/ToTensor con v2.ToImage e v2.ToDtype
-        v2.ToImage(),
-        v2.ToDtype(torch.float32, scale=True),
+        *get_base_ops(),
         v2.RandomHorizontalFlip(p=cfg.augmentation.hflip),
         v2.RandomRotation(cfg.augmentation.rotation_angle),
         v2.ColorJitter(
@@ -101,16 +103,19 @@ def get_pipeline_transforms(
             contrast=cfg.augmentation.jitter_val,
             saturation=cfg.augmentation.jitter_val if is_rgb else 0.0,
         ),
-        # Using a subtle scale range to preserve medical feature proportions
-        v2.RandomResizedCrop(IMG_SIZE, scale=(0.9, 1.0), antialias=True),
-        v2.Normalize(mean=mean, std=std),
+        v2.RandomResizedCrop(
+            IMG_SIZE,
+            scale=(0.9, 1.0),
+            antialias=True,
+            interpolation=v2.InterpolationMode.BILINEAR,
+        ),
+        v2.Normalize(**stats),
     ])
     
     # Validation/Inference pipeline: Strict consistency
     val_transform = v2.Compose([
-        v2.ToImage(),
-        v2.ToDtype(torch.float32, scale=True),
-        v2.Normalize(mean=mean, std=std),
+        *get_base_ops(),
+        v2.Normalize(**stats),
     ])
     
     return train_transform, val_transform
