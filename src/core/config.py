@@ -100,11 +100,15 @@ class TrainingConfig(BaseModel):
     epochs: int = Field(default=60, gt=0)
     patience: int = Field(default=15, ge=0)
     learning_rate: float = Field(default=0.008, gt=0)
+    min_lr: float = Field(default=1e-6)
     momentum: float = Field(default=0.9, ge=0.0, le=1.0)
     weight_decay: float = Field(default=5e-4, ge=0.0)
     mixup_alpha: float = Field(default=0.002, ge=0.0)
+    mixup_epochs: int = Field(default=30, ge=0)
     use_tta: bool = True
     cosine_fraction: float = Field(default=0.5, ge=0.0, le=1.0)
+    use_amp: bool = Field(default=False)
+    grad_clip: float | None = Field(default=1.0, gt=0)
 
 
 class AugmentationConfig(BaseModel):
@@ -202,7 +206,10 @@ class Config(BaseModel):
                 patience=args.patience,
                 mixup_alpha=args.mixup_alpha,
                 use_tta=args.use_tta,
-                cosine_fraction=args.cosine_fraction
+                cosine_fraction=args.cosine_fraction,
+                mixup_epochs=getattr(args, 'mixup_epochs', args.epochs // 2),
+                use_amp=args.use_amp,
+                grad_clip=args.grad_clip
             ),
             augmentation=AugmentationConfig(
                 hflip=args.hflip,

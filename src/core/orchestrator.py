@@ -26,7 +26,6 @@ from .system import (
 from .logger import Logger
 from .constants import RunPaths, setup_static_directories
 
-
 # =========================================================================== #
 #                              Root Orchestrator                              #
 # =========================================================================== #
@@ -129,8 +128,15 @@ class RootOrchestrator:
         self.run_logger.info(f"Execution Device: {device_str.upper()}")
         
         # Hardware fallback warning logic
-        if device_str != "cpu" and not get_cuda_name() and "mps" not in device_str:
-            self.run_logger.warning("Hardware Fallback: Requested accelerator not fully detected.")
+        if device_str == "cuda":
+            gpu_name = get_cuda_name()
+            if gpu_name:
+                self.run_logger.info(f"GPU Model: {gpu_name}")
+        
+        if device_str != "cpu" and self.get_device().type == "cpu":
+            self.run_logger.warning(
+                f"HARDWARE FALLBACK: Requested {device_str}, but it's unavailable. Using CPU."
+            )
 
         self.run_logger.info(f"Run Directory initialized: {self.paths.root}")
         self.run_logger.info(

@@ -28,6 +28,9 @@ from src.core import (
 from src.data_handler import (
     load_medmnist, get_dataloaders, show_sample_images, get_augmentations_description
 )
+from src.factories import (
+    get_optimizer, get_scheduler, get_criterion
+)
 from src.models import get_model
 from src.trainer import ModelTrainer
 from src.evaluation import run_final_evaluation
@@ -73,10 +76,18 @@ def main() -> None:
         run_logger.info(f" Starting Pipeline: {cfg.model_name} ".center(60, "#"))
 
         model   = get_model(device=device, cfg=cfg)
+
+        criterion = get_criterion(cfg)
+        optimizer = get_optimizer(model, cfg)
+        scheduler = get_scheduler(optimizer, cfg)
+
         trainer = ModelTrainer(
             model        = model,
             train_loader = train_loader,
             val_loader   = val_loader,
+            optimizer    = optimizer,
+            scheduler    = scheduler,
+            criterion    = criterion,
             device       = device,
             cfg          = cfg,
             output_dir   = paths.models
@@ -118,7 +129,9 @@ def main() -> None:
             f"{'#'*60}"
         )
         run_logger.info(summary)
-
+    
+    except KeyboardInterrupt:
+        run_logger.warning("Interrupted by user. Cleaning up and exiting...")
     except Exception as e:
         run_logger.error(f"Pipeline crashed during execution: {e}", exc_info=True)
         raise e

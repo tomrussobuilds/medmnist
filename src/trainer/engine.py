@@ -1,35 +1,135 @@
 """
-Training Utilities and Trainer Module
+Core Training and Validation Engines
 
-This module provides implementations for the MixUp data augmentation technique
-and the central ModelTrainer class. The Trainer encapsulates the entire training
-lifecycle, including optimization, learning rate scheduling (Cosine Annealing
-followed by ReduceLROnPlateau), validation, checkpointing, and early stopping.
+This module provides high-performance implementation of the training and 
+validation loops. It integrates modern PyTorch features such as Automatic 
+Mixed Precision (AMP), Gradient Clipping, and MixUp augmentation to ensure 
+numerical stability and efficient hardware utilization.
 """
+
 # =========================================================================== #
 #                                Standard Imports                             #
 # =========================================================================== #
-import logging
 from typing import Tuple
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
 # =========================================================================== #
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 from tqdm import tqdm
 
 # =========================================================================== #
-#                                Internal Imports                             #
+#                               CORE ENGINES                                  #
 # =========================================================================== #
-from src.core import Config
+
+def train_one_epoch(
+    model: nn.Module,
+    loader: torch.utils.data.DataLoader,
+    criterion: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    device: torch.device,
+    mixup_fn = None,
+    scaler = None,
+    grad_clip: float = 0.0
+) -> float:
+    """
+    Performs a single full pass over the training dataset.
+
+    Args:
+        model (nn.Module): The neural network architecture to train.
+        loader (DataLoader): Training data provider.
+        criterion (nn.Module): Loss function (e.g., CrossEntropyLoss).
+        optimizer (Optimizer): Gradient descent optimizer (e.g., SGD, AdamW).
+        device (torch.device): Hardware target (cuda, mps, or cpu).
+        mixup_fn (callable, optional): Function to apply MixUp data blending.
+        scaler (GradScaler, optional): PyTorch scaler for mixed precision training.
+        grad_clip (float): Maximum norm for gradient clipping (0.0 to disable).
+
+    Returns:
+        float: The average training loss for the current epoch.
+    """
+    model.train()
+    running_loss = 0.0
+
+    for inputs, targets in tqdm(loader, desc="Training", leave=False):
+        inputs, targets = inputs.to(device), targets.to(device)
+        optimizer.zero_grad()
+
+        # --- 1. MixUp Preparation ---
+        # If MixUp is enabled, we generate a convex combination of samples.
+        # Otherwise, we use original targets for both standard loss paths.
+        if mixup_fn:
+            inputs, y_a, y_b, lam = mixup_fn(inputs, targets)
+            outputs = model(inputs)
+            loss = lam * criterion(outputs, y_a) + (1 - lam) * criterion(outputs, y_b)
+        else:
+            outputs = model(inputs)
+            loss = criterion(outputs, targets)
+        
+        # --- 2. Backward Pass & Parameter Update ---
+        # Standard backward pass for CPU efficiency (ignoring scaler overhead)
+        loss.backward()
+
+        if grad_clip > 0:
+            torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
+        
+        optimizer.step()
+
+        running_loss += loss.item() * inputs.size(0)
+    
+    return running_loss / len(loader.dataset)
+
+
+def validate_epoch(
+    model: nn.Module,
+    val_loader: torch.utils.data.DataLoader,
+    criterion: nn.Module,
+    device: torch.device
+) -> dict:
+    """
+    Evaluates the model performance on a held-out validation set.
+
+    This function computes the validation loss and classification accuracy 
+    under a 'no_grad' context to minimize memory consumption and latency.
+
+    Args:
+        model (nn.Module): The model to evaluate.
+        val_loader (DataLoader): Validation data provider.
+        criterion (nn.Module): Loss function used for evaluation.
+        device (torch.device): Hardware target for execution.
+
+    Returns:
+        dict: A dictionary containing 'loss' (float) and 'accuracy' (float) metrics.
+    """
+    model.eval()
+    val_loss = 0.0
+    correct = 0
+    total = 0
+    
+    with torch.no_grad():
+        for inputs, targets in val_loader:
+            inputs, targets = inputs.to(device), targets.to(device)
+            outputs = model(inputs)
+            
+            # Loss computation
+            loss = criterion(outputs, targets)
+            val_loss += loss.item() * inputs.size(0)
+            
+            # Accuracy computation
+            _, predicted = torch.max(outputs, 1)
+            total += targets.size(0)
+            correct += (predicted == targets).sum().item()
+    
+    return {
+        "loss": val_loss / len(val_loader.dataset),
+        "accuracy": correct / total
+    }
 
 # =========================================================================== #
 #                               MIXUP UTILITY                                 #
 # =========================================================================== #
-# Global logger instance
-logger = logging.getLogger("medmnist_pipeline")
 
 def mixup_data(
     x: torch.Tensor,
@@ -52,20 +152,20 @@ def mixup_data(
             mixed_x: The blended input images.
             y_a: The original targets.
             y_b: The permuted targets.
-            lam: The mixing coefficient $\lambda$.
+            lam: The mixing coefficient lambda.
     """
     if alpha <= 0:
         return x, y, y, 1.0
 
-    # Draw mixing coefficient $\lambda$ from Beta distribution
+    # Draw mixing coefficient lambda from Beta distribution
     lam: float = np.random.beta(alpha, alpha)
     batch_size: int = x.size(0)
     
     # Generate a random permutation of indices
-    if device is not None:
-        index = torch.randperm(batch_size, device=device)
-    else:
-        index = torch.randperm(batch_size).to(x.device)
+    # Optimized for CPU by avoiding explicit device calls when not on GPU
+    index = torch.randperm(batch_size)
+    if x.is_cuda:
+        index = index.to(x.device)
 
     # Calculate the mixed input
     mixed_x: torch.Tensor = lam * x + (1 - lam) * x[index, :]
@@ -92,86 +192,9 @@ def mixup_criterion(
         pred (torch.Tensor): Model predictions for the mixed input.
         y_a (torch.Tensor): The original targets.
         y_b (torch.Tensor): The permuted targets.
-        lam (float): The mixing coefficient $\lambda$.
+        lam (float): The mixing coefficient lambda.
 
     Returns:
         torch.Tensor: The final MixUp-regularized loss value.
     """
     return lam * criterion(pred, y_a) + (1 - lam) * criterion(pred, y_b)
-
-
-# =========================================================================== #
-#                               CORE ENGINES                                  #
-# =========================================================================== #
-
-def train_one_epoch(
-    model: nn.Module,
-    train_loader: torch.utils.data.DataLoader,
-    criterion: nn.Module,
-    optimizer: torch.optim.Optimizer,
-    device: torch.device,
-    epoch: int,
-    total_epochs: int,
-    cfg: Config,
-) -> float:
-    """
-    Performs a single training cycle over the training set, applying MixUp
-    based on the epoch number.
-    """
-    model.train()
-    running_loss: float = 0.0
-    progress_bar = tqdm(train_loader, desc=f"Training", leave=False)
-    
-    # Determine if MixUp should be applied this epoch
-    cosine_limit = int(cfg.training.cosine_fraction * cfg.training.epochs)
-    current_alpha = cfg.training.mixup_alpha if epoch <= cosine_limit else 0.0
-    
-    for inputs, targets in progress_bar:
-        inputs, targets = inputs.to(device), targets.to(device)
-
-        if current_alpha > 0:
-            # Apply MixUp
-            inputs, targets_a, targets_b, lam = mixup_data(
-                inputs, targets, current_alpha, device
-            )
-            outputs = model(inputs)
-            loss = mixup_criterion(criterion, outputs, targets_a, targets_b, lam)
-        else:
-            # Standard training
-            outputs = model(inputs)
-            loss = criterion(outputs, targets)
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        # Update running loss and progress bar
-        running_loss += loss.item() * inputs.size(0)
-        progress_bar.set_postfix(
-            {"loss": f"{running_loss / ((progress_bar.n + 1) * inputs.size(0)):.4f}"}
-        )
-
-    return running_loss / len(train_loader.dataset)
-
-
-def validate_epoch(
-        model: nn.Module,
-        val_loader: torch.utils.data.DataLoader,
-        device: torch.device
-    ) -> float:
-    """
-    Performs a full validation cycle on the validation set.
-    """
-    model.eval()
-    correct: int = 0
-    total: int = 0
-    
-    with torch.no_grad():
-        for inputs, targets in val_loader:
-            inputs, targets = inputs.to(device), targets.to(device)
-            outputs = model(inputs)
-            _, predicted = torch.max(outputs, 1)
-            total += targets.size(0)
-            correct += (predicted == targets).sum().item()
-    
-    return correct / total

@@ -19,6 +19,13 @@ import logging
 import argparse
 
 # =========================================================================== #
+#                                Third-Party Imports                          #
+# =========================================================================== #
+import torch.nn as nn
+import torch.optim as optim
+from torch.optim.lr_scheduler import CosineAnnealingLR
+
+# =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
 from src.core import (
@@ -49,6 +56,8 @@ def run_smoke_test(args: argparse.Namespace) -> None:
         "training": base_cfg.training.model_copy(update={
             "epochs": 1,
             "batch_size": 4,
+            "use_amp": False,
+            "grad_clip": 1.0
         }),
         "dataset": base_cfg.dataset.model_copy(update={
             "max_samples": 16,
@@ -83,12 +92,19 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     model = get_model(device=device, cfg=cfg)
     run_logger.info(f"Model {cfg.model_name} instantiated.")
 
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=cfg.training.learning_rate)
+    scheduler = CosineAnnealingLR(optimizer, T_max=cfg.training.epochs)
+
     # 5. Training Loop Execution
     run_logger.info("Executing training epoch...")
     trainer = ModelTrainer(
         model=model,
         train_loader=train_loader,
         val_loader=val_loader,
+        optimizer=optimizer,
+        scheduler=scheduler,
+        criterion=criterion,
         device=device,
         cfg=cfg,
         output_dir=paths.models

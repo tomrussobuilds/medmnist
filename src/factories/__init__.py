@@ -1,28 +1,25 @@
 """
-Trainer Package Facade
+Factories Package Initializer
 
-This package exposes the central ModelTrainer class and the low-level execution 
-engines, providing a unified interface for the training lifecycle.
+This package centralizes the creation of model components, optimization 
+strategies, and loss functions, decoupling the experiment configuration 
+from the low-level PyTorch implementation.
 """
 
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from .engine import (
-    mixup_data, 
-    mixup_criterion, 
-    train_one_epoch, 
-    validate_epoch
+from .optim_factory import (
+    get_optimizer, 
+    get_scheduler, 
+    get_criterion
 )
-from .trainer import ModelTrainer
 
 # =========================================================================== #
 #                                   Exports                                   #
 # =========================================================================== #
 __all__ = [
-    "ModelTrainer",
-    "train_one_epoch",
-    "validate_epoch",
-    "mixup_data",
-    "mixup_criterion"
+    "get_optimizer",
+    "get_scheduler",
+    "get_criterion"
 ]

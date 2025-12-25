@@ -130,6 +130,26 @@ def parse_args() -> argparse.Namespace:
         default=default_cfg.training.cosine_fraction,
         help="Fraction of total epochs to apply cosine annealing before switching to ReduceLROnPlateau."
     )
+    # Coerenza con cfg.training.use_amp
+    train_group.add_argument(
+        '--use_amp',
+        action='store_true',
+        default=default_cfg.training.use_amp,
+        help="Enable Automatic Mixed Precision (FP16) during training."
+    )
+    train_group.add_argument(
+        '--no_amp',
+        action='store_false',
+        dest='use_amp',
+        help="Disable Automatic Mixed Precision."
+    )
+    # Coerenza con cfg.training.grad_clip
+    train_group.add_argument(
+        '--grad_clip',
+        type=float,
+        default=default_cfg.training.grad_clip,
+        help="Maximum norm for gradient clipping (set to 0 to disable)."
+    )
 
     # Group: Regularization & Augmentation
     aug_group = parser.add_argument_group("Regularization & Augmentation")
@@ -138,6 +158,12 @@ def parse_args() -> argparse.Namespace:
         '--mixup_alpha',
         type=float,
         default=default_cfg.training.mixup_alpha
+    )
+    aug_group.add_argument(
+        '--mixup_epochs',
+        type=int,
+        default=default_cfg.training.mixup_epochs,
+        help="Number of epochs to apply MixUp augmentation."
     )
     aug_group.add_argument(
         '--no_tta',
