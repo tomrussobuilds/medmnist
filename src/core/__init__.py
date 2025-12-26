@@ -19,7 +19,7 @@ from .config import (
 # =========================================================================== #
 #                                Constants & Paths
 # =========================================================================== #
-from .constants import (
+from .paths import (
     PROJECT_ROOT, 
     DATASET_DIR,
     OUTPUTS_ROOT,

@@ -32,7 +32,7 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator
 #                                Internal Imports                             #
 # =========================================================================== #
 from .system import detect_best_device, get_num_workers
-from .constants import DATASET_DIR, OUTPUTS_ROOT
+from .paths import DATASET_DIR, OUTPUTS_ROOT
 
 # =========================================================================== #
 #                                SUB-CONFIGURATIONS                           #
@@ -122,6 +122,35 @@ class DatasetConfig(BaseModel):
     std: tuple[float, ...] = (0.5, 0.5, 0.5)
     normalization_info: str = "N/A"
 
+class EvaluationConfig(BaseModel):
+    """Sub-configuration for model evaluation and reporting."""
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid"
+    )
+    
+    n_samples: int = Field(default=12, gt=0)
+    fig_dpi: int = Field(default=200, gt=0)
+    img_size: tuple[int, int] = (10, 10)
+    cmap_confusion: str = "Blues"
+    plot_style: str = "seaborn-v0_8-muted"
+
+    report_format: str = "xlsx"
+
+    @field_validator("report_format")
+    @classmethod
+    def validate_format(cls, v: str) -> str:
+        supported = ["xlsx", "csv", "json"]
+        if v.lower() not in supported:
+            raise ValueError(f"Format {v} not supoprted. Use {supported}")
+        return v.lower()
+    
+    save_confusion_matrix: bool = True
+    save_predictions_grid: bool = True
+    grid_cols: int = 4
+    fig_size_predictions: tuple[int, int] = (12, 8)
+
+
 # =========================================================================== #
 #                                MAIN CONFIGURATION                          #
 # =========================================================================== #
@@ -145,6 +174,7 @@ class Config(BaseModel):
     training: TrainingConfig = Field(default_factory=TrainingConfig)
     augmentation: AugmentationConfig = Field(default_factory=AugmentationConfig)
     dataset: DatasetConfig = Field(default_factory=DatasetConfig)
+    evaluation: EvaluationConfig = Field(default_factory=EvaluationConfig)
     
     num_workers: int = Field(default_factory=get_num_workers)
     model_name: str = "ResNet-18 Adapted"
@@ -213,5 +243,11 @@ class Config(BaseModel):
                 mean=ds_meta.mean,
                 std=ds_meta.std,
                 normalization_info=f"Mean={ds_meta.mean}, Std={ds_meta.std}"
+            ),
+            evaluation=EvaluationConfig(
+                n_samples=getattr(args, 'n_samples', 12),
+                fig_dpi=getattr(args, 'fig_dpi', 200),
+                plot_style=getattr(args, 'plot_style', "seaborn-v0_8-muted"),
+                report_format=getattr(args, 'report_format', "xlsx")
             )
         )

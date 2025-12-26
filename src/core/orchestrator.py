@@ -15,17 +15,18 @@ from pathlib import Path
 #                             Third-Party Imports                             #
 # =========================================================================== #
 import numpy as np
+import torch
 
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
 from .system import (
     set_seed, ensure_single_instance, kill_duplicate_processes, get_cuda_name,
-    to_device_obj, load_model_weights
+    to_device_obj, load_model_weights, get_optimal_threads
 )
 from .io import save_config_as_yaml, validate_npz_keys
 from .logger import Logger
-from .constants import RunPaths, setup_static_directories
+from .paths import RunPaths, setup_static_directories
 
 # =========================================================================== #
 #                              Root Orchestrator                              #
@@ -128,8 +129,15 @@ class RootOrchestrator:
 
     def _log_initial_status(self) -> None:
         """Logs the verified baseline environment configuration."""
+        device_obj = self.get_device()
         device_str = self.cfg.system.device
-        self.run_logger.info(f"Execution Device: {device_str.upper()}")
+        self.run_logger.info(f"Execution Device: {str(device_obj).upper()}")
+
+        if device_obj.type == 'cpu':
+            optimal_threads = get_optimal_threads(self.cfg.num_workers)
+            torch.set_num_threads(optimal_threads)
+            self.run_logger.info(f"CPU Optimization: Configured with {optimal_threads} compute threads.")
+            self.run_logger.info(f"Worker Strategy: {self.cfg.num_workers} data loaders active.")
         
         # Hardware fallback warning logic
         if device_str == "cuda":

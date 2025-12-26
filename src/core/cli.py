@@ -234,4 +234,33 @@ def parse_args() -> argparse.Namespace:
         help="Initialize model with random weights."
     )
 
+    # Group: Evaluation & Reporting
+    eval_group = parser.add_argument_group("Evaluation & Reporting")
+
+    eval_group.add_argument(
+        '--n_samples',
+        type=int,
+        default=default_cfg.evaluation.n_samples,
+        help="Number of images to display in the prediction grid."
+    )
+    eval_group.add_argument(
+        '--fig_dpi',
+        type=int,
+        default=default_cfg.evaluation.fig_dpi,
+        help="Resolution (DPI) for saved plots."
+    )
+    eval_group.add_argument(
+        '--report_format',
+        type=str,
+        default=default_cfg.evaluation.report_format,
+        choices=["xlsx", "csv", "json"],
+        help="Format for the final experiment summary."
+    )
+    eval_group.add_argument(
+        '--plot_style',
+        type=str,
+        default=default_cfg.evaluation.plot_style,
+        help="Matplotlib style for visualizations (e. g., 'ggplot', 'bmh')."
+    )
+    
     return parser.parse_args()

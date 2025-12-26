@@ -54,7 +54,7 @@ def main() -> None:
     run_logger   = orchestrator.run_logger
     device       = orchestrator.get_device()
     
-    # Retrieve dataset metadata
+    # Retrieve dataset metadata from registry
     ds_meta      = DATASET_REGISTRY[cfg.dataset.dataset_name.lower()]
 
     try:
@@ -93,26 +93,24 @@ def main() -> None:
             output_dir   = paths.models
         )
         
-        # Start training and capture history
+        # Start training and return explicit history lists
         best_path, train_losses, val_accuracies = trainer.train()
 
         # --- 4. Model Recovery & Evaluation ---
         run_logger.info(" Final Evaluation Phase ".center(60, "-"))
         
+        # Recover best weights found during validation
         orchestrator.load_weights(model, best_path)
         
+        # Final test and reporting with explicit parameters
         macro_f1, test_acc = run_final_evaluation(
             model          = model,
             test_loader    = test_loader,
-            test_images    = None,
-            test_labels    = None,
+            train_losses   = train_losses,    # Passed as explicit list
+            val_accuracies = val_accuracies,  # Passed as explicit list
             class_names    = ds_meta.classes,
-            train_losses   = train_losses,
-            val_accuracies = val_accuracies,
-            device         = device,
             paths          = paths,
             cfg            = cfg,
-            use_tta        = cfg.training.use_tta,
             aug_info       = get_augmentations_description(cfg)
         )
 

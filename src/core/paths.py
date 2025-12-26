@@ -95,6 +95,20 @@ class RunPaths:
         self.logs: Final[Path] = self.root / "logs"
         
         self._setup_run_directories()
+    
+    @property
+    def best_model_path(self) -> Path:
+        """Returns the standardized filesystem path for the top-performing model checkpoint."""
+        return self.models / f"best_model_{self.model_slug}.pth"
+    
+    @property
+    def final_report_path(self) -> Path:
+        """Returns the destination path for the comprehensive experiment summary (Excel format)."""
+        return self.reports / "training_summary.xlsx"
+    
+    def get_fig_path(self, filename: str) -> Path:
+        """Generates an absolute path for a visualization artifact within the figures directory."""
+        return self.figures / filename
 
     def _setup_run_directories(self) -> None:
         """Ensures all sub-directories for the current run exist."""

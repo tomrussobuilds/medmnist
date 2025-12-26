@@ -57,6 +57,24 @@ def get_num_workers() -> int:
     is_repro = os.environ.get("DOCKER_REPRODUCIBILITY_MODE", "0").upper() in ("1", "TRUE")
     return 0 if is_repro else 4
 
+def get_optimal_threads(num_workers: int) -> int:
+    """
+    Calculates the optimal number of compute threads based on available CPU cores.
+    
+    This utility prevents resource contention by allocating threads that remain 
+    free after the DataLoader workers have been assigned. It ensures at least 
+    one thread is always available for tensor computations.
+    
+    Args:
+        num_workers (int): The number of subprocesses allocated for data loading.
+        
+    Returns:
+        int: The recommended number of threads for intra-op parallelism.
+    """
+    total_cores = os.cpu_count() or 1
+
+    return max(1, total_cores - num_workers)
+
 
 def detect_best_device() -> str:
     """

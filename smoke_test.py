@@ -126,15 +126,11 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     macro_f1, test_acc = run_final_evaluation(
         model=model,
         test_loader=test_loader,
-        test_images=None, 
-        test_labels=None, 
         class_names=ds_meta.classes,
         train_losses=train_losses,
         val_accuracies=val_accuracies,
-        device=device,
         paths=paths,
         cfg=cfg,
-        use_tta=cfg.training.use_tta,
         aug_info=aug_info
     )
 

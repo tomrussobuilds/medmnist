@@ -16,6 +16,7 @@
 
 ## 📌 Table of Contents
 
+* [📊 Experiment Artifacts & Reporting](#-experiment-artifacts--reporting)
 * [🚀 Getting Started](#-getting-started)
 * [✨ Key Features](#-key-features)
 * [🏗 Architecture Details](#-architecture-details)
@@ -38,15 +39,74 @@ This repository provides a highly reproducible, robust training framework for th
 | Test Accuracy (with TTA)| **97.78%** |
 | Test Macro F1 (with TTA)| **0.9752** |
 
-### Confusion Matrix
-<img src="docs/media/confusion_matrix.png" width="400">
-
-### Training Curves
-<img src="docs/media/training_curves.png" width="400">
-
-→ Confusion matrix, training curves, sample predictions and Excel report are automatically saved.
-
 ---
+
+# 📊 Experiment Artifacts & Reporting
+
+Every run is fully documented through a suite of automatically generated artifacts. This ensures total traceability and rapid qualitative assessment.
+1. Qualitative Results (Sample Predictions)
+
+The pipeline generates a high-resolution grid of test samples with their corresponding predictions. Correct classifications are marked in green, while errors are highlighted in red to facilitate error analysis.
+
+2. Quantitative Performance (Automated Excel)
+
+Beyond console logs, the orchestrator exports a comprehensive .xlsx report. This is the Single Source of Truth for each experiment, containing:
+
+  - Epoch-by-epoch logs: Loss, Accuracy, and Learning Rate curves.
+
+  - Class-wise metrics: Precision, Recall, and F1-score for every medical category.
+
+  - System Telemetry: Hardware used, total training time, and library versions.
+
+3. Traceability & Reproducibility (YAML Config)
+
+To ensure 100% bit-perfect replication, a config.yaml is mirrored in the run folder. This file captures the exact state of the Pydantic configuration at the moment of execution.
+
+<details>
+<summary><b>Click to expand example config.yaml</b></summary>
+
+```yaml
+# Actual artifact generated in outputs/config.yaml
+system:
+  device: cpu
+  data_dir: "~/med_mnist/dataset"
+  output_dir: "~/med_mnist/outputs"
+  save_model: true
+
+training:
+  seed: 42
+  batch_size: 128
+  epochs: 60
+  learning_rate: 0.008
+  mixup_alpha: 0.002
+  use_tta: true
+
+dataset:
+  dataset_name: "bloodmnist"
+  in_channels: 3
+  num_classes: 8
+```
+
+### Visual Diagnostics
+
+<table style="width: 100%; border-collapse: collapse; border: none;">
+  <tr style="border: none;">
+    <td style="width: 50%; border: none; text-align: center;">
+      <b>Confusion Matrix</b><br>
+      <img src="docs/media/confusion_matrix.png" width="100%">
+    </td>
+    <td style="width: 50%; border: none; text-align: center;">
+      <b>Training Curves</b><br>
+      <img src="docs/media/training_curves.png" width="100%">
+    </td>
+  </tr>
+</table>
+
+### Sample Predictions
+
+<p align="center">
+  <img src="docs/media/sample_predictions.png" width="800">
+</p>
 
 ## 🚀 Getting Started
 

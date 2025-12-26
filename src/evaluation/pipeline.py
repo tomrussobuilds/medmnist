@@ -17,7 +17,6 @@ import logging
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-import numpy as np
 
 # =========================================================================== #
 #                                Internal Imports                             #
@@ -41,73 +40,74 @@ logger = logging.getLogger("medmnist_pipeline")
 def run_final_evaluation(
     model: nn.Module,
     test_loader: DataLoader,
-    test_images: np.ndarray = None,
-    test_labels: np.ndarray = None,
-    class_names: List[str] = [],
-    train_losses: List[float] = [],
-    val_accuracies: List[float] = [],
-    device: torch.device = torch.device("cpu"),
-    paths: RunPaths = None,
-    cfg: Config = None,
-    use_tta: bool = False,
+    train_losses: List[float],
+    val_accuracies: List[float],
+    class_names: List[str],
+    paths: RunPaths,
+    cfg: Config,
     aug_info: str = "N/A"
 ) -> Tuple[float, float]:
     """
-    Executes the complete evaluation pipeline. Supports both direct array 
-    input and Lazy Loading from DataLoaders for visualization samples.
+    Executes the complete evaluation pipeline. 
+    
+    Coordinates full-set inference (with TTA support), visualizes metrics, 
+    and generates the final structured Excel report.
     """
     
+    # Resolve device from config
+    device = torch.device(cfg.system.device)
+
     # --- 1) Inference & Metrics ---
-    # Perform full test set inference (supports TTA)
+    # Performance on the full test set
     all_preds, all_labels, test_acc, macro_f1 = evaluate_model(
-        model, test_loader, device, use_tta=use_tta
+        model,
+        test_loader,
+        device=device,
+        use_tta=cfg.training.use_tta
     )
 
     # --- 2) Visualizations ---
-    # Standard metrics plots
+    # Diagnostic Confusion Matrix
     plot_confusion_matrix(
         all_labels=all_labels,
         all_preds=all_preds,
         classes=class_names,
-        out_path=paths.figures / "confusion_matrix.png",
+        out_path=paths.get_fig_path("confusion_matrix.png"),
         cfg=cfg
     )
 
+    # Historical Training Curves
     plot_training_curves(
         train_losses=train_losses,
         val_accuracies=val_accuracies,
-        out_dir=paths.figures,
+        out_path=paths.get_fig_path("training_curves.png"), 
         cfg=cfg
     )
 
-    # Generate the visual grid of predictions
+    # Lazy-loaded prediction grid (samples from loader)
     show_predictions(
         model=model,
         loader=test_loader,
         device=device,
         classes=class_names,
-        n=12,
-        save_path=paths.figures / "sample_predictions.png",
+        save_path=paths.get_fig_path("sample_predictions.png"),
         cfg=cfg
     )
 
     # --- 3) Structured Reporting ---
-        # Locate the best model checkpoint dynamically
-    best_model_filename = f"best_model_{cfg.model_name.lower().replace(' ', '_')}.pth"
-    
-    # Compile final Excel summary
+    # Aggregates everything into a formatted Excel summary
     report = create_structured_report(
         val_accuracies=val_accuracies,
         macro_f1=macro_f1,
         test_acc=test_acc,
         train_losses=train_losses,
-        best_path=paths.models / best_model_filename,
+        best_path=paths.best_model_path,
         log_path=paths.logs / "run.log",
         cfg=cfg,
         aug_info=aug_info
     )
-    report.save(paths.reports / "training_summary.xlsx")
+    report.save(paths.final_report_path)
 
-    logger.info(f"Evaluation finished. Metrics: Acc {test_acc:.4f}, F1 {macro_f1:.4f}")
+    logger.info(f"Final Evaluation Phase Complete. Test Acc: {test_acc:.4f}")
     
     return macro_f1, test_acc

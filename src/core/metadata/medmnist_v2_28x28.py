@@ -14,7 +14,7 @@ from typing import Dict, Final
 #                                Internal Imports                             #
 # =========================================================================== #
 from .base import DatasetMetadata
-from ..constants import DATASET_DIR
+from ..paths import DATASET_DIR
 
 # =========================================================================== #
 #                                DATASET REGISTRY                             #
