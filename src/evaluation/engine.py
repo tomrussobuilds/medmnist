@@ -70,7 +70,10 @@ def tta_predict_batch(
         lambda x: x,  # Original identity
         lambda x: TF.affine(
             x, angle=0, 
-            translate=(cfg.augmentation.tta_translate, cfg.augmentation.tta_translate), 
+            translate=(
+                cfg.augmentation.tta_translate,
+                cfg.augmentation.tta_translate
+                ), 
             scale=1.0, shear=0
         ),
         lambda x: TF.affine(
@@ -80,14 +83,14 @@ def tta_predict_batch(
         lambda x: TF.gaussian_blur(
             x, kernel_size=3, sigma=cfg.augmentation.tta_blur_sigma
         ),
-        lambda x: (x + 0.01 * torch.randn_like(x)).clamp(0, 1)  # Gaussian Noise
+        lambda x: (x + 0.01 * torch.randn_like(x)).clamp(0, 1),  # Gaussian Noise
+        lambda x: torch.flip(x, dims=[3]),           # Horizontal flip
     ]
 
     # 2. ADVANCED TRANSFORMS: Geometric augmentations
     # Only enabled for non-anatomical data and non-CPU devices to optimize performance
     if not is_anatomical and device.type != "cpu":
         transforms.extend([
-            lambda x: torch.flip(x, dims=[3]),           # Horizontal flip
             lambda x: torch.rot90(x, k=1, dims=[2, 3]),  # 90 degree rotation
             lambda x: torch.rot90(x, k=2, dims=[2, 3]),  # 180 degree rotation
             lambda x: torch.rot90(x, k=3, dims=[2, 3]),  # 270 degree rotation

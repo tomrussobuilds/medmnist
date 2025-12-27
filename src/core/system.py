@@ -9,13 +9,18 @@ process management (exclusive locking, duplicate termination).
 #                                Standard Imports
 # =========================================================================== #
 import os
-import fcntl
 import sys
+import platform
 import random
 import time
 import logging
 from pathlib import Path
 from typing import Optional
+try:
+    import fcntl  # Unix-only
+    HAS_FCNTL = True
+except ImportError:
+    HAS_FCNTL = False
 
 # =========================================================================== #
 #                                Third-Party Imports
@@ -23,13 +28,75 @@ from typing import Optional
 import numpy as np
 import torch
 import psutil
+import matplotlib
 
 # =========================================================================== #
 #                               SYSTEM UTILITIES
 # =========================================================================== #
 
+def configure_system_libraries():
+    """
+    Docstring per setup_system_environment
+    """
+    is_linux = platform.system() == "Linux"
+    is_docker = any([
+        os.environ.get("IS_DOCKER") == "1",
+        os.environ.get("DOCKER_ENV") == "1",
+        os.path.exists("/.dockerenv")
+    ])
+    if is_linux or is_docker:
+        matplotlib.use("Agg")  # Non-interactive backend for headless environments
+        matplotlib.rcParams['pdf.fonttype'] = 42
+        matplotlib.rcParams['ps.fonttype'] = 42
+        matplotlib.rcParams['font.family'] = 'sans-serif'
+        logging.getLogger("matplotlib").setLevel(logging.WARNING)
+    if not HAS_FCNTL and platform.system() != "Windows":
+        logging.warning("fcntl module not available; exclusive locking disabled on this OS.")
+
+
 # Global variable to hold the lock file descriptor and prevent GC cleanup
 _lock_fd: Optional[int] = None
+
+def ensure_single_instance(
+        lock_file: Path,
+        logger: logging.Logger
+    ) -> None:
+    """
+    Uses flock (Unix) to ensure only one instance of the script runs.
+    The lock is released only when the process exits.
+    """
+    global _lock_fd
+
+    is_unix = platform.system() in ("Linux", "Darwin")
+
+    if is_unix and HAS_FCNTL:
+        try:
+            lock_file.parent.mkdir(parents=True, exist_ok=True)
+            # Open for writing and keep fd alive globally
+            f = open(lock_file, 'w')
+            fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            _lock_fd = f 
+            logger.info("Exclusive system lock acquired.")
+        except (IOError, BlockingIOError):
+            logger.error("CRITICAL: Another instance is already running. Aborting to prevent conflicts.")
+            sys.exit(1)
+
+
+def release_single_instance(lock_file: Path):
+    """
+    Releases the exclusive system lock held by this process.
+    """
+    global _lock_fd
+    
+    if _lock_fd:
+        if HAS_FCNTL:
+            fcntl.flock(_lock_fd, fcntl.LOCK_UN)
+        _lock_fd.close()
+        _lock_fd = None
+    
+    if lock_file.exists():
+        lock_file.unlink()
+
 
 def set_seed(seed: int) -> None:
     """
@@ -54,8 +121,8 @@ def get_num_workers() -> int:
     Determines optimal DataLoader workers based on reproducibility settings.
     Returns 0 (single-thread) if DOCKER_REPRODUCIBILITY_MODE is enabled.
     """
-    is_repro = os.environ.get("DOCKER_REPRODUCIBILITY_MODE", "0").upper() in ("1", "TRUE")
-    return 0 if is_repro else 4
+    is_docker_reproducible = os.environ.get("DOCKER_REPRODUCIBILITY_MODE", "0").upper() in ("1", "TRUE")
+    return 0 if is_docker_reproducible else 4
 
 def get_optimal_threads(num_workers: int) -> int:
     """
@@ -108,6 +175,22 @@ def to_device_obj(device_str: str) -> torch.device:
     return torch.device(device_str)
 
 
+def apply_cpu_threads(num_workers: int) -> int:
+    """Calculates and sets the optimal number of threads for PyTorch."""
+    optimal_threads = get_optimal_threads(num_workers)
+    torch.set_num_threads(optimal_threads)
+    return optimal_threads
+
+
+def determine_tta_mode(use_tta: bool, device_type: str) -> str:
+    """Returns a string description of the TTA mode based on hardware."""
+    if not use_tta:
+        return "DISABLED"
+    if device_type != "cpu":
+        return f"FULL (Accelerated {device_type.upper()} - All transforms)"
+    return "LIGHT (CPU Optimized - Subset of transforms)"
+
+
 def kill_duplicate_processes(
         logger: logging.Logger,
         script_name: Optional[str] = None
@@ -144,23 +227,3 @@ def kill_duplicate_processes(
         logger.info(f"Cleaned up {killed} duplicate process(es). Cooling down...")
         time.sleep(1.5)
 
-
-def ensure_single_instance(
-        lock_file: Path,
-        logger: logging.Logger
-    ) -> None:
-    """
-    Uses flock (Unix) to ensure only one instance of the script runs.
-    The lock is released only when the process exits.
-    """
-    global _lock_fd
-    try:
-        lock_file.parent.mkdir(parents=True, exist_ok=True)
-        # Open for writing and keep fd alive globally
-        f = open(lock_file, 'w')
-        fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        _lock_fd = f 
-        logger.info("Exclusive system lock acquired.")
-    except (IOError, BlockingIOError):
-        logger.error("CRITICAL: Another instance is already running. Aborting to prevent conflicts.")
-        sys.exit(1)
