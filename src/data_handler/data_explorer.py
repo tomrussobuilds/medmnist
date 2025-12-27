@@ -16,9 +16,6 @@ from typing import List
 #                                Third-Party Imports                          #
 # =========================================================================== #
 import torch
-import numpy as np
-import matplotlib
-matplotlib.use("Agg")  # Use non-interactive backend for plotting
 import matplotlib.pyplot as plt
 
 # =========================================================================== #

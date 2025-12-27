@@ -23,14 +23,15 @@ import torch
 # =========================================================================== #
 from .system import (
     set_seed, ensure_single_instance, kill_duplicate_processes, get_cuda_name,
-    to_device_obj, load_model_weights, get_optimal_threads
+    to_device_obj, load_model_weights, configure_system_libraries,
+    release_single_instance, apply_cpu_threads, determine_tta_mode
 )
 from .io import save_config_as_yaml, validate_npz_keys
 from .logger import Logger
 from .paths import RunPaths, setup_static_directories
 
 # =========================================================================== #
-#                              Root Orchestrator                              #
+#                              Root Orchestrator RootOrchestrator             #
 # =========================================================================== #
 
 class RootOrchestrator:
@@ -94,47 +95,50 @@ class RootOrchestrator:
 
         This method synchronizes the environment following a strict order of 
         operations:
-            1. RNG Seeding: Locks global state for reproducibility.
-            2. Static Layout: Ensures baseline project structure.
-            3. Path Mapping: Generates unique session-specific workspace.
-            4. Telemetry: Hot-swaps logger to file-persistent handlers.
-            5. Guarding: Acquires system locks and purges zombie processes.
-            6. Persistence: Saves the validated configuration for reference.
+            1. System Libraries: Configures matplotlib for headless operation.
+            2. RNG Seeding: Locks global state for reproducibility.
+            3. Static Layout: Ensures baseline project structure.
+            4. Path Mapping: Generates unique session-specific workspace.
+            5. Telemetry: Hot-swaps logger to file-persistent handlers.
+            6. Guarding: Acquires system locks and purges zombie processes.
+            7. Persistence: Saves the validated configuration for reference.
 
         Returns:
             RunPaths: The verified path orchestrator for the current session.
         """
-        # 1. Reproducibility setup: Lock global random state
+        # 1. Configure system libraries for the current environment
+        configure_system_libraries()
+
+        # 2. Reproducibility setup: Lock global random state
         set_seed(self.cfg.training.seed)
 
-        # 2. Static environment setup: Prepare global folder structure
+        # 3. Static environment setup: Prepare global folder structure
         setup_static_directories()
 
-        # 3. Dynamic path initialization: Create run-specific folder
+        # 4. Dynamic path initialization: Create run-specific folder
         self.paths = RunPaths(
             dataset_slug=self.cfg.dataset.dataset_name,
             model_name=self.cfg.model_name,
             base_dir=self.cfg.system.output_dir
         )
 
-        # 4. Logger initialization: Start file and console logging
+        # 5. Logger initialization: Start file and console logging
         Logger.setup(
             name=self.paths.project_id,
             log_dir=self.paths.logs
         )
         self.run_logger = logging.getLogger(self.paths.project_id)
 
-        # 5. Environment initialization and safety: Lock instance and clean zombies
-        # Updated: Use dynamic lock path from Config SSOT
+        # 6. Environment initialization and safety: Lock instance and clean zombies
+        kill_duplicate_processes(
+            logger=self.run_logger
+        )
         ensure_single_instance(
             lock_file=self.cfg.system.lock_file_path,
             logger=self.run_logger
         )
-        kill_duplicate_processes(
-            logger=self.run_logger
-        )
         
-        # 6. Metadata preservation: Save validated config as SSOT reference
+        # 7. Metadata preservation: Save validated config as SSOT reference
         save_config_as_yaml(
             config=self.cfg,
             yaml_path=self.paths.get_config_path()
@@ -149,11 +153,10 @@ class RootOrchestrator:
         Releases system resources and removes the lock file.
         To be called in the 'finally' block of main.py.
         """
-        lock_path = self.cfg.system.lock_file_path
-        if lock_path.exists():
-            lock_path.unlink()
-            if self.run_logger:
-                self.run_logger.info("System lock released cleanly.")
+        # Release the system lock to allow future instances
+        release_single_instance(self.cfg.system.lock_file_path)
+        if self.run_logger:
+            self.run_logger.info("System lock released cleanly.")
 
     def get_device(self) -> torch.device:
         """
@@ -205,13 +208,16 @@ class RootOrchestrator:
         mode_str = "RGB-PROMOTED" if self.cfg.dataset.force_rgb else "NATIVE-GRAY"
         self.run_logger.info(f"Data Mode: {mode_str} (Input: {self.cfg.dataset.img_size}px)")
 
-        # Log CPU-specific thread optimizations
+        # Log CPU-specific thread optimizations via system utility
         if device_obj.type == 'cpu':
-            optimal_threads = get_optimal_threads(self.cfg.num_workers)
-            torch.set_num_threads(optimal_threads)
+            optimal_threads = apply_cpu_threads(self.cfg.num_workers)
             self.run_logger.info(f"CPU Optimization: Configured with {optimal_threads} compute threads.")
             self.run_logger.info(f"Worker Strategy: {self.cfg.num_workers} data loaders active.")
         
+        # TTA Status via system utility logic
+        tta_status = determine_tta_mode(self.cfg.training.use_tta, device_obj.type)
+        self.run_logger.info(f"TTA Status: {tta_status}")
+
         # Hardware fallback warning and metadata logging
         if device_str == "cuda":
             gpu_name = get_cuda_name()
@@ -228,21 +234,3 @@ class RootOrchestrator:
             f"Hyperparameters: LR={self.cfg.training.learning_rate:.4f}, "
             f"Batch={self.cfg.training.batch_size}, Epochs={self.cfg.training.epochs}"
         )
-    
-    def get_tta_status(self) -> str:
-        """
-        Determines the TTA (Test-Time Augmentation) operational mode based 
-        on hardware availability and user configuration.
-
-        Returns:
-            str: Description of the TTA execution state.
-        """
-        if not self.cfg.training.use_tta:
-            return "DISABLED"
-        
-        # Consistent with engine.py logic where CPU mode uses a lighter augmentation set
-        device_type = self.get_device().type
-        if device_type != "cpu":
-            return f"FULL (Accelerated {device_type.upper()} - All transforms)"
-        
-        return "LIGHT (CPU Optimized - Subset of transforms)"

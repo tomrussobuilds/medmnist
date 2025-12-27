@@ -14,7 +14,8 @@ from .config import (
     SystemConfig,
     DatasetConfig,
     TrainingConfig,
-    AugmentationConfig
+    AugmentationConfig,
+    EvaluationConfig,
 )
 
 # =========================================================================== #
@@ -58,7 +59,10 @@ from .system import (
     ensure_single_instance,
     get_cuda_name,
     to_device_obj,
-    load_model_weights
+    load_model_weights,
+    get_optimal_threads,
+    configure_system_libraries,
+    release_single_instance,
 )
 
 # =========================================================================== #
