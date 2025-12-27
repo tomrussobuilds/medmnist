@@ -6,7 +6,7 @@
 
 ![Status](https://img.shields.io/badge/status-WIP-orange)
 ![Issues](https://img.shields.io/github/issues/tomrussobuilds/medmnist)
-![Stars](https://img.shields.io/github/stars/tomrussobuilds/medmnist?style=social)
+![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)
 
 ---
 
@@ -18,15 +18,15 @@
 
 * [📊 Experiment Artifacts & Reporting](#-experiment-artifacts--reporting)
 * [🚀 Getting Started](#-getting-started)
-* [✨ Key Features](#-key-features)
+* [✨ Key Features](#-key-features--defensive-engineering)
 * [🏗 Architecture Details](#-architecture-details)
 * [📁 Project Structure](#-project-structure)
 * [⚙️ Requirements & Installation](#️-requirements--installation)
-* [💻 Usage (Local )](#-usage-local)
-* [🐳 Docker Execution](#-docker-execution)
+* [💻 Usage (Local)](#-usage-local)
+* [🐳 Docker Execution](#-docker-execution-recommended-for-portability)
 * [✅ Environment Verification (Smoke Test)](#-environment-verification-smoke-test)
 * [📊 Command Line Arguments](#-command-line-arguments)
-* [🗺 Research Goals](#-research-goals)
+* [🗺 Research Goals](#-research-goals--roadmap)
 
 This repository provides a highly reproducible, robust training framework for the **MedMNIST v2** suite (supporting BloodMNIST, DermaMNIST, etc.) using an adapted pretrained ResNet-18 architecture. The goal is to demonstrate solid performance using a minimal configuration that adheres to modern PyTorch best practices.
 
@@ -82,7 +82,7 @@ Every run is fully documented through a suite of automatically generated artifac
 Ensure you have the project structure correctly set up with `src/` as a package:
 ```bash
 # Clone the repository
-git clone <github.com/tomrussobuilds/medmnist.git>
+git clone https://github.com/tomrussobuilds/medmnist.git
 cd med_mnist
 
 # (Optional) Add src to PYTHONPATH to enable absolute imports
@@ -203,7 +203,6 @@ med_mnist/
 
 ### ⚙️ Requirements & Installation
 
-Install dependencies easily with pip:
 
 ```bash
 pip install -r requirements.txt
@@ -240,6 +239,7 @@ The script will automatically:
 ---
 
 ### ✅ Environment Verification (Smoke Test)
+
 Before starting a full training session, it is highly recommended to run the diagnostic smoke test. This ensures that your local environment, PyTorch versions, and visualization libraries are fully compatible:
 
 ```bash
