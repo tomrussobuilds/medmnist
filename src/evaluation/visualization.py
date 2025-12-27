@@ -80,8 +80,17 @@ def show_predictions(
             )
         
         ax.axis("off") # Always turn off axis, even for empty slots
+
+    tta_info = f" [TTA: {'ON' if cfg.training.use_tta else 'OFF'}]" if cfg else ""
     
-    plt.suptitle(f"Sample Predictions — {cfg.model_name if cfg else 'Inference'}", fontsize=14)
+    domain_info = f" | Mode: {'Texture' if cfg.dataset.is_texture_based else 
+                              'Anatomical' if cfg.dataset.is_anatomical else 'Standard'}" if cfg else ""
+    plt.suptitle(
+        f"Sample Predictions — "
+        f"{cfg.model_name if cfg else 'Inference'}{tta_info}{domain_info}",
+        fontsize=14
+    )
+
     
     # 4. Export and Cleanup
     _finalize_figure(plt, save_path, cfg)

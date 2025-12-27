@@ -162,10 +162,36 @@ def get_num_workers() -> int:
     Returns:
         int: Recommended number of subprocesses for data loading.
     """
-    if os.environ.get("DOCKER_REPRODUCIBILITY_MODE", "0").upper() in ("1", "TRUE"):
-        return 0
-    return min(os.cpu_count() or 2, 8)
+    total_cores = os.cpu_count() or 2
+    if total_cores <= 4:
+        return 2
+    return min(total_cores // 2, 8)
 
+
+def worker_init_fn(worker_id: int) -> None:
+    """
+    Initializes random number generators for DataLoader workers to ensure 
+    augmentation diversity and reproducibility.
+    
+    This function bridges the gap between PyTorch's multi-processing and 
+    Python/NumPy's random states, preventing 'seed leakage' where different 
+    workers produce identical augmentations.
+    """
+    # 1. Get the base seed from the parent process
+    worker_info = torch.utils.data.get_worker_info()
+    if worker_info is None:
+        return
+
+    # 2. Combine base seed with worker ID for a unique sub-seed
+    # We use a large prime or bitwise operations to ensure spread
+    base_seed = worker_info.seed 
+    seed = (base_seed + worker_id) % 2**32
+
+    # 3. Synchronize all major PRNGs
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    
 
 def apply_cpu_threads(
         num_workers: int
@@ -182,7 +208,7 @@ def apply_cpu_threads(
     """
     total_cores = os.cpu_count() or 1
     # Balance: Leave cores for workers, but keep at least 2 for tensor math
-    optimal_threads = total_cores if num_workers == 0 else max(2, total_cores - num_workers)
+    optimal_threads = max(2, total_cores - num_workers)
     
     torch.set_num_threads(optimal_threads)
     os.environ["OMP_NUM_THREADS"] = str(optimal_threads)

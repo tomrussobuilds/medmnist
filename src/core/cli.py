@@ -251,6 +251,18 @@ def parse_args() -> argparse.Namespace:
         dest='force_rgb',
         help="Disable grayscale to RGB conversion."
     )
+    dataset_group.add_argument(
+        '--is_anatomical',
+        type=lambda x: (str(x).lower() == 'true'),
+        default=None,
+        help="Override anatomical orientation flag. If None, uses Registry default."
+    )
+    dataset_group.add_argument(
+        '--is_texture_based',
+        type=lambda x: (str(x).lower() == 'true'),
+        default=None,
+        help="Override texture-based flag. If None, uses Registry default."
+    )
 
     # Group: Model Selection
     model_group = parser.add_argument_group("Model Configuration")

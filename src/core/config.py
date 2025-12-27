@@ -20,13 +20,13 @@ Key Features:
 # =========================================================================== #
 import os
 import argparse
-import torch
 from pathlib import Path
 import tempfile
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
 # =========================================================================== #
+import torch
 from pydantic import (
     BaseModel, Field, ConfigDict, field_validator, model_validator
     )
@@ -132,6 +132,7 @@ class AugmentationConfig(BaseModel):
     hflip: float = Field(default=0.5, ge=0.0, le=1.0)
     rotation_angle: int = Field(default=10, ge=0, le=180)
     jitter_val: float = Field(default=0.2, ge=0.0)
+    min_scale: float = Field(default=0.9, ge=0.0, le=1.0)
 
     tta_translate: float = Field(default=2.0, description="Pixel shift for TTA")
     tta_scale: float = Field(default=1.1, description="Scale factor for TTA")
@@ -162,6 +163,7 @@ class DatasetConfig(BaseModel):
     std: tuple[float, ...] = (0.5, 0.5, 0.5)
     normalization_info: str = "N/A"
     is_anatomical: bool = True
+    is_texture_based: bool = True
 
     @property
     def effective_in_channels(self) -> int:
@@ -340,6 +342,7 @@ class Config(BaseModel):
                 hflip=args.hflip,
                 rotation_angle=args.rotation_angle,
                 jitter_val=args.jitter_val,
+                min_scale=getattr(args, 'min_scale', 0.9),
                 tta_translate=getattr(args, 'tta_translate', 2.0),
                 tta_scale=getattr(args, 'tta_scale', 1.1),
                 tta_blur_sigma=getattr(args, 'tta_blur_sigma', 0.4)
@@ -354,6 +357,7 @@ class Config(BaseModel):
                 std=ds_meta.std,
                 normalization_info=f"Mean={ds_meta.mean}, Std={ds_meta.std}",
                 is_anatomical=ds_meta.is_anatomical,
+                is_texture_based=ds_meta.is_texture_based,
                 force_rgb=should_force_rgb,
                 img_size=getattr(args, 'img_size', 28)
             ),

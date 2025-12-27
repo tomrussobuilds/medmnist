@@ -11,35 +11,23 @@ and Grayscale datasets dynamically.
 #                                Standard Imports                             #
 # =========================================================================== #
 import random
-from typing import Tuple, Final
+from typing import Tuple
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
 # =========================================================================== #
-import numpy as np
 import torch
 from torchvision.transforms import v2
 
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from src.core import Config
+from src.core import Config, DatasetMetadata
 
 
 # =========================================================================== #
 #                             TRANSFORMATION PIPELINES                        #
 # =========================================================================== #
-# Standard constants
-IMG_SIZE: Final[int] = 28
-
-# Normalization values for ImageNet (RGB)
-RGB_MEAN: Final[Tuple[float, float, float]] = (0.485, 0.456, 0.406)
-RGB_STD: Final[Tuple[float, float, float]] = (0.229, 0.224, 0.225)
-
-# Grayscale normalization values
-GRAY_MEAN: Final[Tuple[float]] = (0.5,)
-GRAY_STD: Final[Tuple[float]] = (0.5,)
-
 
 def get_augmentations_description(cfg: Config) -> str:
     """
@@ -50,7 +38,7 @@ def get_augmentations_description(cfg: Config) -> str:
         "HFlip": cfg.augmentation.hflip,
         "Rotation": f"{cfg.augmentation.rotation_angle}°",
         "Jitter": cfg.augmentation.jitter_val,
-        "ResizedCrop": f"{IMG_SIZE} (0.9, 1.0)"
+        "ResizedCrop": f"{cfg.dataset.img_size} (0.9, 1.0)"
     }
 
     descr = [f"{k}({v})" for k, v in params.items()]
@@ -61,39 +49,48 @@ def get_augmentations_description(cfg: Config) -> str:
     return ", ".join(descr)
 
 
-def worker_init_fn(worker_id: int):
-    """
-    Initializes random number generators (PRNGs) for each DataLoader worker.
-    Crucial for maintaining augmentation diversity and reproducibility 
-    when using multiple workers for lazy-loading.
-    """
-    worker_info = torch.utils.data.get_worker_info()
-    base_seed = worker_info.seed if worker_info else torch.initial_seed()
-    seed = (base_seed + worker_id) % 2**32
-
-    np.random.seed(seed)
-    random.seed(seed) 
-    torch.manual_seed(seed)
-
 def get_pipeline_transforms(
-        cfg: Config,
-        is_rgb: bool = True
-    ) -> Tuple[v2.Compose, v2.Compose]:
+    cfg: Config,
+    ds_meta: DatasetMetadata
+) -> Tuple[v2.Compose, v2.Compose]:
     """
-    Defines the transformation pipelines for training and evaluation.
+    Defines the image transformation pipelines for training and evaluation.
+
+    This function dynamically constructs the Torchvision V2 augmentation 
+    pipeline based on the dataset metadata (RGB vs Grayscale) and the 
+    global experiment configuration. It ensures that 1-channel datasets 
+    are promoted to 3-channel tensors to maintain compatibility with 
+    architectures like ResNet-18.
+
+    Args:
+        cfg (Config): The validated global configuration object.
+        ds_meta (DatasetMetadata): Metadata specific to the current MedMNIST dataset.
+
+    Returns:
+        Tuple[v2.Compose, v2.Compose]: A tuple containing (train_transform, val_transform).
     """
-    stats = {
-        True:  {"mean": RGB_MEAN, "std": RGB_STD},
-        False: {"mean": GRAY_MEAN, "std": GRAY_STD} 
-    }[is_rgb]
+    
+    # 1. Resolve Channel Logic
+    # Identify if the dataset is native RGB or requires grayscale-to-RGB promotion.
+    is_rgb = ds_meta.in_channels == 3
+    
+    # 2. Extract Normalization Stats from Registry (Pydantic models)
+    # Ensuring consistency between dataset domain and pixel distributions.
+    mean = ds_meta.mean
+    std = ds_meta.std
 
     def get_base_ops():
-        return [
+        """Foundational operations common to all pipelines."""
+        ops = [
             v2.ToImage(),
             v2.ToDtype(torch.float32, scale=True),
         ]
+        # Promote 1-channel to 3-channel for architecture compatibility
+        if not is_rgb:
+            ops.append(v2.Grayscale(num_output_channels=3))
+        return ops
         
-    # Training pipeline: Focus on robust generalization
+    # --- TRAINING PIPELINE ---
     train_transform = v2.Compose([
         *get_base_ops(),
         v2.RandomHorizontalFlip(p=cfg.augmentation.hflip),
@@ -104,18 +101,19 @@ def get_pipeline_transforms(
             saturation=cfg.augmentation.jitter_val if is_rgb else 0.0,
         ),
         v2.RandomResizedCrop(
-            IMG_SIZE,
-            scale=(0.9, 1.0),
+            size=cfg.dataset.img_size,
+            # Hardcode removed: now using min_scale from configuration
+            scale=(cfg.augmentation.min_scale, 1.0),
             antialias=True,
             interpolation=v2.InterpolationMode.BILINEAR,
         ),
-        v2.Normalize(**stats),
+        v2.Normalize(mean=mean, std=std),
     ])
     
-    # Validation/Inference pipeline: Strict consistency
+    # --- VALIDATION/INFERENCE PIPELINE ---
     val_transform = v2.Compose([
         *get_base_ops(),
-        v2.Normalize(**stats),
+        v2.Normalize(mean=mean, std=std),
     ])
     
     return train_transform, val_transform

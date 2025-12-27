@@ -10,6 +10,7 @@ and structured experiment reporting using a memory-efficient Lazy approach.
 # =========================================================================== #
 from typing import Tuple, List
 import logging
+from pathlib import Path
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
@@ -45,7 +46,8 @@ def run_final_evaluation(
     class_names: List[str],
     paths: RunPaths,
     cfg: Config,
-    aug_info: str = "N/A"
+    aug_info: str = "N/A",
+    log_path: Path | None = None
 ) -> Tuple[float, float]:
     """
     Executes the complete evaluation pipeline. 
@@ -63,7 +65,10 @@ def run_final_evaluation(
         model,
         test_loader,
         device=device,
-        use_tta=cfg.training.use_tta
+        use_tta=cfg.training.use_tta,
+        is_anatomical=cfg.dataset.is_anatomical,
+        is_texture_based=cfg.dataset.is_texture_based,
+        cfg=cfg
     )
 
     # --- 2) Visualizations ---
@@ -96,13 +101,15 @@ def run_final_evaluation(
 
     # --- 3) Structured Reporting ---
     # Aggregates everything into a formatted Excel summary
+    final_log = log_path if log_path is not None else (paths.logs / "run.log")
+
     report = create_structured_report(
         val_accuracies=val_accuracies,
         macro_f1=macro_f1,
         test_acc=test_acc,
         train_losses=train_losses,
         best_path=paths.best_model_path,
-        log_path=paths.logs / "run.log",
+        log_path=final_log,
         cfg=cfg,
         aug_info=aug_info
     )

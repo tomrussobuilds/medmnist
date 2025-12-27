@@ -16,7 +16,8 @@ from .fetcher import (
 
 from .factory import (
     create_temp_loader,
-    get_dataloaders
+    get_dataloaders,
+    DataLoaderFactory
 )
 
 from .data_explorer import (
@@ -25,8 +26,7 @@ from .data_explorer import (
 
 from .transforms import (
     get_augmentations_description,
-    get_pipeline_transforms,
-    worker_init_fn
+    get_pipeline_transforms
 )
 
 from .dataset import (
@@ -42,9 +42,9 @@ __all__ = [
     "MedMNISTData",
     "ensure_dataset_npz",
     "get_dataloaders",
+    "DataLoaderFactory",
     "show_sample_images",
     "get_augmentations_description",
     "get_pipeline_transforms",
-    "worker_init_fn",
     "MedMNISTDataset"
 ]

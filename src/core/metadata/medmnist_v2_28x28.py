@@ -41,7 +41,8 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.485, 0.456, 0.406),
         std=(0.229, 0.224, 0.225),
         in_channels=3,
-        is_anatomical=False
+        is_anatomical=False,
+        is_texture_based=True
     ),
     "bloodmnist": DatasetMetadata(
         name="bloodmnist",
@@ -62,7 +63,8 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.4914, 0.4822, 0.4465),
         std=(0.2023, 0.1994, 0.2010),
         in_channels=3,
-        is_anatomical=False
+        is_anatomical=False,
+        is_texture_based=False
     ),
     "dermamnist": DatasetMetadata(
         name="dermamnist",
@@ -82,7 +84,8 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.485, 0.456, 0.406),
         std=(0.229, 0.224, 0.225),
         in_channels=3,
-        is_anatomical=False
+        is_anatomical=False,
+        is_texture_based=True
     ),
     "octmnist": DatasetMetadata(
         name="octmnist",
@@ -99,7 +102,8 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.5, 0.5, 0.5),
         std=(0.5, 0.5, 0.5),
         in_channels=1,
-        is_anatomical=True
+        is_anatomical=True,
+        is_texture_based=True
     ),
     "pneumoniamnist": DatasetMetadata(
         name="pneumoniamnist",
@@ -114,7 +118,8 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.5, 0.5, 0.5),
         std=(0.5, 0.5, 0.5),
         in_channels=1,
-        is_anatomical=True
+        is_anatomical=True,
+        is_texture_based=False
     ),
     "retinamnist": DatasetMetadata(
         name="retinamnist",
@@ -132,7 +137,8 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.485, 0.456, 0.406),
         std=(0.229, 0.224, 0.225),
         in_channels=3,
-        is_anatomical=False
+        is_anatomical=False,
+        is_texture_based=True
     ),
     "breastmnist": DatasetMetadata(
         name="breastmnist",
@@ -147,7 +153,8 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.5, 0.5, 0.5),
         std=(0.5, 0.5, 0.5),
         in_channels=1,
-        is_anatomical=True
+        is_anatomical=True,
+        is_texture_based=False
     ),
     "organmnist": DatasetMetadata(
         name="organmnist",
@@ -171,7 +178,8 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.5, 0.5, 0.5),
         std=(0.5, 0.5, 0.5),
         in_channels=1,
-        is_anatomical=True
+        is_anatomical=True,
+        is_texture_based=False
     ),
     "tissuemnist": DatasetMetadata(
         name="tissuemnist",
@@ -192,7 +200,8 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.5, 0.5, 0.5),
         std=(0.5, 0.5, 0.5),
         in_channels=1,
-        is_anatomical=False
+        is_anatomical=False,
+        is_texture_based=True
     ),
     "organcmnist": DatasetMetadata(
         name="organcmnist",
@@ -216,6 +225,7 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.5, 0.5, 0.5),
         std=(0.5, 0.5, 0.5),
         in_channels=1,
-        is_anatomical=True
+        is_anatomical=True,
+        is_texture_based=False
     ),
 }

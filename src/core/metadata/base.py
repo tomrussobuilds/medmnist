@@ -53,6 +53,10 @@ class DatasetMetadata(BaseModel):
         default=True, 
         description="True if the dataset has a fixed anatomical orientation (e.g., ChestMNIST)"
     )
+    is_texture_based: bool = Field(
+        default=True,
+        description="True if the dataset classification relies on texture patterns (e.g., PathMNIST)"
+    )
 
     def __repr__(self) -> str:
         return f"<DatasetMetadata: {self.display_name} ({len(self.classes)} classes)>"

@@ -214,10 +214,16 @@ class RootOrchestrator:
             opt_threads = apply_cpu_threads(self.cfg.num_workers)
             self.run_logger.info(f"CPU Threads: {opt_threads} (Workers: {self.cfg.num_workers})")
 
-        # 2. Dataset & Domain
-        mode_str = "RGB-PROMOTED" if self.cfg.dataset.force_rgb else "NATIVE-GRAY"
+        # 2. Dataset & Domain - High Fidelity Logic
+        if self.cfg.dataset.effective_in_channels == 3:
+            mode_str = "NATIVE-RGB" if self.cfg.dataset.in_channels == 3 else "RGB-PROMOTED"
+        else:
+            mode_str = "NATIVE-GRAY"
+
         self.run_logger.info(f"Dataset: {self.cfg.dataset.dataset_name} ({self.cfg.dataset.img_size}px)")
         self.run_logger.info(f"Data Mode: {mode_str}")
+        self.run_logger.info(f"Anatomical Constraints: {self.cfg.dataset.is_anatomical}")
+        self.run_logger.info(f"Texture-Based Logic: {self.cfg.dataset.is_texture_based}")
 
         # 3. Training Strategy
         tta_status = determine_tta_mode(self.cfg.training.use_tta, device_obj.type)

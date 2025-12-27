@@ -65,6 +65,7 @@ from .system import (
     apply_cpu_threads,
     determine_tta_mode,
     apply_cpu_threads,
+    worker_init_fn
 )
 
 # =========================================================================== #
