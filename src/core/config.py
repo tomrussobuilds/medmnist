@@ -1,23 +1,23 @@
 """
-    Main Configuration Manifest for the MedMNIST Pipeline.
+Main Configuration Manifest for the MedMNIST Pipeline.
     
-    This root container aggregates specialized sub-configurations (System, Training, 
-    Augmentation, Dataset, Evaluation) into a unified, immutable schema. It acts 
-    as the central validator for cross-module logic, ensuring that hardware 
-    capabilities (AMP, Device) align with training strategies (MixUp, Pretraining).
+This root container aggregates specialized sub-configurations (System, Training, 
+Augmentation, Dataset, Evaluation) into a unified, immutable schema. It acts 
+as the central validator for cross-module logic, ensuring that hardware 
+capabilities (AMP, Device) align with training strategies (MixUp, Pretraining).
 
-    The class provides robust factory methods (`from_args`, `from_yaml`) to 
-    seamlessly bridge external inputs into a type-safe, validated environment.
+The class provides robust factory methods (`from_args`, `from_yaml`) to 
+seamlessly bridge external inputs into a type-safe, validated environment.
 
-    Attributes:
-        system (SystemConfig): Infrastructure and hardware settings.
-        training (TrainingConfig): Optimization and regularization hyperparameters.
-        augmentation (AugmentationConfig): Data transformation and TTA parameters.
-        dataset (DatasetConfig): Metadata and constraints for the specific MedMNIST task.
-        evaluation (EvaluationConfig): Visualization and reporting preferences.
-        num_workers (int): Validated CPU worker count for data loading.
-        model_name (str): Architecture identifier.
-        pretrained (bool): Flag to enable/disable ImageNet weight transfer.
+Attributes:
+    system (SystemConfig): Infrastructure and hardware settings.
+    training (TrainingConfig): Optimization and regularization hyperparameters.
+    augmentation (AugmentationConfig): Data transformation and TTA parameters.
+    dataset (DatasetConfig): Metadata and constraints for the specific MedMNIST task.
+    evaluation (EvaluationConfig): Visualization and reporting preferences.
+    num_workers (int): Validated CPU worker count for data loading.
+    model_name (str): Architecture identifier.
+    pretrained (bool): Flag to enable/disable ImageNet weight transfer.
 """
 
 # =========================================================================== #
@@ -34,7 +34,8 @@ from typing import Annotated, Optional
 # =========================================================================== #
 import torch
 from pydantic import (
-    BaseModel, Field, ConfigDict, field_validator, model_validator, AfterValidator
+    BaseModel, AfterValidator, ConfigDict,
+    field_validator, model_validator, Field
     )
 
 # =========================================================================== #
