@@ -10,7 +10,6 @@ and Grayscale datasets dynamically.
 # =========================================================================== #
 #                                Standard Imports                             #
 # =========================================================================== #
-import random
 from typing import Tuple
 
 # =========================================================================== #
@@ -102,7 +101,6 @@ def get_pipeline_transforms(
         ),
         v2.RandomResizedCrop(
             size=cfg.dataset.img_size,
-            # Hardcode removed: now using min_scale from configuration
             scale=(cfg.augmentation.min_scale, 1.0),
             antialias=True,
             interpolation=v2.InterpolationMode.BILINEAR,

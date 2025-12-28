@@ -20,14 +20,14 @@ import torch.nn as nn
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from src.core import Config, DATASET_REGISTRY
+from src.core import Config, DATASET_REGISTRY, LOGGER_NAME
 from .resnet_18_adapted import build_resnet18_adapted
 
 # =========================================================================== #
 #                                MODEL FACTORY LOGIC                          #
 # =========================================================================== #
 # Global logger instance
-logger = logging.getLogger("medmnist_pipeline")
+logger = logging.getLogger(LOGGER_NAME)
 
 def get_model(
     device: torch.device,

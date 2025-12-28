@@ -22,7 +22,7 @@ from torch.utils.data import DataLoader
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from src.core import Config, RunPaths
+from src.core import Config, RunPaths, LOGGER_NAME
 from .engine import evaluate_model
 from .visualization import (
     plot_confusion_matrix, 
@@ -35,7 +35,7 @@ from .reporting import create_structured_report
 #                               EVALUATION PIPELINE                           #
 # =========================================================================== #
 # Global logger instance
-logger = logging.getLogger("medmnist_pipeline")
+logger = logging.getLogger(LOGGER_NAME)
 
 
 def run_final_evaluation(

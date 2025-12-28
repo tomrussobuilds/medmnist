@@ -27,7 +27,7 @@ from .system import (
 )
 from .io import save_config_as_yaml
 from .logger import Logger
-from .paths import RunPaths, setup_static_directories
+from .paths import RunPaths, setup_static_directories, LOGGER_NAME
 
 # =========================================================================== #
 #                              Root Orchestrator RootOrchestrator             #
@@ -124,10 +124,10 @@ class RootOrchestrator:
 
         # 5. Logger initialization: Start file and console logging
         Logger.setup(
-            name=self.paths.project_id,
+            name=LOGGER_NAME,
             log_dir=self.paths.logs
         )
-        self.run_logger = logging.getLogger(self.paths.project_id)
+        self.run_logger = logging.getLogger(LOGGER_NAME)
 
         # 6. Environment initialization and safety: Lock instance and clean zombies
         kill_duplicate_processes(

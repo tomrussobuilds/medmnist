@@ -30,13 +30,13 @@ from torchvision import models
 # =========================================================================== #
 #                                Internal Imports
 # =========================================================================== #
-from src.core import Config
+from src.core import Config, LOGGER_NAME
 
 # =========================================================================== #
 #                               MODEL DEFINITION
 # =========================================================================== #
 # Global logger instance
-logger = logging.getLogger("medmnist_pipeline")
+logger = logging.getLogger(LOGGER_NAME)
 
 def build_resnet18_adapted(
         device: torch.device,

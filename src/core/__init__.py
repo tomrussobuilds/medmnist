@@ -82,3 +82,16 @@ from .io import (
 #                                Command Line Interface
 # =========================================================================== #
 from .cli import parse_args
+
+# =========================================================================== #
+#                                Paths                                        #
+# =========================================================================== #
+from .paths import (
+    PROJECT_ROOT,
+    DATASET_DIR,
+    OUTPUTS_ROOT,
+    STATIC_DIRS,
+    LOGGER_NAME,
+    RunPaths,
+    setup_static_directories
+)

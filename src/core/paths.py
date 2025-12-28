@@ -16,6 +16,13 @@ from pathlib import Path
 from typing import Final, List, Optional
 
 # =========================================================================== #
+#                                GLOBAL CONSTANTS                             #
+# =========================================================================== #
+
+# Global logger identity used by all modules to ensure log synchronization
+LOGGER_NAME: Final[str] = "medmnist_pipeline"
+
+# =========================================================================== #
 #                                PATH CALCULATIONS                            #
 # =========================================================================== #
 

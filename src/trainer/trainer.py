@@ -24,14 +24,14 @@ from torch.utils.data import DataLoader
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from src.core import Config
+from src.core import Config, LOGGER_NAME
 from .engine import train_one_epoch, validate_epoch, mixup_data
 
 # =========================================================================== #
 #                                TRAINING LOGIC                               #
 # =========================================================================== #
 # Global logger instance
-logger = logging.getLogger("medmnist_pipeline")
+logger = logging.getLogger(LOGGER_NAME)
 
 class ModelTrainer:
     """

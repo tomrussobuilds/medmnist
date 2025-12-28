@@ -21,14 +21,14 @@ import matplotlib.pyplot as plt
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from src.core import Config
+from src.core import Config, LOGGER_NAME
 from .factory import DataLoader
 
 # ========================================================================== #
 #                             VISUALIZATION UTILITIES                        #
 # ========================================================================== #  
 # Global logger instance
-logger = logging.getLogger("medmnist_pipeline")
+logger = logging.getLogger(LOGGER_NAME)
 
 
 def show_sample_images(

@@ -27,10 +27,10 @@ from torch.utils.data import DataLoader
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from src.core import Config
+from src.core import Config, LOGGER_NAME
 
 # Global logger instance
-logger = logging.getLogger("medmnist_pipeline")
+logger = logging.getLogger(LOGGER_NAME)
 
 # =========================================================================== #
 #                               PUBLIC INTERFACE                              #

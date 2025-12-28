@@ -24,13 +24,13 @@ from pydantic import BaseModel, ConfigDict, Field
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from src.core import Config
+from src.core import Config, LOGGER_NAME
 
 # =========================================================================== #
 #                               EXCEL REPORTS                                 #
 # =========================================================================== #
 
-logger = logging.getLogger("medmnist_pipeline")
+logger = logging.getLogger(LOGGER_NAME)
 
 class TrainingReport(BaseModel):
     """
