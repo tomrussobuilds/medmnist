@@ -125,7 +125,7 @@ class TrainingConfig(BaseModel):
         default=1.0,
         description="Max norm for gradient clipping; None to disable"
     )
-    
+
 
 class AugmentationConfig(BaseModel):
     """Sub-configuration for data augmentation parameters."""
@@ -280,69 +280,89 @@ class Config(BaseModel):
     def from_args(cls, args: argparse.Namespace) -> "Config":
         """
         Factory method to create a validated Config instance from a CLI namespace.
+        
+        This method orchestrates the transformation of raw argparse parameters into 
+        the hierarchical Pydantic schema, applying conditional logic for hardware 
+        compatibility and dataset metadata resolution.
         """
+        
+        # 1. Short-circuit: If a --config YAML is provided, load directly from file
         if hasattr(args, 'config') and args.config:
             return cls.from_yaml(Path(args.config))
-        # -------------------------------------------------------------------------- #
-        from .metadata import DATASET_REGISTRY
 
-        # 1. Dataset metadata lookup
-        dataset_key = args.dataset.lower()
-        if dataset_key not in DATASET_REGISTRY:
-            raise ValueError(f"Dataset '{args.dataset}' not found in DATASET_REGISTRY.")
-        ds_meta = DATASET_REGISTRY[dataset_key]
+        # --- (Encapsulation) ---
 
-        # 2. Early logic: Decide whether to force RGB based on model and dataset needs
-        if hasattr(args, 'force_rgb') and args.force_rgb is not None:
-            should_force_rgb = args.force_rgb
-        else:
-            should_force_rgb = (ds_meta.in_channels == 1) and args.pretrained
+        def resolve_dataset_metadata():
+            """Retrieve static metadata for the dataset."""
+            from .metadata import DATASET_REGISTRY
+            key = args.dataset.lower()
+            if key not in DATASET_REGISTRY:
+                raise ValueError(f"Dataset '{args.dataset}' not supported in DATASET_REGISTRY.")
+            return DATASET_REGISTRY[key]
 
-        # 3. Hardware-aware logic: Resolve device and validate AMP support
-        final_device_str = args.device if hasattr(args, 'device') else "auto"
+        def resolve_rgb_logic(ds_meta):
+            """Decide whether to force conversion to 3-channel (RGB)."""
+            if hasattr(args, 'force_rgb') and args.force_rgb is not None:
+                return args.force_rgb
+            # Default logic: force RGB if using pretrained on grayscale
+            return (ds_meta.in_channels == 1) and getattr(args, 'pretrained', False)
 
-        # 4. Dataset limits
-        final_max_samples = args.max_samples if (hasattr(args, 'max_samples') and args.max_samples > 0) else None
-
-        # 5. Atomic construction of the Config object
-        return cls(
-            model_name=args.model_name,
-            pretrained=args.pretrained,
-            num_workers=args.num_workers,
-            system=SystemConfig(
-                device=final_device_str,
-                data_dir=Path(args.data_dir),
-                output_dir=Path(args.output_dir),
-                save_model=args.save_model,
-                log_interval=args.log_interval,
-                project_name=getattr(args, 'project_name', "medmnist_experiment")
-            ),
-            training=TrainingConfig(
-                seed=args.seed,
-                batch_size=args.batch_size,
-                learning_rate=args.lr,
-                momentum=args.momentum,
-                weight_decay=args.weight_decay,
-                epochs=args.epochs,
-                patience=args.patience,
-                mixup_alpha=args.mixup_alpha,
-                mixup_epochs=args.mixup_epochs,
-                use_tta=args.use_tta,
-                cosine_fraction=args.cosine_fraction,
-                use_amp=args.use_amp,
-                grad_clip=args.grad_clip,
+        def build_training_subconfig():
+            """Map training parameters ensuring defaults are present."""
+            return TrainingConfig(
+                seed=getattr(args, 'seed', 42),
+                batch_size=getattr(args, 'batch_size', 128),
+                learning_rate=getattr(args, 'lr', 0.008),
+                momentum=getattr(args, 'momentum', 0.9),
+                weight_decay=getattr(args, 'weight_decay', 5e-4),
+                epochs=getattr(args, 'epochs', 60),
+                patience=getattr(args, 'patience', 15),
+                mixup_alpha=getattr(args, 'mixup_alpha', 0.2),
+                mixup_epochs=getattr(args, 'mixup_epochs', 20),
+                use_tta=getattr(args, 'use_tta', True),
+                cosine_fraction=getattr(args, 'cosine_fraction', 0.5),
+                use_amp=getattr(args, 'use_amp', False),
+                grad_clip=getattr(args, 'grad_clip', 1.0),
                 label_smoothing=getattr(args, 'label_smoothing', 0.0),
                 min_lr=getattr(args, 'min_lr', 1e-6)
-            ),
-            augmentation=AugmentationConfig(
-                hflip=args.hflip,
-                rotation_angle=args.rotation_angle,
-                jitter_val=args.jitter_val,
+            )
+
+        def build_augmentation_subconfig():
+            """Mappa i parametri relativi alle data augmentations."""
+            return AugmentationConfig(
+                hflip=getattr(args, 'hflip', 0.5),
+                rotation_angle=getattr(args, 'rotation_angle', 10),
+                jitter_val=getattr(args, 'jitter_val', 0.2),
                 min_scale=getattr(args, 'min_scale', 0.9),
                 tta_translate=getattr(args, 'tta_translate', 2.0),
                 tta_scale=getattr(args, 'tta_scale', 1.1),
                 tta_blur_sigma=getattr(args, 'tta_blur_sigma', 0.4)
+            )
+
+        # --- LOGIC EXECUTION ---
+
+        ds_meta = resolve_dataset_metadata()
+        should_force_rgb = resolve_rgb_logic(ds_meta)
+        
+        # Determine final max_samples value
+        final_max_samples = args.max_samples if (getattr(args, 'max_samples', 0) > 0) else None
+
+        # --- CONFIGURATION BUILDING ---
+
+        return cls(
+            model_name=getattr(args, 'model_name', "ResNet-18 Adapted"),
+            pretrained=getattr(args, 'pretrained', True),
+            num_workers=getattr(args, 'num_workers', 4),
+            system=SystemConfig(
+                device=getattr(args, 'device', "auto"),
+                data_dir=Path(getattr(args, 'data_dir', "./data")),
+                output_dir=Path(getattr(args, 'output_dir', "./outputs")),
+                save_model=getattr(args, 'save_model', True),
+                log_interval=getattr(args, 'log_interval', 10),
+                project_name=getattr(args, 'project_name', "medmnist_experiment")
             ),
+            training=build_training_subconfig(),
+            augmentation=build_augmentation_subconfig(),
             dataset=DatasetConfig(
                 dataset_name=ds_meta.name,
                 max_samples=final_max_samples,
