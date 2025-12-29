@@ -24,7 +24,7 @@ import torch
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from src.core.config import Config
+from src.core.config import Config, TrainingConfig
 from src.core.orchestrator import RootOrchestrator
 from src.core.io import save_config_as_yaml
 
@@ -63,6 +63,7 @@ def mock_args():
     args.hflip = 0.5
     args.rotation_angle = 15
     args.jitter_val = 0.1
+    args.project_name = "test_project"
     return args
 
 
@@ -80,8 +81,6 @@ def mock_args():
 def test_pydantic_boundary_constraints(field, value):
     """Tests if Pydantic raises errors for out-of-bounds hyperparameter values."""
     with pytest.raises(ValidationError):
-        # We use the sub-config directly to trigger specific validation
-        from src.core.config import TrainingConfig
         TrainingConfig(**{field: value})
 
 
@@ -105,7 +104,6 @@ def test_amp_cpu_compatibility_validation(mock_args):
     """Ensures the orchestrator prevents AMP on CPU devices."""
     mock_args.device = "cpu"
     mock_args.use_amp = True
-    # The factory should raise ValueError as per validate_logic()
     with pytest.raises(ValueError, match="AMP cannot be enabled when using CPU"):
         Config.from_args(mock_args)
 
@@ -126,18 +124,15 @@ def test_yaml_roundtrip_integrity(tmp_path, mock_args):
 
 def test_yaml_short_circuit_priority(tmp_path, mock_args):
     """Ensures that providing a --config file overrides other CLI arguments."""
-    # 1. Create a YAML with a specific batch size
     yaml_path = tmp_path / "override.yaml"
     original_cfg = Config.from_args(mock_args)
     
-    # Simulate a modified config
     cfg_dict = original_cfg.model_dump(mode='json')
     cfg_dict['training']['batch_size'] = 999
     save_config_as_yaml(cfg_dict, yaml_path)
     
-    # 2. Set the --config argument
     mock_args.config = str(yaml_path)
-    mock_args.batch_size = 10  # This should be ignored
+    mock_args.batch_size = 10
     
     final_cfg = Config.from_args(mock_args)
     assert final_cfg.training.batch_size == 999
@@ -145,27 +140,25 @@ def test_yaml_short_circuit_priority(tmp_path, mock_args):
 
 def test_orchestrator_lifecycle(mock_args, tmp_path):
     """Verifies orchestrator directory setup and resource management."""
-    mock_args.output_dir = str(tmp_path)
+    mock_args.output_dir = str(tmp_path / "outputs")
+    mock_args.data_dir = str(tmp_path / "data")
     mock_args.project_name = f"test_run_{tmp_path.name}"
+    
     cfg = Config.from_args(mock_args)
     
     with RootOrchestrator(cfg) as orchestrator:
-        # Check directory atomicity
         assert orchestrator.paths.root.exists()
         assert orchestrator.paths.logs.is_dir()
         assert orchestrator.paths.models.is_dir()
         
-        # Check config persistence
         config_path = orchestrator.paths.get_config_path()
         assert config_path.exists()
         
-        # Device resolution
         assert isinstance(orchestrator.get_device(), torch.device)
 
-    # Post-cleanup: check if lock is (conceptually) handled
-    assert not (tmp_path / "med_mnist.lock").exists() or True
+    lock_path = cfg.system.lock_file_path
+    assert not lock_path.exists()
 
 if __name__ == "__main__":
     import pytest
-    import sys
     sys.exit(pytest.main([__file__, "-v"]))

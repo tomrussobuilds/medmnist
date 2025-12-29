@@ -91,7 +91,7 @@ def main() -> None:
                 criterion    = criterion,
                 device       = device,
                 cfg          = cfg,
-                output_dir   = paths.models
+                output_path  = paths.models
             )
             
             # Start training and return explicit history lists
