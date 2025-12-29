@@ -128,7 +128,7 @@ class ModelTrainer:
             val_auc = val_metrics.get("auc", 0.0)
             logger.info(f"Epoch {epoch} Validation AUC: {val_auc:.4f} "
                         f"Previous Best AUC: {self.best_auc:.4f}"
-)
+            )
             self.val_aucs.append(val_auc)
 
             # --- 3. Scheduling Phase ---

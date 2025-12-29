@@ -64,49 +64,62 @@ def adaptive_tta_predict(
     Returns:
         torch.Tensor: The averaged softmax probability predictions (mean ensemble).
     """
+
+    def _get_tta_transforms() -> List:
+        """
+        Internal factory to resolve the augmentation suite based on 
+        dataset constraints and hardware capabilities.
+        """
+        # 1. BASE TRANSFORMS: Safe for all medical datasets
+        t_list = [
+            lambda x: x,  # Original identity
+            lambda x: torch.flip(x, dims=[3]),  # Horizontal flip
+        ]
+
+        # 2. TEXTURE-AWARE TRANSFORMS: Geometric vs Pixel-level
+        if is_texture_based:
+            # Subtle shift: only 1px if image is small, to avoid losing detail
+            t_list.append(lambda x: TF.affine(x, angle=0, translate=(1, 1), scale=1.0, shear=0))
+        else:
+            # Standard pixel-level augmentations for morphology-based data (Blood, Chest)
+            t_list.extend([
+                (lambda x: TF.affine(
+                    x, angle=0, 
+                    translate=(cfg.augmentation.tta_translate, cfg.augmentation.tta_translate), 
+                    scale=1.0, shear=0
+                )),
+                (lambda x: TF.affine(
+                    x, angle=0, translate=(0, 0), 
+                    scale=cfg.augmentation.tta_scale, shear=0
+                )),
+                # Gaussian Blur and Noise are the most destructive for texture
+                (lambda x: TF.gaussian_blur(
+                    x, kernel_size=3, sigma=cfg.augmentation.tta_blur_sigma
+                )),
+                # Gaussian Noise addition with clamping to [0, 1]
+                (lambda x: (x + 0.01 * torch.randn_like(x)).clamp(0, 1)),
+            ])
+
+        # 3. ADVANCED TRANSFORMS: Geometric augmentations
+        # Only enabled for non-anatomical data and non-CPU devices
+        if not is_anatomical and device.type != "cpu":
+            t_list.extend([
+                (lambda x: torch.rot90(x, k=1, dims=[2, 3])),  # 90 degree rotation
+                (lambda x: torch.rot90(x, k=2, dims=[2, 3])),  # 180 degree rotation
+                (lambda x: torch.rot90(x, k=3, dims=[2, 3])),  # 270 degree rotation
+            ])
+        elif not is_anatomical and device.type == "cpu":
+            # Light CPU fallback: Additional flip only
+            t_list.append((lambda x: torch.flip(x, dims=[2])))
+            
+        return t_list
+
+    # --- MAIN EXECUTION FLOW ---
     model.eval()
     inputs = inputs.to(device)
     
-    # 1. BASE TRANSFORMS: Safe for all medical datasets
-    transforms = [
-        lambda x: x,  # Original identity
-        lambda x: torch.flip(x, dims=[3]),  # Horizontal flip
-    ]
-
-    # 2. TEXTURE-AWARE TRANSFORMS: Geometric vs Pixel-level
-    if is_texture_based:
-        # Subtle shift: only 1px if image is small, to avoid losing detail
-        transforms.append(lambda x: TF.affine(x, angle=0, translate=(1, 1), scale=1.0, shear=0))
-    else:
-        # Standard pixel-level augmentations for morphology-based data (Blood, Chest)
-        transforms.extend([
-            lambda x: TF.affine(
-                x, angle=0, 
-                translate=(cfg.augmentation.tta_translate, cfg.augmentation.tta_translate), 
-                scale=1.0, shear=0
-            ),
-            lambda x: TF.affine(
-                x, angle=0, translate=(0, 0), 
-                scale=cfg.augmentation.tta_scale, shear=0
-            ),
-            # Gaussian Blur and Noise are the most destructive for texture
-            lambda x: TF.gaussian_blur(
-                x, kernel_size=3, sigma=cfg.augmentation.tta_blur_sigma
-            ),
-            lambda x: (x + 0.01 * torch.randn_like(x)).clamp(0, 1), # Gaussian Noise
-        ])
-
-    # 3. ADVANCED TRANSFORMS: Geometric augmentations
-    # Only enabled for non-anatomical data and non-CPU devices
-    if not is_anatomical and device.type != "cpu":
-        transforms.extend([
-            lambda x: torch.rot90(x, k=1, dims=[2, 3]),  # 90 degree rotation
-            lambda x: torch.rot90(x, k=2, dims=[2, 3]),  # 180 degree rotation
-            lambda x: torch.rot90(x, k=3, dims=[2, 3]),  # 270 degree rotation
-        ])
-    elif not is_anatomical and device.type == "cpu":
-        # Light CPU fallback: Additional flip only
-        transforms.append(lambda x: torch.flip(x, dims=[2])) # Vertical flip
+    # Generate the suite of transforms via internal factory
+    transforms = _get_tta_transforms()
 
     # 4. ENSEMBLE EXECUTION: Iterative probability accumulation to save VRAM
     ensemble_probs = None
@@ -131,7 +144,7 @@ def evaluate_model(
         device: torch.device,
         use_tta: bool = False,
         is_anatomical: bool = False,
-        is_texture_based: bool = False, # AGGIUNTO
+        is_texture_based: bool = False,
         cfg: Config = None
 ) -> Tuple[np.ndarray, np.ndarray, float, float]:
     """
