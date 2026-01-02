@@ -176,6 +176,7 @@ Where $\lambda \in [0, 1]$ is drawn from a $\text{Beta}(\alpha, \alpha)$ distrib
 
 ### 📁 Project Structure
 
+```bash
 med_mnist/
 ├── main.py                      # Global entry point: CLI parsing and RootOrchestrator lifecycle.
 ├── Dockerfile                   # Image definition: Multi-stage build for reproducibility.
@@ -207,7 +208,7 @@ med_mnist/
 │       ├── engine.py            # Performance scoring (Macro F1, Accuracy).
 │       └── reporting.py         # Automated Excel and visualization generation.
 └── outputs/                     # Results (ignored): Isolated workspace for each run.
-
+```
 ---
 
 ### ⚙️ Requirements & Installation
