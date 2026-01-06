@@ -46,48 +46,17 @@ Every run is fully documented through a suite of automatically generated artifac
 
 ---
 
-### Visual Diagnostics
+### Visual Diagnostics & Reporting
 
-<table style="width: 100%; table-layout: fixed; border: none;">
-  <thead>
-    <tr>
-      <th style="width: 50%; text-align: center; border: none;"><b>Confusion Matrix</b></th>
-      <th style="width: 50%; text-align: center; border: none;"><b>Training Dynamics</b></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center" valign="middle" style="border: none;">
-        <img src="docs/artifacts/confusion_matrix.png" width="100%">
-      </td>
-      <td align="center" valign="middle" style="border: none;">
-        <img src="docs/artifacts/training_curves.png" width="100%">
-      </td>
-    </tr>
-  </tbody>
-</table>
+<p align="center">
+  <img src="docs/artifacts/confusion_matrix.png" width="400" />
+  <img src="docs/artifacts/training_curves.png" width="400" />
+</p>
 
-
-### Sample Predictions & Reporting
-
-<table style="width: 100%; table-layout: fixed;">
-  <thead>
-    <tr>
-      <th style="width: 50%; text-align: center;"><b>Sample Predictions</b></th>
-      <th style="width: 50%; text-align: center;"><b>Quantitative Report (Excel)</b></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center" valign="middle">
-        <img src="docs/artifacts/sample_predictions.png" width="100%">
-      </td>
-      <td align="center" valign="middle">
-        <img src="docs/artifacts/excel_report_preview.png" width="100%">
-      </td>
-    </tr>
-  </tbody>
-</table>
+<p align="center">
+  <img src="docs/artifacts/sample_predictions.png" width="400" />
+  <img src="docs/artifacts/excel_report_preview.png" width="400" />
+</p>
 
 ## 🚀 Getting Started
 
