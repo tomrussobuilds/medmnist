@@ -48,15 +48,15 @@ Every run is fully documented through a suite of automatically generated artifac
 
 ### Visual Diagnostics
 
-<table style="width: 100%; border: none;">
+<table style="width: 100%; table-layout: fixed; border: none;">
   <tr>
-    <td style="width: 50%; text-align: center; border: none; vertical-align: top;">
+    <td style="text-align: center; vertical-align: middle; border: none;">
       <b>Confusion Matrix</b><br>
-      <img src="docs/artifacts/confusion_matrix.png" style="width: 100%; max-width: 300px;">
+      <img src="docs/artifacts/confusion_matrix.png" style="width: 100%; max-height: 350px; object-fit: contain;">
     </td>
-    <td style="width: 40%; text-align: center; border: none; vertical-align: top;">
+    <td style="text-align: center; vertical-align: middle; border: none;">
       <b>Training Dynamics</b><br>
-      <img src="docs/artifacts/training_curves.png" style="width: 100%;">
+      <img src="docs/artifacts/training_curves.png" style="width: 100%; max-height: 350px; object-fit: contain;">
     </td>
   </tr>
 </table>
@@ -64,15 +64,15 @@ Every run is fully documented through a suite of automatically generated artifac
 
 ### Sample Predictions & Reporting
 
-<table style="width: 100%; border: none;">
+<table style="width: 100%; table-layout: fixed;">
   <tr>
-    <td style="width: 50%; text-align: center; border: none; vertical-align: top;">
+    <td style="text-align: center; vertical-align: middle;">
       <b>Sample Predictions</b><br>
-      <img src="docs/artifacts/sample_predictions.png" style="width: 100%; border-radius: 5px;">
+      <img src="docs/artifacts/sample_predictions.png" style="width: 100%; max-height: 400px; object-fit: contain; border-radius: 5px;">
     </td>
-    <td style="width: 50%; text-align: center; border: none; vertical-align: top;">
+    <td style="text-align: center; vertical-align: middle;">
       <b>Quantitative Report (Excel)</b><br>
-      <img src="docs/artifacts/excel_report_preview.png" style="width: 100%; border-radius: 5px;">
+      <img src="docs/artifacts/excel_report_preview.png" style="width: 100%; max-height: 400px; object-fit: contain; border-radius: 5px;">
     </td>
   </tr>
 </table>
