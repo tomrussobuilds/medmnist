@@ -26,46 +26,59 @@ from ..paths import LOGGER_NAME
 
 def save_config_as_yaml(data: Any, yaml_path: Path) -> Path:
     """
-    Saves a configuration object as a YAML file.
-    
-    Orchestrates the conversion from Pydantic models or dictionaries to a 
-    sanitized, YAML-friendly format and ensures atomic persistence.
+    Serializes and persists configuration data to a YAML file.
+
+    This function coordinates the extraction of data from potentially complex 
+    objects (supporting Pydantic models, custom portable manifests, or raw dicts),
+    applies recursive sanitization, and performs an atomic write to disk.
 
     Args:
-        data (Any): The configuration data (Pydantic model or dict).
-        yaml_path (Path): The target filesystem path for the YAML file.
+        data (Any): The configuration object to save. Supports objects with 
+            'dump_portable()' or 'model_dump()' methods, or standard dictionaries.
+        yaml_path (Path): The destination filesystem path.
 
     Returns:
-        Path: The confirmed path where the configuration was stored.
+        Path: The confirmed path where the YAML was successfully written.
 
     Raises:
-        Exception: If serialization or filesystem write fails.
+        ValueError: If the data structure cannot be serialized.
+        OSError: If a filesystem-level error occurs (permissions, disk full).
     """
     logger = logging.getLogger(LOGGER_NAME)
+
+    # 1. Extraction & Sanitization Phase
     try:
-        # 1. Extraction: Interface with Pydantic or raw dicts
-        if hasattr(data, "model_dump"):
+        # Priority 1: Custom portability protocol
+        if hasattr(data, "dump_portable"):
+            raw_dict = data.dump_portable()
+        
+        # Priority 2: Pydantic model protocol
+        elif hasattr(data, "model_dump"):
             try:
                 raw_dict = data.model_dump(mode='json')
-            except Exception as e:
-                logger.warning(f"JSON dump failed, using fallback serialization: {e}")
+            except Exception:
+                # Fallback for older Pydantic V2 versions or complex types
                 raw_dict = data.model_dump()
+        
+        # Priority 3: Raw dictionary or other types
         else:
             raw_dict = data
-
-        # 2. Sanitization: Recursive cleanup of non-serializable types
+            
         final_data = _sanitize_for_yaml(raw_dict)
+        
+    except Exception as e:
+        logger.error(f"Serialization failed: object structure is incompatible. Error: {e}")
+        raise ValueError(f"Could not serialize configuration object: {e}") from e
 
-        # 3. Persistence: Safe physical write to disk
+    # 2. Persistence Phase (Atomic Write)
+    try:
         _persist_yaml_atomic(final_data, yaml_path)
-
         logger.info(f"Configuration frozen successfully at → {yaml_path.name}")
         return yaml_path
-
-    except Exception as e:
-        logger.error(f"Failed to save configuration YAML: {e}")
+        
+    except (OSError, PermissionError) as e:
+        logger.error(f"IO Error: Could not write YAML to {yaml_path}. Error: {e}")
         raise
-
 
 def load_config_from_yaml(yaml_path: Path) -> Dict[str, Any]:
     """

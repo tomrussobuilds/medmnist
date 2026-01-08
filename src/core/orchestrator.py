@@ -184,8 +184,8 @@ class RootOrchestrator:
         Ensures auditability by saving a portable YAML manifest of the session.
         """
         save_config_as_yaml(
-            self.cfg.dump_portable(),
-            self.paths.get_config_path()
+            data=self.cfg,
+            yaml_path=self.paths.get_config_path()
         )
 
     def _phase_6_infrastructure_guarding(self) -> None:
