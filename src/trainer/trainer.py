@@ -169,7 +169,7 @@ class ModelTrainer:
         )
 
         if self.best_path.exists():
-            self.finalize_best_weights() 
+            self.load_best_weights() 
         else:
             logger.warning("Forcing checkpoint save for smoke test integrity.")
             torch.save(self.model.state_dict(), self.best_path)
