@@ -11,7 +11,8 @@ It also includes the RootOrchestrator to manage experiment lifecycle initializat
 # =========================================================================== #
 from .config import (
     Config,
-    SystemConfig,
+    HardwareConfig,
+    TelemetryConfig,
     DatasetConfig,
     ModelConfig,
     TrainingConfig,
@@ -92,7 +93,8 @@ from .cli import parse_args
 __all__ = [
     # Configuration
     "Config",
-    "SystemConfig",
+    "HardwareConfig",
+    "TelemetryConfig"
     "DatasetConfig",
     "ModelConfig",
     "TrainingConfig",

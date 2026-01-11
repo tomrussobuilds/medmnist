@@ -38,7 +38,8 @@ from pydantic import (
 # =========================================================================== #
 #                               Internal Imports                              #
 # =========================================================================== #
-from .system_config import SystemConfig
+from .hardware_config import HardwareConfig
+from .telemetry_config import TelemetryConfig
 from .training_config import TrainingConfig
 from .augmentation_config import AugmentationConfig
 from .dataset_config import DatasetConfig
@@ -67,7 +68,8 @@ class Config(BaseModel):
             frozen=True
     )
     
-    system: SystemConfig = Field(default_factory=SystemConfig)
+    hardware: HardwareConfig = Field(default_factory=HardwareConfig)
+    telemetry: TelemetryConfig = Field(default_factory=TelemetryConfig)
     training: TrainingConfig = Field(default_factory=TrainingConfig)
     augmentation: AugmentationConfig = Field(default_factory=AugmentationConfig)
     dataset: DatasetConfig = Field(default_factory=DatasetConfig)
@@ -86,8 +88,9 @@ class Config(BaseModel):
         """
         full_data = self.model_dump()
 
-        # Sanitize system paths
-        full_data["system"] = self.system.to_portable_dict()    
+        # Sanitize hardware + telemetry paths
+        full_data["hardware"] = self.hardware.model_dump()
+        full_data["telemetry"] = self.telemetry.to_portable_dict()    
 
         # Sanitize dataset root if applicable
         dataset_section = full_data.get("dataset", {})
@@ -129,7 +132,7 @@ class Config(BaseModel):
             )
             
         # 2. Hardware vs Feature alignment
-        if self.system.device == "cpu" and self.training.use_amp:
+        if self.hardware.device == "cpu" and self.training.use_amp:
             raise ValueError("AMP cannot be enabled when using CPU device.")
             
         # 3. Model vs Dataset consistency (Late Bound validation)
@@ -158,7 +161,7 @@ class Config(BaseModel):
     @property
     def num_workers(self) -> int:
         """Proxies the effective number of workers from system policy."""
-        return self.system.effective_num_workers
+        return self.hardware.effective_num_workers
     
     @classmethod
     def _resolve_dataset_metadata(cls, args: argparse.Namespace) -> Dict[str, Any]:
@@ -221,7 +224,8 @@ class Config(BaseModel):
         
         # 3. Manual Assembly (CLI-only flow)
         return cls(
-            system=SystemConfig.from_args(args),
+            hardware=HardwareConfig.from_args(args),
+            telemetry=TelemetryConfig.from_args(args),
             training=TrainingConfig.from_args(args),
             augmentation=AugmentationConfig.from_args(args),
             dataset=DatasetConfig.from_args(args, metadata=ds_meta),

@@ -57,7 +57,7 @@ def run_final_evaluation(
     """
     
     # Resolve device from config
-    device = torch.device(cfg.system.device)
+    device = torch.device(cfg.hardware.device)
 
     # --- 1) Inference & Metrics ---
     # Performance on the full test set

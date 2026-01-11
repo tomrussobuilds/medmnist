@@ -101,8 +101,8 @@ class RootOrchestrator:
         self._device_cache: Optional[torch.device] = None
         
         # Policy extraction from the SSOT
-        self.repro_mode = self.cfg.system.use_deterministic_algorithms
-        self.num_workers = self.cfg.system.effective_num_workers
+        self.repro_mode = self.cfg.hardware.use_deterministic_algorithms
+        self.num_workers = self.cfg.hardware.effective_num_workers
     
     def __enter__(self) -> "RootOrchestrator":
         """
@@ -165,7 +165,7 @@ class RootOrchestrator:
             dataset_slug=self.cfg.dataset.dataset_name,
             model_name=self.cfg.model.name,
             training_cfg=self.cfg.dump_serialized(),
-            base_dir=self.cfg.system.output_dir
+            base_dir=self.cfg.telemetry.output_dir
         )
 
     def _phase_4_logging_initialization(self) -> None:
@@ -176,7 +176,7 @@ class RootOrchestrator:
         self.run_logger = self._log_initializer(
             name=LOGGER_NAME,
             log_dir=self.paths.logs,
-            level=self.cfg.system.log_level
+            level=self.cfg.telemetry.log_level
         )
 
     def _phase_5_config_persistence(self) -> None:
@@ -261,5 +261,5 @@ class RootOrchestrator:
             torch.device: The `PyTorch` device object for model execution.
         """
         if self._device_cache is None:
-            self._device_cache = to_device_obj(device_str=self.cfg.system.device)
+            self._device_cache = to_device_obj(device_str=self.cfg.hardware.device)
         return self._device_cache

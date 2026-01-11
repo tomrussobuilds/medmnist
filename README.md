@@ -122,6 +122,17 @@ To regenerate the dependency graph, run the following command from the project r
 ```bash
 PYTHONPATH=src pydeps src --cluster --max-bacon=0 --max-module-depth=4 --only src --noshow -T svg -o docs/framework_map.svg
 ```
+
+```bash
+Requirements:
+
+Python package: pydeps
+
+System dependency: Graphviz (dot must be available in your PATH)
+
+Tip: On Linux you can install Graphviz via sudo apt install graphviz. On MacOS: brew install graphviz.
+```
+
 </details>
 
 ---

@@ -13,7 +13,8 @@ import argparse
 # =========================================================================== #
 #                               Internal Imports                              #
 # =========================================================================== #
-from .config.system_config import SystemConfig
+from .config.hardware_config import HardwareConfig
+from .config.telemetry_config import TelemetryConfig
 from .config.training_config import TrainingConfig
 from .config.evaluation_config import EvaluationConfig
 from .config.augmentation_config import AugmentationConfig
@@ -34,7 +35,8 @@ def parse_args() -> argparse.Namespace:
     )
     
     # Instantiate specific configs that HAVE default values for all fields
-    sys_def   = SystemConfig()
+    hardware_def   = HardwareConfig()
+    telemetry_def = TelemetryConfig()
     train_def = TrainingConfig()
     eval_def  = EvaluationConfig()
     aug_def   = AugmentationConfig()
@@ -53,7 +55,7 @@ def parse_args() -> argparse.Namespace:
     strat_group.add_argument(
         '--project_name',
         type=str,
-        default=sys_def.project_name,
+        default=hardware_def.project_name,
         help="Logical name for the experiment suite (used for logging and locks)."
     )
     strat_group.add_argument(
@@ -69,7 +71,7 @@ def parse_args() -> argparse.Namespace:
     sys_group.add_argument(
         '--device',
         type=str,
-        default=sys_def.device,
+        default=hardware_def.device,
         help="Computing device (cpu, cuda, mps)."
     )
     sys_group.add_argument(
@@ -86,26 +88,26 @@ def parse_args() -> argparse.Namespace:
     path_group.add_argument(
         '--data_dir',
         type=str,
-        default=str(sys_def.data_dir),
+        default=str(telemetry_def.data_dir),
         help="Path to directory containing raw MedMNIST .npz files."
     )
     path_group.add_argument(
         '--output_dir',
         type=str,
-        default=str(sys_def.output_dir),
+        default=str(telemetry_def.output_dir),
         help="Base directory for experiment outputs and runs."
     )
     path_group.add_argument(
         '--log_interval',
         type=int,
-        default=sys_def.log_interval,
+        default=telemetry_def.log_interval,
         help="How many batches to wait before logging training status."
     )
     path_group.add_argument(
         '--no_save',
         action='store_false',
         dest='save_model',
-        default=sys_def.save_model,
+        default=telemetry_def.save_model,
         help="Disable saving the best model checkpoint."
     )
     path_group.add_argument(

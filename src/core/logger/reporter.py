@@ -107,7 +107,7 @@ class Reporter(BaseModel):
         on hardware utilization. It includes a fallback warning if the requested 
         accelerator (CUDA/MPS) is unavailable and the system reverted to CPU.
         """
-        requested_device = cfg.system.device.lower()
+        requested_device = cfg.hardware.device.lower()
         active_type = device.type
         
         logger.info(f"[HARDWARE]")
@@ -150,7 +150,7 @@ class Reporter(BaseModel):
     ) -> None:
         """Logs high-level training strategies, models, and hyperparameters."""
         train = cfg.training
-        sys = cfg.system
+        sys = cfg.hardware
         tta_status = determine_tta_mode(train.use_tta, device.type)
         
         repro_mode = "Bit-Perfect (Strict)" if sys.use_deterministic_algorithms else "Standard"

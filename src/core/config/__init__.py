@@ -15,7 +15,8 @@ from .engine import Config
 # =========================================================================== #
 #                                Sub-Configurations                           #
 # =========================================================================== #
-from .system_config import SystemConfig
+from .hardware_config import HardwareConfig
+from .telemetry_config import TelemetryConfig
 from .training_config import TrainingConfig
 from .augmentation_config import AugmentationConfig
 from .dataset_config import DatasetConfig
@@ -37,7 +38,8 @@ from .types import ValidatedPath
 # =========================================================================== #
 __all__ = [
     "Config",
-    "SystemConfig",
+    "HardwareConfig",
+    "TelemetryConfig",
     "TrainingConfig",
     "AugmentationConfig",
     "DatasetConfig",

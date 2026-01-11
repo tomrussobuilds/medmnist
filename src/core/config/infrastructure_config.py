@@ -68,7 +68,7 @@ class InfrastructureManager(BaseModel):
             logger (Optional[logging.Logger]): Active logger for status reporting.
         """
         # 1. Process Sanitization
-        if cfg.system.allow_process_kill:
+        if cfg.hardware.allow_process_kill:
             # Prevent accidental termination in shared HPC/Cluster environments
             is_shared = any(env in os.environ for env in ["SLURM_JOB_ID", "PBS_JOBID", "LSB_JOBID"])
             if not is_shared:
@@ -78,7 +78,7 @@ class InfrastructureManager(BaseModel):
 
         # 2. Concurrency Guarding
         ensure_single_instance(
-            lock_file=cfg.system.lock_file_path,
+            lock_file=cfg.hardware.lock_file_path,
             logger=logger or logging.getLogger("Infrastructure")
         )
 
@@ -95,7 +95,7 @@ class InfrastructureManager(BaseModel):
         """
         # 1. Release Filesystem Lock
         try:
-            release_single_instance(cfg.system.lock_file_path)
+            release_single_instance(cfg.hardware.lock_file_path)
         
             msg = "System resource lock released successfully."
             if logger:

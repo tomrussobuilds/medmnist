@@ -25,7 +25,7 @@ from pydantic import (
 from .types import DropoutRate
 
 # =========================================================================== #
-#                                MODEL CONFIGURATION                         #
+#                                MODEL CONFIGURATION                          #
 # =========================================================================== #
 
 class ModelConfig(BaseModel):
