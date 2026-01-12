@@ -15,11 +15,11 @@
 
 ## 📌 Table of Contents
 
-* [📊 Experiment Artifacts & Reporting](#-experiment-artifacts--reporting)
 * [🚀 Getting Started](#-getting-started)
 * [✨ Key Features](#-key-features--defensive-engineering)
-* [🏗 Architecture Details](#-architecture-details)
+* [📊 Experiment Artifacts & Reporting](#-experiment-artifacts--reporting)
 * [🧩 Internal Dependency Mapping](#-internal-dependency-mapping)
+* [🏗 Architecture Details](#-architecture-details)
 * [📁 Project Structure](#-project-structure)
 * [⚙️ Requirements & Installation](#️-requirements--installation)
 * [💻 Usage (Local)](#-usage-local)
