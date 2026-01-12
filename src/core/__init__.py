@@ -68,7 +68,7 @@ from .environment import (
     worker_init_fn,
     ensure_single_instance,
     release_single_instance,
-    kill_duplicate_processes
+    DuplicateProcessCleaner
 )
 
 # =========================================================================== #
