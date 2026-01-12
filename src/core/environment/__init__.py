@@ -35,7 +35,7 @@ from .reproducibility import (
 from .guards import (
     ensure_single_instance,
     release_single_instance,
-    kill_duplicate_processes
+    DuplicateProcessCleaner
 )
 
 # =========================================================================== #
@@ -61,5 +61,5 @@ __all__ = [
     # Guards
     "ensure_single_instance",
     "release_single_instance",
-    "kill_duplicate_processes"
+    "DuplicateProcessCleaner",
 ]

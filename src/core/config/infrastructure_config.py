@@ -34,7 +34,7 @@ from pydantic import BaseModel, ConfigDict
 #                                Internal Imports                             #
 # =========================================================================== #
 from ..environment import (
-    ensure_single_instance, release_single_instance, kill_duplicate_processes
+    ensure_single_instance, release_single_instance, DuplicateProcessCleaner
 )
 
 # =========================================================================== #
@@ -83,13 +83,14 @@ class InfrastructureManager(BaseModel):
 
         # Process Sanitization
         if cfg.hardware.allow_process_kill:
+            cleaner = DuplicateProcessCleaner()
             is_shared = any(
                 env in os.environ
                 for env in ["SLURM_JOB_ID", "PBS_JOBID", "LSB_JOBID"]
             )
             if not is_shared:
-                kill_duplicate_processes(logger=log)
-                log.info(" » Duplicate processes terminated.")
+                num_zombies = cleaner.terminate_duplicates(logger=log)
+                log.info(f" » Duplicate processes terminated: {num_zombies}.")
             else:
                 log.debug(" » [SYS] Shared environment detected: skipping process kill.")
 
