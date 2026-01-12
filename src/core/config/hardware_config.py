@@ -1,19 +1,22 @@
 """
 Hardware Manifest.
 
-This module defines the declarative schema for hardware abstraction and 
-execution policy negotiation. It is responsible for resolving compute devices,
-enforcing determinism constraints, and exposing hardware-derived execution
-parameters.
+This module defines the declarative schema for hardware abstraction and
+execution policy negotiation. It is responsible for resolving the effective
+compute device, enforcing determinism constraints, and deriving
+hardware-dependent execution parameters.
 
 It acts as the Single Source of Truth (SSOT) for:
-    * Device selection and accelerator validation (CPU / CUDA / MPS)
-    * Reproducibility and deterministic execution policy
-    * DataLoader parallelism constraints
-    * Process-level synchronization primitives (lock files)
+    * Device selection policy with automatic accelerator resolution
+      (CPU / CUDA / MPS via 'auto')
+    * Reproducibility and deterministic execution guarantees
+    * DataLoader parallelism constraints derived from execution policy
+    * Process-level synchronization primitives (cross-platform lock files)
 
-This manifest guarantees that all hardware-related decisions are validated,
-explicit, and immutable for the lifetime of an experiment.
+The manifest cleanly separates declarative configuration from internal
+runtime state (e.g. reproducibility mode), ensuring that all hardware-related
+decisions are validated, explicit, and immutable for the lifetime of an
+experiment.
 """
 
 # =========================================================================== #
@@ -34,8 +37,12 @@ from pydantic import (
 # =========================================================================== #
 #                               Internal Imports                              #
 # =========================================================================== #
-from .types import ProjectSlug
-from ..environment import detect_best_device, get_num_workers
+from .types import (
+    ProjectSlug, DeviceType
+)
+from ..environment import (
+    detect_best_device, get_num_workers
+)
 
 # =========================================================================== #
 #                                MODEL CONFIGURATION                          #
@@ -52,9 +59,9 @@ class HardwareConfig(BaseModel):
     )
 
     # Hardware Configuration
-    device: str = Field(
-        default_factory=detect_best_device,
-        description="Computing device (cpu, cuda, mps or auto)."
+    device: DeviceType = Field(
+        default="auto",
+        description="Computing device selection policy."
     )
 
     # Execution Policy
@@ -64,7 +71,7 @@ class HardwareConfig(BaseModel):
         description="Permission flag to terminate duplicate processes for environment cleanup."
     )
 
-    # Internal state for policy resolution
+    # Internal, non serialized execution state
     _reproducible_mode: bool = False
     
     @property
@@ -79,8 +86,8 @@ class HardwareConfig(BaseModel):
         return Path(tempfile.gettempdir()) / f"{safe_name}.lock"
 
     @property
-    def support_amp(self) -> bool:
-        """Determines if the current validated device supports Automatic Mixed Precision (AMP)."""
+    def supports_amp(self) -> bool:
+        """Whether validated device supports Automatic Mixed Precision (AMP)."""
         return self.device.lower().startswith("cuda") or \
                self.device.lower().startswith("mps")
 
@@ -104,7 +111,7 @@ class HardwareConfig(BaseModel):
 
     @field_validator("device")
     @classmethod
-    def resolve_device(cls, v: str) -> str:
+    def resolve_device(cls, v: DeviceType) -> DeviceType:
         """
         SSOT Validation: Ensures the requested device actually exists on this system.
         If the requested accelerator (cuda/mps) is unavailable, it self-corrects to 'cpu'.
@@ -113,10 +120,12 @@ class HardwareConfig(BaseModel):
             return detect_best_device()
 
         requested = v.lower()
-        if "cuda" in requested and not torch.cuda.is_available():
+
+        if requested == "cuda" and not torch.cuda.is_available():
             return "cpu"
-        if "mps" in requested and not torch.backends.mps.is_available():
+        if requested == "mps" and not torch.backends.mps.is_available():
             return "cpu"
+        
         return requested
 
     @classmethod

@@ -20,7 +20,9 @@ Key Operational Tasks:
 # =========================================================================== #
 import os
 import logging
-from typing import Optional, Any
+from typing import (
+    Optional, Any, Protocol
+)
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
@@ -32,92 +34,109 @@ from pydantic import BaseModel, ConfigDict
 #                                Internal Imports                             #
 # =========================================================================== #
 from ..environment import (
-    ensure_single_instance, 
-    release_single_instance, 
-    kill_duplicate_processes
+    ensure_single_instance, release_single_instance, kill_duplicate_processes
 )
 
 # =========================================================================== #
 #                             INFRASTRUCTURE MANAGER                          #
 # =========================================================================== #
 
+class HardwareAwareConfig(Protocol):
+    """
+    Structural contract for configurations exposing a hardware manifest.
+
+    This protocol decouples infrastructure management from concrete
+    configuration implementations, enabling type-safe access to
+    hardware-related execution policies.
+    """
+    hardware: Any
+
 class InfrastructureManager(BaseModel):
     """
     Operational executor for environment safeguarding and resource management.
-    
-    The InfrastructureManager offloads system-level tasks from the configuration 
-    schemas and the central orchestrator. It ensures that the execution 
-    environment is "clean" before a run starts and "released" after it ends,
-    preventing resource leakage.
+
+    Ensures the execution environment is "clean" before a run starts and
+    resources are released after the run, preventing collisions and leaks.
     """
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
         frozen=True
     )
 
-    def prepare_environment(self, cfg: Any, logger: Optional[logging.Logger] = None) -> None:
+    def prepare_environment(
+        self,
+        cfg: HardwareAwareConfig,
+        logger: Optional[logging.Logger] = None
+    ) -> None:
         """
-        Coordinates the pre-execution sequence to ensure environment integrity.
+        Prepares the environment for execution.
 
-        This includes:
-            1. Terminating zombie or duplicate processes if permitted.
-            2. Acquiring an advisory lock to prevent race conditions.
+        Steps:
+            1. Terminate duplicate or zombie processes if allowed.
+            2. Acquire a filesystem lock to prevent concurrent runs.
 
         Args:
-            cfg: The global configuration manifest.
-            logger (Optional[logging.Logger]): Active logger for status reporting.
+            cfg: Configuration exposing a hardware manifest.
+            logger: Logger instance for status reporting.
         """
-        # 1. Process Sanitization
-        if cfg.hardware.allow_process_kill:
-            # Prevent accidental termination in shared HPC/Cluster environments
-            is_shared = any(env in os.environ for env in ["SLURM_JOB_ID", "PBS_JOBID", "LSB_JOBID"])
-            if not is_shared:
-                kill_duplicate_processes(logger=logger)
-            elif logger:
-                logger.debug(" » [SYS] Shared environment detected: skipping process kill.")
+        log = logger or logging.getLogger("Infrastructure")
 
-        # 2. Concurrency Guarding
+        # Process Sanitization
+        if cfg.hardware.allow_process_kill:
+            is_shared = any(
+                env in os.environ
+                for env in ["SLURM_JOB_ID", "PBS_JOBID", "LSB_JOBID"]
+            )
+            if not is_shared:
+                kill_duplicate_processes(logger=log)
+                log.info(" » Duplicate processes terminated.")
+            else:
+                log.debug(" » [SYS] Shared environment detected: skipping process kill.")
+
+        # Concurrency Guarding
         ensure_single_instance(
             lock_file=cfg.hardware.lock_file_path,
-            logger=logger or logging.getLogger("Infrastructure")
+            logger=log
         )
+        log.info(f" » Lock acquired at {cfg.hardware.lock_file_path}")
 
-    def release_resources(self, cfg: Any, logger: Optional[logging.Logger] = None) -> None:
+    def release_resources(
+        self,
+        cfg: HardwareAwareConfig,
+        logger: Optional[logging.Logger] = None
+    ) -> None:
         """
-        Handles the graceful release of system and hardware resources.
+        Releases system and hardware resources gracefully.
 
-        Designed to be called during the orchestrator's cleanup phase to ensure 
-        that lock files are unlinked and compute caches are cleared.
+        Steps:
+            1. Release filesystem lock.
+            2. Flush hardware memory caches.
 
         Args:
-            cfg: The global configuration manifest.
-            logger (Optional[logging.Logger]): Active logger for status reporting.
+            cfg: Configuration exposing a hardware manifest.
+            logger: Logger instance for status reporting.
         """
-        # 1. Release Filesystem Lock
+        log = logger or logging.getLogger("Infrastructure")
+
         try:
             release_single_instance(cfg.hardware.lock_file_path)
-        
-            msg = "System resource lock released successfully."
-            if logger:
-                logger.info(f" » {msg}")
-            else:
-                logging.debug(msg)
+            log.info(f" » Lock released at {cfg.hardware.lock_file_path}")
         except Exception as e:
-            if logger:
-                logger.warning(f"Failed to release lock file: {e}")
+            log.warning(f" » Failed to release lock file: {e}")
 
-        # 2. Hardware Memory Cleanup
-        self._flush_compute_cache()
+        self._flush_compute_cache(log=log)
 
-    def _flush_compute_cache(self) -> None:
+    def _flush_compute_cache(self, log: Optional[logging.Logger] = None) -> None:
         """
-        Clears volatile memory buffers for supported hardware backends.
-        Prevents memory fragmentation across consecutive experimental runs.
+        Clears GPU/MPS memory to prevent fragmentation across runs.
         """
+        log = log or logging.getLogger("Infrastructure")
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
+            log.debug(" » CUDA cache cleared.")
         if hasattr(torch, "mps") and torch.backends.mps.is_available():
             try:
                 torch.mps.empty_cache()
-            except Exception as e:
-                pass
+                log.debug(" » MPS cache cleared.")
+            except Exception:
+                log.debug(" » MPS cache cleanup failed (non-fatal).")

@@ -2,18 +2,21 @@
 Telemetry & Filesystem Manifest.
 
 This module defines the declarative schema for filesystem orchestration,
-logging strategy, and experiment identity. It is responsible for path
-sanitization, portable serialization, and experiment metadata.
+logging policy, and experiment identity. It is responsible for resolving
+and anchoring paths, configuring logging behavior, and exporting
+environment-agnostic manifests.
 
 It acts as the Single Source of Truth (SSOT) for:
-    * Dataset and output directory resolution
-    * Logging cadence and verbosity
-    * Experiment identity and naming
-    * Environment-agnostic manifest export
+    * Dataset and output directory resolution and anchoring
+    * Logging cadence, verbosity, and persistence policy
+    * Experiment identity and run-level metadata
+    * Portable, host-independent configuration serialization
 
-By centralizing telemetry concerns, the engine ensures that experiment
-artifacts are traceable, portable, and free from host-specific leakage.
+By centralizing telemetry and filesystem concerns, the engine guarantees
+that experiment artifacts are traceable, reproducible, and free from
+host-specific filesystem leakage across different environments.
 """
+
 
 # =========================================================================== #
 #                                Standard Imports                             #

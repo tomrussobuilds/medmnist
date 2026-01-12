@@ -109,3 +109,4 @@ ProjectSlug  = Annotated[
 ]
 LogFrequency = Annotated[int, Field(ge=1, le=1000)]
 LogLevel     = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+DeviceType   = Literal["auto", "cpu", "cuda", "mps"]
