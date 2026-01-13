@@ -7,18 +7,12 @@ Handles secure restoration of model states and device mapping for neural network
 # =========================================================================== #
 #                                Standard Imports                             #
 # =========================================================================== #
-import logging
 from pathlib import Path
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
 # =========================================================================== #
 import torch
-
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
-from ..paths import LOGGER_NAME
 
 # =========================================================================== #
 #                               Weight Management                             #
@@ -39,9 +33,7 @@ def load_model_weights(
 
     Raises:
         FileNotFoundError: If the checkpoint file does not exist.
-    """
-    logger = logging.getLogger(LOGGER_NAME)
-    
+    """   
     if not path.exists():
         raise FileNotFoundError(f"Model checkpoint not found at: {path}")
     
@@ -49,4 +41,3 @@ def load_model_weights(
     state_dict = torch.load(path, map_location=device, weights_only=True)
     model.load_state_dict(state_dict)
     
-    logger.info(f" » Weights successfully restored from: {path.name}")

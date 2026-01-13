@@ -1,21 +1,20 @@
 """
 Environment Orchestration & Lifecycle Management.
 
-This module provides the `RootOrchestrator`, the central authority for 
-initializing and managing the experiment's execution state. It synchronizes 
-hardware (`CUDA`/`CPU`), filesystem (`RunPaths`), and telemetry (`Logging`) into a 
-unified, reproducible context.
+Provides RootOrchestrator, the central authority for initializing and managing 
+experiment execution state. Synchronizes hardware (CUDA/CPU), filesystem (RunPaths), 
+and telemetry (Logging) into a unified, reproducible context.
 
 Key Responsibilities:
-    - Deterministic Seeding: Ensures global `RNG` state is locked, supporting 
-      both standard and strict (bit-perfect) reproducibility modes.
-    - Resource Guarding: Implements single-instance locking to prevent race 
-      conditions on shared hardware or filesystem resources via `InfrastructureManager`.
-    - Path Atomicity: Dynamically generates and validates experiment workspaces.
-    - Hardware Abstraction: Manages device-specific optimizations including 
-      compute thread synchronization and `DataLoader` worker scaling.
-    - Lifecycle Safety: Uses the `Context Manager` pattern to guarantee resource 
-      cleanup and state persistence even during runtime failures.
+    - Deterministic seeding: Global RNG state locking for standard and 
+      bit-perfect reproducibility
+    - Resource guarding: Single-instance locking preventing race conditions 
+      via InfrastructureManager
+    - Path atomicity: Dynamic experiment workspace generation and validation
+    - Hardware abstraction: Device-specific optimizations including compute 
+      thread synchronization and DataLoader worker scaling
+    - Lifecycle safety: Context Manager pattern guaranteeing resource cleanup 
+      and state persistence during failures
 """
 
 # =========================================================================== #
@@ -35,61 +34,49 @@ import torch
 from .environment import (
     set_seed, to_device_obj, configure_system_libraries, apply_cpu_threads
 )
-from .config.infrastructure_config import (
-    InfrastructureManager
-)
-from .io import (
-    save_config_as_yaml
-)
-from .logger import (
-    Logger, Reporter
-)
-from .paths import (
-    RunPaths, setup_static_directories, LOGGER_NAME
-)
+from .config.infrastructure_config import InfrastructureManager
+from .io import save_config_as_yaml
+from .logger import Logger, Reporter
+from .paths import RunPaths, setup_static_directories, LOGGER_NAME
+
 if TYPE_CHECKING:
     from .config.engine import Config
 
+
 # =========================================================================== #
-#                              Root Orchestrator                              #
+#                            Root Orchestrator                                #
 # =========================================================================== #
 
 class RootOrchestrator:
     """
-    High-level lifecycle controller for the experiment environment.
+    High-level lifecycle controller for experiment environment.
     
-    The `RootOrchestrator` acts as the central state machine for the pipeline. It
-    coordinates the transition from a static configuration (`Pydantic`-validated) 
-    to a live execution state, synchronizing hardware discovery, filesystem 
-    provisioning, and telemetry initialization.
+    Central state machine coordinating transition from static configuration 
+    (Pydantic-validated) to live execution state. Synchronizes hardware discovery, 
+    filesystem provisioning, and telemetry initialization.
 
-    By leveraging the `Context Manager` pattern, it guarantees that system-level 
-    resources—such as kernel-level file locks and telemetry handlers—are 
-    safely acquired before execution and released upon termination, ensuring 
-    environment atomicity even during runtime failures.
+    Context Manager pattern guarantees system-level resources (kernel locks, 
+    telemetry handlers) are safely acquired before execution and released 
+    upon termination, ensuring atomicity during failures.
 
     Attributes:
-        cfg (Config): The validated global configuration manifest (`SSOT`).
-        infra (InfrastructureManager): Handler for `OS`-level resource guarding.
-        reporter (Reporter): Specialized engine for environment telemetry.
-        _log_initializer (callable): A strategy function responsible for configuring 
-            the logging handlers.
-        paths (Optional[RunPaths]): Orchestrator for session-specific directories.
-        run_logger (Optional[logging.Logger]): Active logger instance for the session.
-        repro_mode (bool): Flag indicating if strict bit-perfect determinism is active.
-        num_workers (int): Resolved number of `DataLoader` workers based on policy.
-        _device_cache (Optional[torch.device]): Memoized compute device object.
+        cfg: Validated global configuration manifest (SSOT)
+        infra: Handler for OS-level resource guarding
+        reporter: Engine for environment telemetry
+        paths: Session-specific directory orchestrator
+        run_logger: Active logger instance for session
+        repro_mode: Bit-perfect determinism flag
+        num_workers: Resolved DataLoader workers from policy
     """
+    
     def __init__(self, cfg: "Config", log_initializer=Logger.setup) -> None:
         """
-        Initializes the orchestrator and binds the execution policy.
+        Initializes orchestrator and binds execution policy.
 
         Args:
-            cfg (Config): The validated global configuration manifest. 
-                Acts as the Single Source of Truth (`SSOT`) for all sub-systems.
-            log_initializer (callable, optional): A strategy function responsible 
-                for configuring the logging handlers. Must accept `name`, 
-                `log_dir`, and `level`. Defaults to `Logger.setup`.
+            cfg: Validated global configuration (SSOT)
+            log_initializer: Strategy function for logging handlers
+                (accepts name, log_dir, level)
         """
         self.cfg = cfg
         self.infra = InfrastructureManager()
@@ -100,18 +87,16 @@ class RootOrchestrator:
         self.run_logger: Optional[logging.Logger] = None
         self._device_cache: Optional[torch.device] = None
         
-        # Policy extraction from the SSOT
+        # Policy extraction from SSOT
         self.repro_mode = self.cfg.hardware.use_deterministic_algorithms
         self.num_workers = self.cfg.hardware.effective_num_workers
     
     def __enter__(self) -> "RootOrchestrator":
         """
-        Context Manager entry point. 
-        Automatically triggers the core service initialization sequence via 
-        `initialize_core_services()`.
+        Context Manager entry - triggers core service initialization.
 
         Returns:
-            RootOrchestrator: The initialized instance, ready for pipeline execution.
+            Initialized RootOrchestrator ready for pipeline execution
         """
         try:
             self.initialize_core_services()
@@ -122,26 +107,23 @@ class RootOrchestrator:
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
         """
-        Context Manager exit point.
-        Ensures that system resources are released and lock files are unlinked.
+        Context Manager exit - ensures resource release and lock cleanup.
 
         Args:
-            exc_type: The type of the exception raised.
-            exc_val: The instance of the exception raised.
-            exc_tb: The traceback of the exception raised.
+            exc_type: Exception type if raised
+            exc_val: Exception instance if raised
+            exc_tb: Exception traceback if raised
 
         Returns:
-            bool: Always `False` to allow exception propagation.
+            False to allow exception propagation
         """
         self.cleanup()
         return False
      
-    # --- PRIVATE LIFECYCLE PHASES ---
+    # --- Private Lifecycle Phases ---
 
     def _phase_1_determinism(self) -> None:
-        """
-        Enforces global `RNG` seeding and algorithmic determinism policies via `set_seed`.
-        """
+        """Enforces global RNG seeding and algorithmic determinism."""
         set_seed(self.cfg.training.seed, strict=self.repro_mode)
 
     def _phase_2_hardware_optimization(self) -> int:
@@ -149,7 +131,7 @@ class RootOrchestrator:
         Configures compute thread affinity and accelerator libraries.
         
         Returns:
-            int: The number of `CPU` threads successfully applied to the runtime.
+            Number of CPU threads applied to runtime
         """
         applied_threads = apply_cpu_threads(self.num_workers)
         configure_system_libraries()
@@ -157,8 +139,8 @@ class RootOrchestrator:
     
     def _phase_3_filesystem_provisioning(self) -> None:
         """
-        Constructs the experiment workspace using `RunPaths`.
-        Anchors all relative paths to the validated `PROJECT_ROOT`.
+        Constructs experiment workspace via RunPaths.
+        Anchors relative paths to validated PROJECT_ROOT.
         """
         setup_static_directories()
         self.paths = RunPaths.create(
@@ -170,8 +152,8 @@ class RootOrchestrator:
 
     def _phase_4_logging_initialization(self) -> None:
         """
-        Bridges the static Logger to the session-specific filesystem.
-        Reconfigures handlers to enable file-based persistence in the run directory.
+        Bridges static Logger to session-specific filesystem.
+        Reconfigures handlers for file-based persistence in run directory.
         """
         self.run_logger = self._log_initializer(
             name=LOGGER_NAME,
@@ -181,8 +163,8 @@ class RootOrchestrator:
 
     def _phase_5_config_persistence(self) -> None:
         """
-        Mirrors the hydrated configuration state to the experiment root.
-        Ensures auditability by saving a portable YAML manifest of the session.
+        Mirrors hydrated configuration to experiment root.
+        Saves portable YAML manifest for session auditability.
         """
         save_config_as_yaml(
             data=self.cfg,
@@ -192,17 +174,14 @@ class RootOrchestrator:
     def _phase_6_infrastructure_guarding(self) -> None:
         """
         Secures system-level resource locks via InfrastructureManager.
-        Prevents concurrent execution conflicts and manages environment cleanup.
+        Prevents concurrent execution conflicts and manages cleanup.
         """
-        self.infra.prepare_environment(
-            self.cfg,
-            logger=self.run_logger
-        )
+        self.infra.prepare_environment(self.cfg, logger=self.run_logger)
 
     def _phase_7_environment_reporting(self, applied_threads: int) -> None:
         """
-        Emits the baseline environment report to the active logging streams.
-        Summarizes hardware, dataset metadata, and resolved execution policies.
+        Emits baseline environment report to active logging streams.
+        Summarizes hardware, dataset metadata, and execution policies.
         """
         self.reporter.log_initial_status(
             logger=self.run_logger,
@@ -213,17 +192,17 @@ class RootOrchestrator:
             num_workers=self.num_workers
         )
 
-    # --- PUBLIC INTERFACE ---
+    # --- Public Interface ---
 
     def initialize_core_services(self) -> RunPaths:
         """
-        Executes the linear sequence of environment initialization phases.
+        Executes linear sequence of environment initialization phases.
 
-        Synchronizes the global state through 7 distinct phases, progressing 
-        from deterministic seeding to full environment reporting.
+        Synchronizes global state through 7 phases, progressing from 
+        deterministic seeding to full environment reporting.
 
         Returns:
-            RunPaths: The verified and provisioned directory structure.
+            Verified and provisioned directory structure
         """
         self._phase_1_determinism()
         applied_threads = self._phase_2_hardware_optimization()
@@ -237,10 +216,10 @@ class RootOrchestrator:
 
     def cleanup(self) -> None:
         """
-        Releases system resources and removes the execution lock file.
+        Releases system resources and removes execution lock file.
         
-        Guarantees a clean state for subsequent pipeline runs by unlinking 
-        `InfrastructureManager` guards and closing active `logging` handlers.
+        Guarantees clean state for subsequent runs by unlinking 
+        InfrastructureManager guards and closing logging handlers.
         """
         try:
             self.infra.release_resources(self.cfg, logger=self.run_logger)
@@ -255,10 +234,10 @@ class RootOrchestrator:
 
     def get_device(self) -> torch.device:
         """
-        Resolves and caches the optimal computation device (`CUDA`/`CPU`/`MPS`).
+        Resolves and caches optimal computation device (CUDA/CPU/MPS).
         
         Returns:
-            torch.device: The `PyTorch` device object for model execution.
+            PyTorch device object for model execution
         """
         if self._device_cache is None:
             self._device_cache = to_device_obj(device_str=self.cfg.hardware.device)

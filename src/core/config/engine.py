@@ -1,24 +1,21 @@
 """
 Vision Pipeline Configuration & Orchestration Engine.
 
-This module acts as the declarative core of the pipeline, defining the 
-hierarchical schema and validation logic required to drive the Orchestrator. 
-It leverages Pydantic to transform raw inputs (CLI, YAML) into a structured, 
-type-safe manifest that synchronizes hardware state with experiment logic.
+Declarative core defining the hierarchical schema and validation logic 
+for the pipeline. Transforms raw inputs (CLI, YAML) into a structured, 
+type-safe manifest synchronizing hardware state with experiment logic.
 
-Key Architectural Features:
-    * Hierarchical Aggregation: Unifies specialized sub-configs (System, Dataset, 
-      Model, Training, Evaluation, Augmentation) into a single immutable object.
-    * Cross-Domain Validation: Implements complex logic checks (e.g., AMP vs. 
-      Device, LR bounds, Mixup scheduling) that span multiple sub-modules.
-    * Metadata-Driven Injection: Centralizes the resolution of registered dataset 
-      specifications, ensuring architectural synchronization across the entire stack.
-    * Factory Polymorphism: Provides dual entry points for instantiation via 
-      structured YAML files or dynamic CLI arguments.
+Key Features:
+    * Hierarchical aggregation: Unifies specialized sub-configs (Hardware, 
+      Dataset, Model, Training, Evaluation, Augmentation) into single immutable object
+    * Cross-domain validation: Complex logic checks (AMP vs Device, LR bounds, 
+      Mixup scheduling) spanning multiple sub-modules
+    * Metadata-driven injection: Centralizes dataset specification resolution, 
+      ensuring architectural synchronization
+    * Factory polymorphism: Dual entry points via YAML files or CLI arguments
 
-By enforcing strict validation during the initialization phase, the engine 
-guarantees that the RootOrchestrator operates within a logically sound 
-and reproducible execution context.
+Strict validation during initialization guarantees logically sound and 
+reproducible execution context for the RootOrchestrator.
 """
 
 # =========================================================================== #
@@ -31,9 +28,7 @@ from typing import Any, Dict
 # =========================================================================== #
 #                                Third-Party Imports                          #
 # =========================================================================== #
-from pydantic import (
-    BaseModel, ConfigDict, Field, model_validator
-)
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 # =========================================================================== #
 #                               Internal Imports                              #
@@ -45,27 +40,25 @@ from .augmentation_config import AugmentationConfig
 from .dataset_config import DatasetConfig
 from .evaluation_config import EvaluationConfig
 from .models_config import ModelConfig
-
-# TODO: Rename 'metadata' to 'registry' in the future to complete de-branding
-from ..metadata import DATASET_REGISTRY
+from ..metadata.wrapper import DatasetRegistryWrapper
 from ..io import load_config_from_yaml
 from ..paths import PROJECT_ROOT
 
+
 # =========================================================================== #
-#                                MAIN CONFIGURATION                          #
+#                            Main Configuration                               #
 # =========================================================================== #
 
 class Config(BaseModel):
     """
-    Main Experiment Manifest and Orchestration Schema.
+    Main experiment manifest aggregating specialized sub-configurations.
     
-    Aggregates specialized sub-configurations into a single validated object.
-    It provides the blueprint for the RootOrchestrator to execute experiments.
+    Provides the validated blueprint for RootOrchestrator to execute experiments.
     """
     model_config = ConfigDict(
-            extra="forbid",
-            validate_assignment=True,
-            frozen=True
+        extra="allow",
+        validate_assignment=True,
+        frozen=True
     )
     
     hardware: HardwareConfig = Field(default_factory=HardwareConfig)
@@ -76,23 +69,76 @@ class Config(BaseModel):
     evaluation: EvaluationConfig = Field(default_factory=EvaluationConfig)
     model: ModelConfig = Field(default_factory=ModelConfig)
 
+    @model_validator(mode="after")
+    def validate_logic(self) -> "Config":
+        """
+        Cross-field logic validation after instantiation.
+        
+        Validates:
+        - ResNet adapted requires 28x28 resolution
+        - Mixup epochs within total epochs
+        - AMP compatibility with device
+        - Pretrained models require 3-channel input
+        - Learning rate bounds
+        """
+        # 1. Model-specific resolution constraints
+        if "resnet_18_adapted" in self.model.name.lower() and self.dataset.resolution != 28:
+            raise ValueError(
+                f"resnet_18_adapted requires resolution=28, got {self.dataset.resolution}"
+            )
+
+        # Skip remaining validations if metadata not injected
+        if self.dataset.metadata is None:
+            return self
+
+        # 2. Training logic
+        if self.training.mixup_epochs > self.training.epochs:
+            raise ValueError(
+                f"mixup_epochs ({self.training.mixup_epochs}) exceeds "
+                f"total epochs ({self.training.epochs})"
+            )
+
+        # 3. Hardware-feature alignment
+        if self.hardware.device == "cpu" and self.training.use_amp:
+            raise ValueError("AMP requires GPU (CUDA/MPS), cannot use with CPU")
+
+        # 4. Model-dataset consistency
+        if self.model.pretrained and self.dataset.in_channels != 3:
+            raise ValueError(
+                f"Pretrained {self.model.name} requires RGB (3 channels), "
+                f"got {self.dataset.in_channels}. Set 'force_rgb: true' in dataset config"
+            )
+
+        # 5. Optimizer bounds
+        if self.training.min_lr >= self.training.learning_rate:
+            raise ValueError(
+                f"min_lr ({self.training.min_lr}) must be less than "
+                f"learning_rate ({self.training.learning_rate})"
+            )
+
+        return self
+
+    @property
+    def run_slug(self) -> str:
+        """Unique experiment folder identifier."""
+        return f"{self.dataset.dataset_name}_{self.model.name}"
+    
+    @property
+    def num_workers(self) -> int:
+        """Effective DataLoader workers from hardware policy."""
+        return self.hardware.effective_num_workers
+
     def dump_portable(self) -> Dict[str, Any]:
         """
-        Serializes the entire configuration with environment-agnostic paths.
+        Serializes config with environment-agnostic paths.
         
-        Converts absolute filesystem paths (system and dataset) into relative 
-        anchors relative to the PROJECT_ROOT.
-        
-        Returns:
-            Dict[str, Any]: A sanitized dictionary safe for cross-platform sharing.
+        Converts absolute paths to relative anchors from PROJECT_ROOT.
         """
         full_data = self.model_dump()
-
-        # Sanitize hardware + telemetry paths
         full_data["hardware"] = self.hardware.model_dump()
-        full_data["telemetry"] = self.telemetry.to_portable_dict()    
+        full_data["telemetry"] = self.telemetry.to_portable_dict()
 
-        # Sanitize dataset root if applicable
+        # Sanitize dataset root path
         dataset_section = full_data.get("dataset", {})
         data_root = dataset_section.get("data_root")
         
@@ -102,127 +148,92 @@ class Config(BaseModel):
                 relative_dr = dr_path.relative_to(PROJECT_ROOT)
                 full_data["dataset"]["data_root"] = f"./{relative_dr}"
             
-        return full_data    
+        return full_data
 
     def dump_serialized(self) -> Dict[str, Any]:
-        """
-        Converts the config into a JSON-compatible dictionary.
-        Essential for saving 'config.yaml' without serialization errors.
-        """
+        """Converts config to JSON-compatible dict for YAML serialization."""
         return self.model_dump(mode="json")
-    
-    @model_validator(mode="after")
-    def validate_logic(self) -> "Config":
-        """
-        Cross-field logic validation after instantiation.
-        
-        This validator ensures hardware, model, and dataset parameters are 
-        logically aligned. It supports 'Late Binding' by skipping checks 
-        that depend on DatasetMetadata if they haven't been injected yet.
-        """
-        # Skip validation if metadata hasn't been injected (prevents AttributeError during YAML load)
-        if self.dataset.metadata is None:
-            return self
-        
-        # 1. Training Logic
-        if self.training.mixup_epochs > self.training.epochs:
-            raise ValueError(
-                f"mixup_epochs ({self.training.mixup_epochs}) cannot exceed "
-                f"total epochs ({self.training.epochs})."
-            )
-            
-        # 2. Hardware vs Feature alignment
-        if self.hardware.device == "cpu" and self.training.use_amp:
-            raise ValueError("AMP cannot be enabled when using CPU device.")
-            
-        # 3. Model vs Dataset consistency (Late Bound validation)
-        # These properties (in_channels) are resolved dynamically from metadata
-        if self.model.pretrained and self.dataset.in_channels != 3:
-            raise ValueError(
-                f"Pretrained {self.model.name} requires 3-channel input (RGB). "
-                f"Current dataset provides {self.dataset.in_channels} channels. "
-                "Set 'force_rgb: true' in dataset config to fix this."
-            )
-            
-        # 4. Optimizer bounds
-        if self.training.min_lr >= self.training.learning_rate:
-            raise ValueError(
-                f"min_lr ({self.training.min_lr}) must be less than "
-                f"initial learning_rate ({self.training.learning_rate})."
-            )
-            
-        return self
 
-    @property
-    def run_slug(self) -> str:
-        """Unique identifier for the experiment folder based on setup."""
-        return f"{self.dataset.dataset_name}_{self.model.name}"
-    
-    @property
-    def num_workers(self) -> int:
-        """Proxies the effective number of workers from system policy."""
-        return self.hardware.effective_num_workers
-    
     @classmethod
-    def _resolve_dataset_metadata(cls, args: argparse.Namespace) -> Dict[str, Any]:
+    def _resolve_dataset_metadata(cls, args: argparse.Namespace) -> dict:
         """
-        Internal helper to identify and fetch dataset specs from the registry.
+        Fetches dataset specs from registry.
         
         Args:
-            args (argparse.Namespace): Parsed command line arguments.
+            args: Parsed CLI arguments
             
         Returns:
-            Dict[str, Any]: Metadata dictionary for the requested dataset.
+            Dataset metadata dictionary
+            
+        Raises:
+            ValueError: If dataset not found or name missing
         """
         ds_name_raw = getattr(args, 'dataset', None)
         if not ds_name_raw:
-            raise ValueError(
-                "Dataset name must be provided via --dataset or a config file."
-            )
-            
+            raise ValueError("Dataset name required via --dataset or config file")
+
+        resolution = getattr(args, 'resolution', None)
         ds_name = ds_name_raw.lower()
-        if ds_name not in DATASET_REGISTRY:
-             raise ValueError(f"Dataset '{ds_name_raw}' not found in registry.")
         
-        return DATASET_REGISTRY[ds_name]
-    
+        wrapper = DatasetRegistryWrapper(resolution=resolution)
+        if ds_name not in wrapper.registry:
+            raise ValueError(
+                f"Dataset '{ds_name_raw}' not found in registry for resolution {resolution}"
+            )
+
+        return wrapper.get_dataset(ds_name)
+
     @classmethod
-    def from_yaml(cls, yaml_path: Path, metadata: Dict[str, Any]) -> "Config":
+    def _hydrate_yaml(cls, yaml_path: Path, metadata: dict) -> "Config":
         """
-        Factory method to create a fully 'hydrated' Config instance from a YAML file.
+        Loads YAML config and injects dataset metadata.
         
         Args:
-            yaml_path: Path to the configuration file.
-            metadata: The resolved dataset metadata to inject.
+            yaml_path: Path to config YAML
+            metadata: Dataset metadata to inject
+            
+        Returns:
+            Validated Config instance
         """
         raw_data = load_config_from_yaml(yaml_path)
-        
-        # 1. Primary instantiation (metadata is None)
         cfg = cls(**raw_data)
         
-        # 2. Metadata Injection (Hydration)
+        # Inject metadata (frozen model workaround)
         object.__setattr__(cfg.dataset, 'metadata', metadata)
         
-        # 3. Final Validation
         return cls.model_validate(cfg)
 
     @classmethod
-    def from_args(cls, args: argparse.Namespace) -> "Config":
+    def from_yaml(cls, yaml_path: Path, metadata: dict) -> "Config":
         """
-        Unified entry point for CLI-based instantiation.
+        Factory from YAML file with metadata injection.
         
-        Leverages _resolve_dataset_metadata to ensure the dataset identity 
-        is validated against the registry before any configuration is built.
+        Args:
+            yaml_path: Path to config YAML
+            metadata: Dataset metadata
+            
+        Returns:
+            Hydrated Config instance
         """
-        # 1. Resolve metadata once (The Source of Truth)
-        ds_meta = cls._resolve_dataset_metadata(args)
+        return cls._hydrate_yaml(yaml_path, metadata)
 
-        # 2. Routing logic
-        if getattr(args, 'config', None):
-            # If a YAML is provided, hydrate it with the resolved metadata
-            return cls.from_yaml(Path(args.config), metadata=ds_meta)
+    @classmethod
+    def _build_from_yaml_or_args(cls, args: argparse.Namespace, ds_meta: dict) -> "Config":
+        """
+        Constructs Config from YAML or CLI arguments.
         
-        # 3. Manual Assembly (CLI-only flow)
+        Prioritizes YAML if provided, otherwise builds from CLI args.
+        
+        Args:
+            args: Parsed argparse namespace
+            ds_meta: Dataset metadata
+            
+        Returns:
+            Configured instance
+        """
+        if getattr(args, "config", None):
+            return cls.from_yaml(Path(args.config), metadata=ds_meta)
+
         return cls(
             hardware=HardwareConfig.from_args(args),
             telemetry=TelemetryConfig.from_args(args),
@@ -230,5 +241,19 @@ class Config(BaseModel):
             augmentation=AugmentationConfig.from_args(args),
             dataset=DatasetConfig.from_args(args, metadata=ds_meta),
             model=ModelConfig.from_args(args),
-            evaluation=EvaluationConfig.from_args(args)
+            evaluation=EvaluationConfig.from_args(args),
         )
+
+    @classmethod
+    def from_args(cls, args: argparse.Namespace) -> "Config":
+        """
+        Factory from CLI arguments.
+        
+        Args:
+            args: Parsed argparse namespace
+            
+        Returns:
+            Configured instance with resolved metadata
+        """
+        ds_meta = cls._resolve_dataset_metadata(args)
+        return cls._build_from_yaml_or_args(args, ds_meta)

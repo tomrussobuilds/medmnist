@@ -60,7 +60,7 @@ def show_predictions(
     
     # 2. Grid & Figure Setup
     grid_cols = cfg.evaluation.grid_cols if cfg else 4
-    fig, axes = _setup_prediction_grid(len(images), grid_cols, cfg)
+    _, axes = _setup_prediction_grid(len(images), grid_cols, cfg)
     
     # 3. Plotting Loop
     for i, ax in enumerate(axes):
@@ -89,11 +89,9 @@ def show_predictions(
     }""" if cfg else ""
 
     plt.suptitle(
-        f"Sample Predictions — "
-        f"{cfg.model.name if cfg else 'Inference'}{tta_info}{domain_info}",
+        f"Sample Predictions — {cfg.model.name} | Resolution — {cfg.dataset.resolution}",
         fontsize=14
     )
-
     
     # 4. Export and Cleanup
     _finalize_figure(plt, save_path, cfg)
@@ -124,7 +122,12 @@ def plot_training_curves(
     ax2.set_ylabel("Accuracy", color='#3498db', fontweight='bold')
     ax2.tick_params(axis='y', labelcolor='#3498db')
 
-    plt.title(f"Training Metrics — {cfg.model.name}", fontsize=14, pad=15)
+    fig.suptitle(
+        f"Training Metrics — {cfg.model.name} | Resolution — {cfg.dataset.resolution}",
+        fontsize=14,
+        y=1.02
+    )
+
     fig.tight_layout()
     
     plt.savefig(out_path, dpi=cfg.evaluation.fig_dpi, bbox_inches="tight")
@@ -162,8 +165,13 @@ def plot_confusion_matrix(
         xticks_rotation=45, 
         values_format='.3f'
     )
+    plt.title(
+        f"Confusion Matrix — {cfg.model.name} | Resolution — {cfg.dataset.resolution}",
+        fontsize=12,
+        pad=20
+    )
 
-    plt.title(f"Confusion Matrix — {cfg.model.name}", fontsize=14, pad=20)
+
     plt.tight_layout()
     
     fig.savefig(out_path, dpi=cfg.evaluation.fig_dpi, bbox_inches="tight")
@@ -194,7 +202,7 @@ def _get_predictions_batch(model: nn.Module, loader: DataLoader, device: torch.d
 def _setup_prediction_grid(num_samples: int, cols: int, cfg: Config | None):
     """Calculates grid dimensions and initializes matplotlib subplots."""
     rows = int(np.ceil(num_samples / cols))
-    base_w, base_h = cfg.evaluation.fig_size_predictions if cfg else (12, 8)
+    base_w, base_h = cfg.evaluation.fig_size_predictions
     
     fig, axes = plt.subplots(
         rows, cols, 
@@ -209,7 +217,7 @@ def _finalize_figure(plt_obj, save_path: Path | None, cfg: Config | None):
     """Handles saving to disk and cleaning up memory."""
     if save_path:
         save_path.parent.mkdir(parents=True, exist_ok=True)
-        dpi = cfg.evaluation.fig_dpi if cfg else 200
+        dpi = cfg.evaluation.fig_dpi
         plt_obj.savefig(save_path, dpi=dpi, bbox_inches="tight", facecolor="white")
         logger.info(f"Predictions grid saved → {save_path.name}")
     else:

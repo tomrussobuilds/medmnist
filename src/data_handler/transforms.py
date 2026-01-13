@@ -115,6 +115,7 @@ def get_pipeline_transforms(
     # --- VALIDATION/INFERENCE PIPELINE ---
     val_transform = v2.Compose([
         *get_base_ops(),
+        v2.Resize(size=cfg.dataset.img_size, antialias=True),
         v2.Normalize(mean=mean, std=std),
     ])
     

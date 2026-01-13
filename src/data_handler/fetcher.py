@@ -150,6 +150,39 @@ def load_medmnist(metadata: DatasetMetadata) -> MedMNISTData:
             num_classes=num_classes
         )
 
+def load_medmnist_health_check(
+        metadata: DatasetMetadata,
+        chunk_size: int = 100
+    ) -> MedMNISTData:
+    """
+    Loads a small "chunk" of data (e.g., the first 100 images and labels) 
+    for an initial health check, while retaining the download and verification logic.
+
+    Args:
+        metadata (DatasetMetadata): Metadata containing URL, MD5, name, and target path for the dataset.
+        chunk_size (int): Number of samples to load for the health check.
+
+    Returns:
+        MedMNISTData: Metadata of the dataset, including info about the loaded data.
+    """
+    path = ensure_dataset_npz(metadata)
+
+    with np.load(path) as data:
+        validate_npz_keys(data)
+
+        images_chunk = data["train_images"][:chunk_size]
+        labels_chunk = data["train_labels"][:chunk_size]
+
+        is_rgb = (images_chunk.ndim == 4 and images_chunk.shape[-1] == 3)
+        
+        num_classes = len(np.unique(labels_chunk))
+        
+        return MedMNISTData(
+            path=path,
+            name=metadata.name,
+            is_rgb=is_rgb,
+            num_classes=num_classes
+        )
 
 # =========================================================================== #
 #                                PRIVATE HELPERS                              #

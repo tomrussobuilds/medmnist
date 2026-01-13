@@ -88,7 +88,7 @@ class RunPaths(BaseModel):
         # Determine the unique run ID
         run_id = cls._generate_unique_id(ds_slug, m_slug, training_cfg)
         
-        base = base_dir or OUTPUTS_ROOT
+        base = Path(base_dir or OUTPUTS_ROOT)
         root_path = base / run_id
 
         # Safety collision check (rare with blake2b but handled)

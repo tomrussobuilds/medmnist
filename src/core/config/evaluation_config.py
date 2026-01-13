@@ -1,24 +1,21 @@
 """
 Evaluation Reporting & Visualization Schema.
 
-This module governs the post-training diagnostic phase, defining the 
-aesthetics and structural requirements for performance telemetry. It 
-synchronizes visual artifact generation (Confusion Matrices, Prediction Grids) 
-with quantitative data persistence (Excel/JSON/CSV).
+Defines post-training diagnostic phase requirements: visual artifacts 
+(confusion matrices, prediction grids) and quantitative data persistence 
+(Excel/JSON/CSV).
 
-Key Architectural Features:
-    * Aesthetic Standardization: Enforces consistent DPI, colormaps, and plot 
-      styles across experiments to facilitate side-by-side comparative analysis.
-    * Diagnostic Layouts: Configures the geometry of prediction grids, allowing 
-      for high-fidelity inspection of model "blind spots" (misclassifications).
-    * Tabular Export Policy: Validates and manages the serialization format 
-      for final metrics, ensuring compatibility with downstream data 
-      visualization tools.
-    * Resource Efficiency: Controls inference batch sizes to optimize memory 
-      usage during the evaluation of large test sets.
+Key Features:
+    * Aesthetic standardization: DPI, colormaps, plot styles for reproducible 
+      comparative analysis across experiments
+    * Diagnostic layouts: Configurable prediction grid geometry for inspecting 
+      model errors and blind spots
+    * Tabular export: Validated serialization formats compatible with 
+      downstream analysis tools
+    * Resource efficiency: Inference batch size control for memory optimization
 
-By centralizing reporting parameters, the schema guarantees that every 
-experiment produces a standardized, publication-quality diagnostic suite.
+Centralizes reporting parameters to ensure standardized, publication-quality 
+diagnostic output for every experiment.
 """
 
 # =========================================================================== #
@@ -29,72 +26,96 @@ import argparse
 # =========================================================================== #
 #                                Third-Party Imports                          #
 # =========================================================================== #
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+from pydantic import (
+    BaseModel, Field, ConfigDict, field_validator
+)
 
 # =========================================================================== #
 #                               Internal Imports                              #
 # =========================================================================== #
-from .types import (
-    PositiveInt, BatchSize
-)
+from .types import PositiveInt, BatchSize
 
 # =========================================================================== #
-#                           EVALUATION CONFIGURATION                          #
+#                           Evaluation Configuration                          #
 # =========================================================================== #
 
 class EvaluationConfig(BaseModel):
     """
-    Controls the visual reporting and performance metric persistence.
+    Visual reporting and performance metric persistence configuration.
     
-    Sets the aesthetics for confusion matrices, prediction grids, and 
-    defines the export format for quantitative tabular reports.
+    Controls inference settings, visualization aesthetics, and export formats 
+    for confusion matrices and prediction grids.
     """
-    model_config = ConfigDict(
-        frozen=True,
-        extra="forbid"
-    )
+    model_config = ConfigDict(frozen=True, extra="forbid")
     
-    # Inference Strategy
+    # Inference
     batch_size: BatchSize = Field(
         default=64,
-        description="Batch size used during inference/evaluation"
+        description="Batch size for inference/evaluation"
     )
     
-    # Visualization Aesthetics
+    # Visualization
     n_samples: PositiveInt = Field(
         default=12,
-        description="Number of images to show in the prediction grid"
+        description="Number of samples in prediction grid"
     )
-    fig_dpi: PositiveInt = Field(default=200)
-    cmap_confusion: str = "Blues"
-    plot_style: str = "seaborn-v0_8-muted"
+    fig_dpi: PositiveInt = Field(
+        default=200,
+        description="DPI for saved figures"
+    )
+    cmap_confusion: str = Field(
+        default="Blues",
+        description="Confusion matrix colormap"
+    )
+    plot_style: str = Field(
+        default="seaborn-v0_8-muted",
+        description="Matplotlib plot style"
+    )
+    grid_cols: PositiveInt = Field(
+        default=4,
+        description="Prediction grid columns"
+    )
+    fig_size_predictions: tuple[PositiveInt, PositiveInt] = Field(
+        default=(12, 8),
+        description="Prediction grid size (width, height)"
+    )
     
-    # Export Settings
-    report_format: str = "xlsx"
-    save_confusion_matrix: bool = True
-    save_predictions_grid: bool = True
-    
-    # Grid Geometry
-    grid_cols: PositiveInt = Field(default=4)
-    fig_size_predictions: tuple[int, int] = (12, 8)
+    # Export
+    report_format: str = Field(
+        default="xlsx",
+        description="Report export format (xlsx, csv, json)"
+    )
+    save_confusion_matrix: bool = Field(
+        default=True,
+        description="Save confusion matrix visualization"
+    )
+    save_predictions_grid: bool = Field(
+        default=True,
+        description="Save prediction grid visualization"
+    )
 
     @field_validator("report_format")
     @classmethod
     def validate_format(cls, v: str) -> str:
-        """Ensure the output format is compatible with downstream consumers."""
-        supported = ["xlsx"]
-        if v.lower() not in supported:
-            return "xlsx"
-        return v.lower()
+        """Validates report format, defaults to xlsx if unsupported."""
+        supported = {"xlsx", "csv", "json"}
+        normalized = v.lower()
+        return normalized if normalized in supported else "xlsx"
 
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> "EvaluationConfig":
-        """Map evaluation and reporting preferences from CLI arguments."""
-        return cls(
-            batch_size=getattr(args, 'eval_batch_size', 64),
-            n_samples=getattr(args, 'eval_samples', 12),
-            fig_dpi=getattr(args, 'fig_dpi', 200),
-            plot_style=getattr(args, 'plot_style', "seaborn-v0_8-muted"),
-            report_format=getattr(args, 'report_format', "xlsx"),
-            save_confusion_matrix=not getattr(args, 'no_confusion', False)
-        )
+        """
+        Factory from CLI arguments.
+        
+        Args:
+            args: Parsed argparse namespace
+            
+        Returns:
+            Configured EvaluationConfig instance
+        """
+        params = {
+            field: getattr(args, field, cls.model_fields[field].default)
+            for field in cls.model_fields
+            if hasattr(args, field) or cls.model_fields[field].default is not None
+        }
+        return cls(**params)

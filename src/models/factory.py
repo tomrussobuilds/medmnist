@@ -23,6 +23,7 @@ import torch.nn as nn
 # =========================================================================== #
 from src.core import Config, LOGGER_NAME
 from .resnet_18_adapted import build_resnet18_adapted
+from .efficientnet_b0 import build_efficientnet_b0
 
 # =========================================================================== #
 #                                MODEL FACTORY LOGIC                          #
@@ -56,6 +57,7 @@ def get_model(
     # Internal registry for architectural routing
     _MODEL_REGISTRY = {
         "resnet_18_adapted": build_resnet18_adapted,
+        "efficientnet_b0": build_efficientnet_b0,
     }
 
     # Resolve structural dimensions from Single Source of Truth (Config)

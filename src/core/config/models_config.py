@@ -43,10 +43,10 @@ class ModelConfig(BaseModel):
     )
     
     name: str = Field(
-        default="resnet18",
-        description="The unique identifier for the model architecture."
+        default="resnet_18_adapted",
+        description="The unique identifier for the model architecture. E.g., 'resnet_18_adapted', 'efficientnet_b0'."
     )
-    
+  
     pretrained: bool = Field(
         default=True,
         description="Whether to initialize the model with pre-trained weights."

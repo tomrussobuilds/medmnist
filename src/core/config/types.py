@@ -1,28 +1,25 @@
 """
 Semantic Type Definitions & Validation Primitives.
 
-This module acts as the foundational type-system for the configuration engine. 
-It leverages Pydantic's Annotated types and Functional Validators to enforce 
-domain-specific constraints (e.g., physical probability ranges, learning rate 
-boundaries, and path integrity) before they reach the orchestration logic.
+Foundational type-system for the configuration engine. Leverages Pydantic's 
+Annotated types and Functional Validators to enforce domain-specific 
+constraints (probability ranges, learning rate boundaries, path integrity) 
+before reaching orchestration logic.
 
 Core Responsibilities:
-    * Path Sanitization: Resolves paths to absolute forms and handles home 
-      directory expansion (~), ensuring path consistency without performing 
-      disk I/O operations.
-    * Boundary Enforcement: Strict validation of hyperparameters (Learning Rates, 
-      Probabilities, Smoothing Values) using field-level constraints to prevent 
-      unstable training states.
-    * Type Aliasing: Provides a centralized registry of domain-specific types 
-      (e.g., WorkerCount, ProjectSlug, LearningRate) to ensure semantic 
-      consistency across the entire configuration suite.
-    * Serialization Policy: Defines custom serialization logic for complex 
-      objects (like Path) to guarantee JSON/YAML compatibility.
+    * Path sanitization: Resolves paths to absolute forms with home directory 
+      expansion (~), ensuring consistency without disk I/O
+    * Boundary enforcement: Strict validation of hyperparameters (LR, 
+      probabilities, smoothing) using field constraints to prevent unstable states
+    * Type aliasing: Centralized registry of domain-specific types (WorkerCount, 
+      ProjectSlug, LearningRate) for semantic consistency
+    * Serialization policy: Custom serialization for complex objects (Path) 
+      ensuring JSON/YAML compatibility
 
-By centralizing these definitions, the engine catches invalid states at the 
-'edge' of the application during schema initialization, preventing runtime 
-failures in the deeper orchestration layers.
+Catches invalid states at application edge during schema initialization, 
+preventing runtime failures in deeper orchestration layers.
 """
+
 # =========================================================================== #
 #                                Standard Imports                             #
 # =========================================================================== #
@@ -32,9 +29,8 @@ from typing import Annotated, Literal
 # =========================================================================== #
 #                                Third-Party Imports                          #
 # =========================================================================== #
-from pydantic import (
-    Field, AfterValidator, PlainSerializer
-)
+from pydantic import Field, AfterValidator, PlainSerializer
+
 
 # =========================================================================== #
 #                                VALIDATORS                                   #
@@ -43,6 +39,7 @@ from pydantic import (
 def _sanitize_path(v: Path) -> Path:
     """Resolve path to absolute form without disk side-effects."""
     return v.expanduser().resolve()
+
 
 # =========================================================================== #
 #                                1. GENERIC PRIMITIVES                        #

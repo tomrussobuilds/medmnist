@@ -1,23 +1,19 @@
 """
 Optimization & Regularization Configuration Schema.
 
-This module defines the declarative schema for the training lifecycle, 
-orchestrating the optimization landscape and regularization boundaries. 
-It synchronizes learning rate dynamics (Cosine Annealing) with advanced 
-data augmentation strategies (Mixup) and precision policies (AMP).
+Declarative schema for training lifecycle, orchestrating optimization 
+landscape and regularization boundaries. Synchronizes learning rate 
+dynamics (Cosine Annealing) with data augmentation (Mixup) and 
+precision policies (AMP).
 
-Key Architectural Features:
-    * Optimization Dynamics: Manages learning rate schedules and momentum 
-      parameters to navigate the loss landscape effectively.
-    * Regularization Suite: Controls Label Smoothing and Mixup coefficients, 
-      facilitating model generalization on medical imaging datasets.
-    * Precision & Stability: Configures Automatic Mixed Precision (AMP) and 
-      Gradient Clipping to optimize hardware throughput and training stability.
-    * Reproducibility Guard: Integrates global seeding and strict 
-      determinism flags to ensure bit-perfect experimental replication.
+Key Features:
+    * Optimization dynamics: LR schedules and momentum for loss landscape navigation
+    * Regularization suite: Label smoothing and Mixup for medical imaging generalization
+    * Precision & stability: AMP and gradient clipping for hardware throughput and stability
+    * Reproducibility guard: Global seeding and strict determinism for bit-perfect replication
 
-By enforcing strict boundary validation (e.g., probability ranges), the 
-schema prevents unstable training states before the first batch is processed.
+Strict boundary validation (probability ranges, LR bounds) prevents unstable 
+training states before first batch processing.
 """
 
 # =========================================================================== #
@@ -39,19 +35,18 @@ from .types import (
     Probability, SmoothingValue, LearningRate, GradNorm, Momentum
 )
 
+
 # =========================================================================== #
 #                             TRAINING CONFIGURATION                          #
 # =========================================================================== #
 
 class TrainingConfig(BaseModel):
     """
-    Defines the optimization landscape and regularization strategies.
+    Optimization landscape and regularization strategies.
     
-    This class ensures all training hyperparameters are validated and provides
-    clear structure for reproducibility, optimization, regularization, and
-    scheduler configuration.
+    Validates training hyperparameters and provides structure for 
+    reproducibility, optimization, regularization, and scheduling.
     """
-
     model_config = ConfigDict(
         frozen=True,
         extra="forbid"
@@ -60,25 +55,25 @@ class TrainingConfig(BaseModel):
     # ==================== Reproducibility ====================
     seed: int = Field(
         default=42,
-        description="Random seed for reproducibility"
+        description="Random seed"
     )
     reproducible: bool = Field(
         default=False,
-        description="Enable strict reproducibility mode"
+        description="Strict reproducibility mode"
     )
 
     # ==================== Training Loop ====================
     batch_size: PositiveInt = Field(
-        default=128,
-        description="Number of samples per batch"
+        default=32,
+        description="Samples per batch"
     )
     epochs: PositiveInt = Field(
         default=60,
-        description="Maximum number of training epochs"
+        description="Maximum epochs"
     )
     patience: NonNegativeInt = Field(
         default=15,
-        description="Early stopping patience in epochs"
+        description="Early stopping patience"
     )
 
     # ==================== Optimization ====================
@@ -92,95 +87,94 @@ class TrainingConfig(BaseModel):
     )
     momentum: Momentum = Field(
         default=0.9,
-        description="SGD momentum factor"
+        description="SGD momentum"
     )
     weight_decay: WeightDecay = Field(
         default=5e-4,
-        description="Weight decay (L2 regularization)"
+        description="L2 regularization"
     )
     grad_clip: Optional[GradNorm] = Field(
         default=1.0,
-        description="Maximum gradient norm; None to disable"
+        description="Max gradient norm"
     )
 
     # ==================== Regularization ====================
     label_smoothing: SmoothingValue = Field(
         default=0.0,
-        description="Label smoothing factor for classification"
+        description="Label smoothing factor"
     )
     mixup_alpha: NonNegativeFloat = Field(
         default=0.2, 
-        description="Mixup interpolation coefficient"
+        description="Mixup coefficient"
     )
     mixup_epochs: NonNegativeInt = Field(
         default=20,
-        description="Number of epochs to apply Mixup"
+        description="Mixup duration (epochs)"
     )
     use_tta: bool = Field(
         default=True,
-        description="Enable Test Time Augmentation (TTA)"
+        description="Test-time augmentation"
     )
 
     # ==================== Scheduler ====================
     scheduler_type: str = Field(
         default="cosine",
-        description="LR scheduler type: 'cosine', 'plateau', 'step', or 'none'"
+        description="LR scheduler: 'cosine', 'plateau', 'step', 'none'"
     )
     cosine_fraction: Probability = Field(
         default=0.5,
-        description="Fraction of total epochs for cosine annealing"
+        description="Cosine annealing fraction"
     )
     scheduler_patience: NonNegativeInt = Field(
         default=5,
-        description="Patience for ReduceLROnPlateau"
+        description="Plateau patience"
     )
     scheduler_factor: Probability = Field(
         default=0.1,
-        description="LR reduction factor for Plateau/StepLR"
+        description="LR reduction factor"
     )
     step_size: PositiveInt = Field(
         default=20,
-        description="Period of LR decay for StepLR"
+        description="StepLR decay period"
     )
     use_amp: bool = Field(
-        default=False,
-        description="Enable Automatic Mixed Precision (AMP)"
+        default=True,
+        description="Automatic Mixed Precision"
     )
 
     # ==================== Loss ====================
     criterion_type: str = Field(
         default="cross_entropy",
-        description="Loss function: 'cross_entropy', 'focal', or 'bce_logit'"
+        description="Loss: 'cross_entropy', 'focal', 'bce_logit'"
     )
     weighted_loss: bool = Field(
         default=False,
-        description="Apply class-frequency weighting"
+        description="Class-frequency weighting"
     )
     focal_gamma: NonNegativeFloat = Field(
         default=2.0,
-        description="Focusing parameter for Focal Loss"
+        description="Focal Loss gamma"
     )
 
     # ==================== Factory Method ====================
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> "TrainingConfig":
         """
-        Factory method to instantiate TrainingConfig from CLI arguments.
-
-        Only overrides schema fields that exist in the args Namespace and are not None.
-        This approach automatically adapts to new fields added to the schema.
+        Factory from CLI arguments.
+        
+        Only overrides schema fields present in args and not None.
+        Automatically adapts to new schema fields.
 
         Args:
-            args (argparse.Namespace): Parsed command-line arguments.
+            args: Parsed command-line arguments
 
         Returns:
-            TrainingConfig: Config instance with CLI-overridden values.
+            TrainingConfig with CLI-overridden values
         """
         args_dict = vars(args)
-        # Keep only args that match schema fields and are not None
         valid_fields = cls.model_fields.keys()
         params = {
-            k: v for k, v in args_dict.items() if k in valid_fields and v is not None
+            k: v for k, v in args_dict.items() 
+            if k in valid_fields and v is not None
         }
-
         return cls(**params)

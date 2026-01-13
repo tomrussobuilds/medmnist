@@ -1,4 +1,4 @@
-# 🩺 MedMNIST Classification with Adapted ResNet-18
+# 🖼️ Adaptive Image Classification with Adapted ResNet-18 and EfficientNet-V0
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-orange?logo=pytorch&logoColor=white)
@@ -15,18 +15,27 @@
 
 ## 📌 Table of Contents
 
-* [🚀 Getting Started](#-getting-started)
-* [✨ Key Features](#-key-features--defensive-engineering)
-* [📊 Experiment Artifacts & Reporting](#-experiment-artifacts--reporting)
-* [🧩 Internal Dependency Mapping](#-internal-dependency-mapping)
-* [🏗 Architecture Details](#-architecture-details)
-* [📁 Project Structure](#-project-structure)
-* [⚙️ Requirements & Installation](#️-requirements--installation)
-* [💻 Usage (Local)](#-usage-local)
-* [🐳 Docker Execution](#-docker-execution-recommended-for-portability)
-* [✅ Environment Verification (Smoke Test)](#-environment-verification-smoke-test)
-* [📊 Command Line Arguments](#-command-line-arguments)
-* [🗺 Research Goals](#-research-goals--roadmap)
+- [🖼️ Adaptive Image Classification with Adapted ResNet-18 and EfficientNet-V0](#️-adaptive-image-classification-with-adapted-resnet-18-and-efficientnet-v0)
+  - [📌 Table of Contents](#-table-of-contents)
+  - [🚀 Getting Started](#-getting-started)
+    - [1. Installation \& Environment](#1-installation--environment)
+    - [✨ Key Features \& Defensive Engineering](#-key-features--defensive-engineering)
+    - [📊 Experiment Artifacts \& Reporting](#-experiment-artifacts--reporting)
+    - [🧩 Internal Dependency Mapping](#-internal-dependency-mapping)
+    - [🏗 Architecture Details](#-architecture-details)
+    - [🔬 Mathematical Weight Transfer](#-mathematical-weight-transfer)
+    - [🔬 Training Regularization](#-training-regularization)
+    - [📁 Project Structure](#-project-structure)
+    - [⚙️ Requirements \& Installation](#️-requirements--installation)
+    - [💻 Usage (Local)](#-usage-local)
+      - [Option A: Running with a Recipe (Recommended)](#option-a-running-with-a-recipe-recommended)
+      - [Option B: Standard CLI (Quick Tests)](#option-b-standard-cli-quick-tests)
+    - [✅ Environment Verification (Smoke Test)](#-environment-verification-smoke-test)
+    - [🐳 Docker Execution (Recommended for Portability)](#-docker-execution-recommended-for-portability)
+    - [📊 Command Line Arguments](#-command-line-arguments)
+    - [Scaling to other MedMNIST datasets](#scaling-to-other-medmnist-datasets)
+    - [Citation](#citation)
+    - [🗺 Research Goals \& Roadmap](#-research-goals--roadmap)
 
 This repository provides a highly reproducible training framework for the MedMNIST v2 suite using an adapted ResNet-18.
 Originally developed on CPU with small datasets (~11k samples for BloodMNIST, ~2.5h training), it now runs in minutes on modern GPUs (e.g., RTX 5070), automatically adapting device and execution policies—paving the way for larger datasets and higher-resolution experiments.
@@ -77,6 +86,9 @@ This pipeline is engineered for unattended, robust execution in research environ
 **Dynamic Path Anchoring**: Leveraging a "Search-up" logic, the system dynamically locates the project root by searching for markers (`.git` or `README.md`). This ensures absolute path stability regardless of whether the script is launched from the root, `src/`, or a subfolder.
 
 **Graceful Logger Reconfiguration**: Implements a two-stage logging lifecycle. Initial logs are routed to `STDOUT` for immediate feedback; once the `Orchestrator` initializes the run directory, the logger seamlessly hot-swaps to include a timestamped file handler without losing previous trace data.
+
+**High-Resolution Support (224×224)**: For experiments requiring more detailed images, the pipeline also supports `EfficientNet-V0` backbones at native `224×224` resolution. GPU acceleration is strongly recommended for these models.
+
 
 ---
 
@@ -240,8 +252,13 @@ This is the preferred way to ensure full reproducibility. The YAML file acts as 
 # Ensure PYTHONPATH is set
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 
-# Launch using the configuration recipe
-python main.py --config recipes/config.yaml
+# Launch using the configuration recipes:
+
+# CPU-friendly setup (28×28, ResNet-18 adapted)
+python main.py --config recipes/config_28x28_resnet_18_adapted.yaml
+
+# High-resolution setup (224×224, GPU acceleration recommended)
+python main.py --config recipes/config_224x224_efficientnet_v0.yaml
 ```
 
 #### Option B: Standard CLI (Quick Tests)
@@ -379,10 +396,10 @@ python main.py --dataset dermamnist --lr 0.005 --epochs 100
 If you use this repository in academic work or derivative projects:
 
 ```bibtex
-@misc{medmnist_resnet18,
-  title  = {MedMNIST Classification with Adapted ResNet-18},
+@misc{adaptive_classification_framework,
+  title  = {Adaptive Image Classification Framework with ResNet-18 and EfficientNet-V0},
   author = {Tommaso Russo},
-  year   = {2025},
+  year   = {2026},
   url    = {https://github.com/tomrussobuilds/medmnist}
 }
 ```
@@ -393,6 +410,6 @@ If you use this repository in academic work or derivative projects:
 
 - **Phase 2: Configuration-Driven Engine (Completed)** Transition to a fully declarative execution model using **YAML Recipes**. Total decoupling of experiment logic from the core engine for version-controlled, reproducible research.
 
-- **Phase 3: High-Resolution & Modern Backbones (Near Term)** Scaling the pipeline to handle high-resolution inputs ($224 \times 224$ and beyond). Integration of state-of-the-art architectures including **Vision Transformers (ViT)**, **EfficientNet-V2**, and **ConvNeXt** to benchmark global vs. local feature extraction.
+- **Phase 3: High-Resolution & Modern Backbones (Current)** Scaling the pipeline to handle high-resolution inputs ($224 \times 224$ and beyond). Integration of state-of-the-art architectures including **Vision Transformers (ViT)**, **EfficientNet-V2**, and **ConvNeXt** to benchmark global vs. local feature extraction.
 
 - **Phase 4: Domain Transcendence & Universal Framework (Long Term)** Evolving the codebase into a domain-agnostic Computer Vision framework. This includes abstracting the Data Registry to support diverse manifolds (Natural Images, Satellite, Industrial Inspection) and implementing multi-modal hooks for broader vision tasks.

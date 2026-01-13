@@ -10,6 +10,7 @@ setup (seeding, workers, memory pinning).
 #                                Standard Imports                             #
 # =========================================================================== #
 import logging
+from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 # =========================================================================== #
@@ -17,7 +18,9 @@ from typing import Dict, Optional, Tuple
 # =========================================================================== #
 import numpy as np
 import torch
-from torch.utils.data import DataLoader, WeightedRandomSampler
+from torch.utils.data import (
+    DataLoader, WeightedRandomSampler, Dataset
+)
 
 # =========================================================================== #
 #                                Internal Imports                             #
@@ -209,27 +212,44 @@ def get_dataloaders(metadata, cfg):
 #                               HEALTH UTILITIES                              #
 # =========================================================================== #
 
+class LazyNPZDataset(Dataset):
+    """Torch Dataset that lazily loads images from a .npz file using memmap."""
+
+    def __init__(self, npz_path: Path):
+        self.npz_path = npz_path
+        # Use memory-mapped mode to avoid loading all in RAM
+        self.data = np.load(npz_path, mmap_mode='r')
+        self.images = self.data['train_images']
+        self.labels = self.data['train_labels']
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, idx):
+        img = self.images[idx]
+        # Ensure channel dimension (C,H,W)
+        if img.ndim == 2:          # (H,W) grayscale
+            img = np.expand_dims(img, axis=0)
+        elif img.ndim == 3:        # (H,W,C)
+            img = np.transpose(img, (2, 0, 1))
+        else:
+            raise ValueError(f"Unexpected image shape: {img.shape}")
+        
+        img = torch.from_numpy(img).float() / 255.0
+        label = int(self.labels[idx])
+        return img, label
+
+
 def create_temp_loader(
-        raw_data: np.lib.npyio.NpzFile,
+        dataset_path: Path,
         batch_size: int = 16
 ) -> DataLoader:
-    """Direct conversion of raw NPZ arrays to DataLoader for health checks.
-
-    Args:
-        raw_data: The loaded NPZ file from numpy.
-        batch_size: Samples per batch.
-
-    Returns:
-        A minimalistic DataLoader for early-stage pipeline verification.
     """
-    images_t = torch.from_numpy(raw_data['train_images']).float() / 255.0
-    
-    if images_t.ndim == 3:
-        images_t = images_t.unsqueeze(1)
-    else:
-        images_t = images_t.permute(0, 3, 1, 2)
-        
-    labels_t = torch.from_numpy(raw_data['train_labels']).long().squeeze()
-    dataset = torch.utils.data.TensorDataset(images_t, labels_t)
-    
-    return DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    Load a NPZ dataset lazily and return a DataLoader for health checks.
+
+    This avoids loading the entire dataset into RAM at once, which is critical
+    for large datasets (e.g., 224x224 images).
+    """
+    dataset = LazyNPZDataset(dataset_path)
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    return loader

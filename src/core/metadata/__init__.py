@@ -11,14 +11,17 @@ across the entire pipeline.
 #                                Internal Imports                             #
 # =========================================================================== #
 from .base import DatasetMetadata
-from .medmnist_v2_28x28 import DATASET_REGISTRY
+from .wrapper import DatasetRegistryWrapper, DEFAULT_WRAPPER
 
 # =========================================================================== #
 #                                PUBLIC REGISTRY                              #
 # =========================================================================== #
 
-# Expose at package level for direct access via scripts.core.metadata
+# Expose at package level
 __all__ = [
     "DatasetMetadata",
-    "DATASET_REGISTRY"
+    "DatasetRegistryWrapper",
+    "DEFAULT_WRAPPER",
 ]
+
+DATASET_REGISTRY = DEFAULT_WRAPPER.registry

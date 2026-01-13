@@ -1,8 +1,8 @@
 """
-Argument Parsing Module
+Argument Parsing Module.
 
-This module handles the command-line interface (CLI) for the training pipeline.
-It bridges terminal inputs with the hierarchical Pydantic configuration.
+Handles command-line interface (CLI) for the training pipeline.
+Bridges terminal inputs with hierarchical Pydantic configuration.
 """
 
 # =========================================================================== #
@@ -19,104 +19,108 @@ from .config.training_config import TrainingConfig
 from .config.evaluation_config import EvaluationConfig
 from .config.augmentation_config import AugmentationConfig
 
+
 # =========================================================================== #
-#                                ARGUMENT PARSING                             #
+#                              Argument Parsing                               #
 # =========================================================================== #
 
 def parse_args() -> argparse.Namespace:
     """
-    Configure and analyze command line arguments for the training script.
+    Configure and parse command-line arguments for the training script.
+    
+    Returns:
+        Parsed arguments namespace
     """
     from .metadata import DATASET_REGISTRY
 
     parser = argparse.ArgumentParser(
-        description="MedMNIST training pipeline based on adapted ResNet-18.",
+        description="MedMNIST training pipeline with multi-resolution support.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     
-    # Instantiate specific configs that HAVE default values for all fields
-    hardware_def   = HardwareConfig()
+    # Instantiate configs with defaults
+    # ModelConfig and DatasetConfig omitted (require mandatory data-dependent fields)
+    hardware_def = HardwareConfig()
     telemetry_def = TelemetryConfig()
     train_def = TrainingConfig()
-    eval_def  = EvaluationConfig()
-    aug_def   = AugmentationConfig()
-    # ModelConfig and DatasetConfig are NOT instantiated here because they 
-    # require mandatory data-dependent fields (channels, classes, metadata).
+    eval_def = EvaluationConfig()
+    aug_def = AugmentationConfig()
 
-    # Group: Global Strategy
+    # ===== Global Strategy =====
     strat_group = parser.add_argument_group("Global Strategy")
 
     strat_group.add_argument(
         '--config', 
         type=str, 
         default=None, 
-        help="Path to a YAML configuration file. If provided, all other CLI arguments are ignored."
+        help="Path to YAML config file (overrides all CLI arguments)"
     )
     strat_group.add_argument(
         '--project_name',
         type=str,
         default=hardware_def.project_name,
-        help="Logical name for the experiment suite (used for logging and locks)."
+        help="Experiment suite name (for logging and locks)"
     )
     strat_group.add_argument(
         '--reproducible',
         action='store_true',
         dest='reproducible',
-        help="Enforces strict determinism: deterministic algorithms and num_workers=0."
+        help="Enforce strict determinism (deterministic algorithms, num_workers=0)"
     )
 
-    # Group: System & Hardware
+    # ===== System & Hardware =====
     sys_group = parser.add_argument_group("System & Hardware")
     
     sys_group.add_argument(
         '--device',
         type=str,
         default=hardware_def.device,
-        help="Computing device (cpu, cuda, mps)."
+        help="Computing device (cpu, cuda, mps, auto)"
     )
     sys_group.add_argument(
         '--num_workers',
         type=int,
         dest='num_workers',
         default=None,
-        help="Number of subprocesses for data loading."
+        help="Data loading subprocesses"
     )
 
-    # Group: Paths & Logging
+    # ===== Paths & Logging =====
     path_group = parser.add_argument_group("Paths & Logging")
 
     path_group.add_argument(
         '--data_dir',
         type=str,
         default=str(telemetry_def.data_dir),
-        help="Path to directory containing raw MedMNIST .npz files."
+        help="Directory containing MedMNIST .npz files"
     )
     path_group.add_argument(
         '--output_dir',
         type=str,
         default=str(telemetry_def.output_dir),
-        help="Base directory for experiment outputs and runs."
+        help="Base directory for experiment outputs"
     )
     path_group.add_argument(
         '--log_interval',
         type=int,
         default=telemetry_def.log_interval,
-        help="How many batches to wait before logging training status."
+        help="Batches between training status logs"
     )
     path_group.add_argument(
         '--no_save',
         action='store_false',
         dest='save_model',
         default=telemetry_def.save_model,
-        help="Disable saving the best model checkpoint."
+        help="Disable best model checkpoint saving"
     )
     path_group.add_argument(
         '--resume',
         type=str,
         default=None,
-        help="Path to a .pth checkpoint to resume training or run evaluation."
+        help="Path to .pth checkpoint for resuming training"
     )
-    # Group: Training Hyperparameters
+
+    # ===== Training Hyperparameters =====
     train_group = parser.add_argument_group("Training Hyperparameters")
     
     train_group.add_argument(
@@ -158,78 +162,78 @@ def parse_args() -> argparse.Namespace:
         '--cosine_fraction',
         type=float,
         default=train_def.cosine_fraction,
-        help="Fraction of total epochs to apply cosine annealing before switching to ReduceLROnPlateau."
+        help="Fraction of epochs for cosine annealing before plateau scheduler"
     )
     train_group.add_argument(
         '--use_amp',
         action='store_true',
         default=train_def.use_amp,
-        help="Enable Automatic Mixed Precision (FP16) during training."
+        help="Enable Automatic Mixed Precision (FP16)"
     )
     train_group.add_argument(
         '--no_amp',
         action='store_false',
         dest='use_amp',
-        help="Disable Automatic Mixed Precision."
+        help="Disable Automatic Mixed Precision"
     )
     train_group.add_argument(
         '--grad_clip',
         type=float,
         default=train_def.grad_clip,
-        help="Maximum norm for gradient clipping (set to 0 to disable)."
+        help="Max gradient norm (0 to disable)"
     )
     train_group.add_argument(
         '--label_smoothing',
         type=float,
         default=0.0,
-        help="Label smoothing factor (0.0 to 1.0)."
+        help="Label smoothing factor (0.0-1.0)"
     )   
     train_group.add_argument(
         '--scheduler_type',
         type=str,
         default=train_def.scheduler_type,
         choices=['cosine', 'plateau', 'step', 'none'],
-        help="Strategy for learning rate decay."
+        help="Learning rate decay strategy"
     )
     train_group.add_argument(
         '--min_lr',
         type=float,
         default=train_def.min_lr,
-        help="Minimum learning rate floor for schedulers."
+        help="Minimum LR floor"
     )
     train_group.add_argument(
         '--scheduler_patience',
         type=int,
         default=train_def.scheduler_patience,
-        help="Epochs to wait before decaying LR (only for 'plateau')."
+        help="Epochs before LR decay (plateau only)"
     )
     train_group.add_argument(
         '--scheduler_factor',
         type=float,
         default=train_def.scheduler_factor,
-        help="Multiplicative factor of learning rate decay."
+        help="LR decay multiplicative factor"
     )
     train_group.add_argument(
         '--step_size',
         type=int,
         default=train_def.step_size,
-        help="Period of learning rate decay in epochs (only for 'step')."
+        help="LR decay period in epochs (step only)"
     )
     train_group.add_argument(
         '--criterion_type',
         type=str,
         default=train_def.criterion_type,
         choices=['cross_entropy', 'bce_logit', 'focal'],
-        help="Loss function target. Use 'bce_logit' for multi-label tasks."
+        help="Loss function (bce_logit for multi-label)"
     )
     train_group.add_argument(
         '--focal_gamma',
         type=float,
         default=train_def.focal_gamma,
-        help="Focusing parameter for Focal Loss (higher gamma = more focus on hard samples)."
+        help="Focal Loss gamma (higher = more focus on hard samples)"
     )
 
-    # Group: Regularization & Augmentation
+    # ===== Regularization & Augmentation =====
     aug_group = parser.add_argument_group("Regularization & Augmentation")
     
     aug_group.add_argument(
@@ -241,14 +245,14 @@ def parse_args() -> argparse.Namespace:
         '--mixup_epochs',
         type=int,
         default=train_def.mixup_epochs,
-        help="Number of epochs to apply MixUp augmentation."
+        help="Epochs to apply MixUp"
     )
     aug_group.add_argument(
         '--no_tta',
         action='store_false',
         dest='use_tta',
         default=train_def.use_tta,
-        help="Disable TTA during final evaluation."
+        help="Disable TTA during evaluation"
     )
     aug_group.add_argument(
         '--hflip',
@@ -266,104 +270,111 @@ def parse_args() -> argparse.Namespace:
         default=aug_def.jitter_val
     )
 
-    # Group: Dataset Selection and Configuration
+    # ===== Dataset Configuration =====
     dataset_group = parser.add_argument_group("Dataset Configuration")
 
     dataset_group.add_argument(
         '--dataset',
         type=str,
         default="bloodmnist",
-        choices=DATASET_REGISTRY.keys(),
-        help="Target MedMNIST dataset."
+        choices=list(DATASET_REGISTRY.keys()),
+        help="Target MedMNIST dataset"
     )
     dataset_group.add_argument(
         '--max_samples',
         type=int,
         default=None,
-        help="Max training samples (Use 0 or -1 for full dataset)."
+        help="Max training samples (0 or -1 for full dataset)"
     )
     dataset_group.add_argument(
         '--balanced',
         action='store_true',
         dest='use_weighted_sampler',
         default=False,
-        help="Use WeightedRandomSampler to handle class imbalance."
+        help="Use WeightedRandomSampler for class imbalance"
     )
     dataset_group.add_argument(
         '--force_rgb',
         action='store_true',
         dest='force_rgb',
         default=None, 
-        help="Force conversion of grayscale to RGB."
+        help="Force grayscale to RGB conversion"
     )
     dataset_group.add_argument(
         '--no_force_rgb',
         action='store_false',
         dest='force_rgb',
-        help="Disable grayscale to RGB conversion."
+        help="Disable grayscale to RGB conversion"
     )
     dataset_group.add_argument(
         '--is_anatomical',
-        type=lambda x: (str(x).lower() == 'true'),
+        type=lambda x: str(x).lower() == 'true',
         default=None,
-        help="Override anatomical orientation flag. If None, uses Registry default."
+        help="Override anatomical orientation flag (None uses registry default)"
     )
     dataset_group.add_argument(
         '--is_texture_based',
-        type=lambda x: (str(x).lower() == 'true'),
+        type=lambda x: str(x).lower() == 'true',
         default=None,
-        help="Override texture-based flag. If None, uses Registry default."
+        help="Override texture-based flag (None uses registry default)"
+    )
+    dataset_group.add_argument(
+        '--resolution',
+        type=int,
+        choices=[28, 224],
+        default=28,
+        help="Dataset image resolution"
     )
 
-    # Group: Model Selection
+    # ===== Model Configuration =====
     model_group = parser.add_argument_group("Model Configuration")
 
     model_group.add_argument(
         '--model_name',
         type=str,
         default="resnet_18_adapted",
-        help="Architecture identifier."
+        help="Architecture identifier"
     )
     model_group.add_argument(
         '--pretrained',
         action='store_true',
         default=True,
-        help="Load ImageNet weights for the backbone (default: True)."
+        help="Load ImageNet weights"
     )
     model_group.add_argument(
         '--no_pretrained',
         action='store_false',
         dest='pretrained',
-        help="Initialize model with random weights."
+        help="Random weight initialization"
     )
 
-    # Group: Evaluation & Reporting
+    # ===== Evaluation & Reporting =====
     eval_group = parser.add_argument_group("Evaluation & Reporting")
 
     eval_group.add_argument(
         '--n_samples',
         type=int,
         default=eval_def.n_samples,
-        help="Number of images to display in the prediction grid."
+        help="Images in prediction grid"
     )
     eval_group.add_argument(
         '--fig_dpi',
         type=int,
         default=eval_def.fig_dpi,
-        help="Resolution (DPI) for saved plots."
+        help="Plot resolution (DPI)"
     )
     eval_group.add_argument(
         '--report_format',
         type=str,
         default=eval_def.report_format,
         choices=["xlsx", "csv", "json"],
-        help="Format for the final experiment summary."
+        help="Experiment summary format"
     )
     eval_group.add_argument(
         '--plot_style',
         type=str,
         default=eval_def.plot_style,
-        help="Matplotlib style for visualizations (e. g., 'ggplot', 'bmh')."
+        help="Matplotlib style (e.g., 'ggplot', 'seaborn-v0_8-muted')"
     )
 
     return parser.parse_args()

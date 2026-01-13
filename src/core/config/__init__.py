@@ -1,10 +1,9 @@
 """
 Configuration Package Initialization.
 
-This package exposes the core Experiment Manifest (Config), its constituent 
-sub-schemas, and operational handlers. By centralizing exports here, the rest 
-of the application can interact with the configuration engine and infrastructure 
-orchestration through a unified interface.
+Exposes the core Experiment Manifest (Config), constituent sub-schemas, 
+and operational handlers. Centralizes exports for unified interface to 
+configuration engine and infrastructure orchestration.
 """
 
 # =========================================================================== #
@@ -46,5 +45,5 @@ __all__ = [
     "EvaluationConfig",
     "ModelConfig",
     "InfrastructureManager",
-    "ValidatedPath"
+    "ValidatedPath",
 ]

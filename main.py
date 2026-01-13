@@ -24,7 +24,8 @@ from src.core import (
     Config, parse_args, DATASET_REGISTRY, RootOrchestrator
 )
 from src.data_handler import (
-    load_medmnist, get_dataloaders, show_sample_images, get_augmentations_description
+    load_medmnist, get_dataloaders, show_samples_for_dataset, 
+    get_augmentations_description
 )
 from src.models import get_model
 from src.trainer import (
@@ -68,18 +69,20 @@ def main() -> None:
             run_logger.info(
                 f"\n{'━' * 80}\n{' DATA PREPARATION ':^80}\n{'━' * 80}"
             )
-            
+
             # Loading data based on metadata and creating DataLoader instances
             data    = load_medmnist(ds_meta)
             loaders = get_dataloaders(data, cfg)
             train_loader, val_loader, test_loader = loaders
-            
+
             # Visual diagnostic: save sample images to verify augmentations/normalization
-            show_sample_images(
-                loader    = train_loader,
-                classes   = ds_meta.classes,
-                save_path = paths.get_fig_path("dataset_samples.png"),
-                cfg       = cfg
+            show_samples_for_dataset(
+                loader       = train_loader,
+                classes      = ds_meta.classes,
+                dataset_name = cfg.dataset.dataset_name,
+                run_paths    = paths,
+                num_samples  = cfg.evaluation.n_samples,
+                resolution   = cfg.dataset.resolution
             )
 
             # --- 3. Model & Training Execution ---

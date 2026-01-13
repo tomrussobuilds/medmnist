@@ -21,7 +21,8 @@ from .factory import (
 )
 
 from .data_explorer import (
-    show_sample_images
+    show_sample_images,
+    show_samples_for_dataset
 )
 
 from .transforms import (
@@ -44,6 +45,7 @@ __all__ = [
     "get_dataloaders",
     "DataLoaderFactory",
     "show_sample_images",
+    "show_samples_for_dataset"
     "get_augmentations_description",
     "get_pipeline_transforms",
     "MedMNISTDataset"

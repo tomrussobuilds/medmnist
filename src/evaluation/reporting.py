@@ -127,7 +127,7 @@ class TrainingReport(BaseModel):
 
                 self._apply_excel_formatting(writer, df)
 
-            logger.info(f"Summary Excel report saved to → {path.name}")
+            logger.info(f"Summary Excel report saved → {path.name}")
         except Exception as e:
             logger.error(f"Failed to generate Excel report: {e}")
 

@@ -1,9 +1,8 @@
 """
-Dataset Metadata Base Definitions
+Dataset Metadata Base Definitions.
 
-This module defines the schema for dataset metadata using Pydantic 
-to ensure immutability, type safety, and seamless integration 
-with the global configuration engine.
+Defines dataset metadata schema using Pydantic for immutability, type safety, 
+and seamless integration with the global configuration engine.
 """
 
 # =========================================================================== #
@@ -17,17 +16,18 @@ from pathlib import Path
 # =========================================================================== #
 from pydantic import BaseModel, Field, ConfigDict
 
+
 # =========================================================================== #
-#                                METADATA SCHEMA                              #
+#                              Metadata Schema                                #
 # =========================================================================== #
 
 class DatasetMetadata(BaseModel):
     """
     Metadata container for a MedMNIST dataset.
     
-    This structure ensures that all dataset-specific constants are grouped
-    and immutable throughout the execution of the pipeline. It serves as
-    the static definition that feeds into the dynamic DatasetConfig.
+    Ensures dataset-specific constants are grouped and immutable throughout 
+    pipeline execution. Serves as static definition feeding into dynamic 
+    DatasetConfig.
     """
     model_config = ConfigDict(
         frozen=True,
@@ -35,74 +35,56 @@ class DatasetMetadata(BaseModel):
         arbitrary_types_allowed=True
     )
 
-    name: str = Field(
-        ...,
-        description="Short identifier (e.g., 'pathmnist')"
-    )
-    display_name: str = Field(
-        ...,
-        description="Full dataset name for reporting"
-    )
-    md5_checksum: str = Field(
-        ...,
-        description="MD5 hash for archive integrity"
-    )
-    url: str = Field(
-        ...,
-        description="Source URL for automated downloads"
-    )
-    path: Path = Field(
-        ...,
-        description="Relative or absolute path to the .npz archive"
-    )
+    # Identity
+    name: str = Field(..., description="Short identifier (e.g., 'pathmnist')")
+    display_name: str = Field(..., description="Full name for reporting")
     
-    classes: List[str] = Field(
-        ...,
-        description="List of class labels in index order"
-    )
-    in_channels: int = Field(
-        ...,
-        description="1 for Grayscale, 3 for RGB"
-    )
+    # Source
+    md5_checksum: str = Field(..., description="MD5 hash for integrity")
+    url: str = Field(..., description="Source URL for downloads")
+    path: Path = Field(..., description="Path to .npz archive")
+    
+    # Classification
+    classes: List[str] = Field(..., description="Class labels in index order")
+    
+    # Image properties
+    in_channels: int = Field(..., description="1 for grayscale, 3 for RGB")
     native_resolution: int = Field(
         default=28, 
-        description="Native pixel resolution of the samples (e.g., 28 or 224)"
+        description="Native pixel resolution (28 or 224)"
     )
     
-    # Normalization parameters
-    mean: Tuple[float, ...] = Field(
-        ...,
-        description="Channel-wise mean for normalization"
-    )
-    std: Tuple[float, ...] = Field(
-        ...,
-        description="Channel-wise std for normalization"
-    )
+    # Normalization
+    mean: Tuple[float, ...] = Field(..., description="Channel-wise mean")
+    std: Tuple[float, ...] = Field(..., description="Channel-wise std")
     
     # Behavioral flags
     is_anatomical: bool = Field(
         default=True, 
-        description="True if the dataset has a fixed anatomical orientation (e.g., ChestMNIST)"
+        description="Fixed anatomical orientation (e.g., ChestMNIST)"
     )
     is_texture_based: bool = Field(
         default=True,
-        description="True if the dataset classification relies on texture patterns (e.g., PathMNIST)"
+        description="Classification relies on texture (e.g., PathMNIST)"
     )
 
     @property
     def normalization_info(self) -> str:
-        """Returns a formatted string of mean/std for reporting purposes."""
+        """Formatted mean/std for reporting."""
         return f"Mean: {self.mean} | Std: {self.std}"
-    
+
     @property
     def resolution_str(self) -> str:
-        """Returns the formatted native resolution string (e.g., '28x28' or '224x224')."""
+        """Formatted resolution string (e.g., '28x28', '224x224')."""
         return f"{self.native_resolution}x{self.native_resolution}"
 
     @property
     def num_classes(self) -> int:
-        """Returns the total number of target classes."""
+        """Total number of target classes."""
         return len(self.classes)
-    
+
     def __repr__(self) -> str:
-        return f"<DatasetMetadata: {self.display_name} ({self.resolution_str}, {self.num_classes} classes)>"
+        return (
+            f"<DatasetMetadata: {self.display_name} "
+            f"({self.resolution_str}, {self.num_classes} classes)>"
+        )

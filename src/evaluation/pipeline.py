@@ -77,7 +77,9 @@ def run_final_evaluation(
         all_labels=all_labels,
         all_preds=all_preds,
         classes=class_names,
-        out_path=paths.get_fig_path("confusion_matrix.png"),
+        out_path=paths.get_fig_path(
+            f"confusion_matrix_{cfg.model.name}_{cfg.dataset.resolution}.png"
+        ),
         cfg=cfg
     )
 
@@ -86,7 +88,9 @@ def run_final_evaluation(
     plot_training_curves(
         train_losses=train_losses,
         val_accuracies=val_acc_list,
-        out_path=paths.get_fig_path("training_curves.png"), 
+        out_path=paths.get_fig_path(
+            f"training_curves_{cfg.model.name}_{cfg.dataset.resolution}.png"
+        ), 
         cfg=cfg
     )
 
@@ -96,7 +100,9 @@ def run_final_evaluation(
         loader=test_loader,
         device=device,
         classes=class_names,
-        save_path=paths.get_fig_path("sample_predictions.png"),
+        save_path=paths.get_fig_path(
+            f"sample_predictions_{cfg.model.name}_{cfg.dataset.resolution}.png"
+        ),
         cfg=cfg
     )
 
@@ -117,6 +123,6 @@ def run_final_evaluation(
     report.save(paths.final_report_path)
 
     test_acc = test_metrics['accuracy']
-    logger.info(f"Final Evaluation Phase Complete. Test Acc: {test_acc:.4f}")
+    logger.info(f"Final Evaluation Phase Complete.")
     
     return macro_f1, test_acc
