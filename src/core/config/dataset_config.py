@@ -28,7 +28,9 @@ from pydantic import BaseModel, Field, ConfigDict
 #                               Internal Imports                              #
 # =========================================================================== #
 from .types import ImageSize, ValidatedPath, PositiveInt
-from ..metadata import DatasetMetadata, DatasetRegistryWrapper
+from ..metadata import (
+    DatasetMetadata, DatasetRegistryWrapper, DATASET_REGISTRY
+)
 from ..paths import DATASET_DIR
 
 # =========================================================================== #
@@ -79,6 +81,8 @@ class DatasetConfig(BaseModel):
     @property
     def dataset_name(self) -> str:
         """Dataset identifier (e.g., 'bloodmnist')."""
+        if self.metadata.name is None:
+            self.metadata.name = DATASET_REGISTRY.keys[0]
         return self.metadata.name
     
     @property
@@ -114,7 +118,7 @@ class DatasetConfig(BaseModel):
         if self.in_channels == 3:
             return "NATIVE-RGB"
         return "RGB-PROMOTED" if self.effective_in_channels == 3 else "NATIVE-GRAY"
-    
+
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> "DatasetConfig":
         """
@@ -131,17 +135,27 @@ class DatasetConfig(BaseModel):
         """
         # 1. Determine dataset name from CLI args or config
         dataset_name = getattr(args, "dataset", None) or getattr(args, "name", None)
-        if dataset_name is None:
-            raise ValueError("No dataset specified in CLI arguments or configuration!")
 
-        # 2. Determine resolution
+        # If no dataset is specified, fall back to the first dataset in the registry
+        if dataset_name is None:
+            dataset_name = list(DATASET_REGISTRY.keys())[0]
+
+        # 2. Determine resolution from CLI args (default is 28)
         resolution = getattr(args, "resolution", 28)
 
         # 3. Load dataset metadata from registry (ignores any old metadata)
         wrapper = DatasetRegistryWrapper(resolution=resolution)
-        resolved_metadata = wrapper.get_dataset(dataset_name)
+        try:
+            # Attempt to get dataset metadata using the provided dataset name
+            resolved_metadata = wrapper.get_dataset(dataset_name)
+        except KeyError:
+            # Handle the case where the dataset is not found in the registry
+            available_datasets = list(wrapper.registry.keys())
+            raise KeyError(
+                f"Dataset '{dataset_name}' not found. Available datasets: {available_datasets}"
+            )
 
-        # 4. Resolve RGB promotion
+        # 4. Resolve RGB promotion based on whether the model is pretrained or not
         is_pretrained = getattr(args, "pretrained", True)
         force_rgb_cli = getattr(args, "force_rgb", None)
         resolved_force_rgb = (
@@ -155,16 +169,17 @@ class DatasetConfig(BaseModel):
             cli_max or cls.model_fields['max_samples'].default
         )
 
-        # 6. Resolve image size from CLI or metadata
+        # 6. Resolve image size from CLI or from metadata
         resolved_img_size = getattr(args, "img_size", None) or resolved_metadata.native_resolution
 
-        # 7. Construct and return DatasetConfig
+        # 7. Construct and return DatasetConfig with all resolved parameters
         return cls(
-            metadata=resolved_metadata,
             data_root=Path(getattr(args, "data_dir", DATASET_DIR)),
+            metadata=resolved_metadata,
             max_samples=resolved_max,
             use_weighted_sampler=getattr(args, "use_weighted_sampler", True),
             force_rgb=resolved_force_rgb,
             img_size=resolved_img_size,
             resolution=resolution
         )
+

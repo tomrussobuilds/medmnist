@@ -28,7 +28,9 @@ from typing import Any, Dict
 # =========================================================================== #
 #                                Third-Party Imports                          #
 # =========================================================================== #
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    BaseModel, ConfigDict, Field, model_validator
+)
 
 # =========================================================================== #
 #                               Internal Imports                              #
@@ -253,7 +255,7 @@ class Config(BaseModel):
             telemetry=TelemetryConfig.from_args(args),
             training=TrainingConfig.from_args(args),
             augmentation=AugmentationConfig.from_args(args),
-            dataset=DatasetConfig.from_args(args, metadata=ds_meta),
+            dataset=DatasetConfig.from_args(args),
             model=ModelConfig.from_args(args),
             evaluation=EvaluationConfig.from_args(args),
         )

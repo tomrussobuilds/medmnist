@@ -82,9 +82,18 @@ class RunPaths(BaseModel):
             training_cfg: Dictionary of hyperparameters used for unique hashing.
             base_dir: Optional custom base directory for outputs.
         """
+        if not isinstance(dataset_slug, str):
+            raise ValueError(
+                f"Expected string for dataset_slug but got {type(dataset_slug)}"
+            )
         ds_slug = dataset_slug.lower()
+
+        if not isinstance(model_name, str):
+            raise ValueError(
+                f"Expected string for model_name but got {type(model_name)}"
+            )
         m_slug = re.sub(r'[^a-zA-Z0-9]', '', model_name.lower())
-        
+
         # Determine the unique run ID
         run_id = cls._generate_unique_id(ds_slug, m_slug, training_cfg)
         
