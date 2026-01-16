@@ -61,4 +61,4 @@ legacy/
 # =========================================================================== #
 # !results/
 *.log
-!docs/artifacts/**/*.log
+!docs/artifacts/**/*.logbackup_*/
