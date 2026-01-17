@@ -339,17 +339,20 @@ W_{\text{dest}} = \mathcal{I}_{\text{bicubic}}(W_{\text{src}}, \text{size}=(3, 3
 
 **Result:** A 3×3 kernel preserving edge-detection patterns optimized for compact receptive fields, enabling faster convergence than random initialization.
 
----
-
 ### Training Regularization
 
 **MixUp Augmentation** synthesizes training samples via convex combinations:
 
-$$\tilde{x} = \lambda x_i + (1 - \lambda) x_j \quad \text{where} \quad \lambda \sim \text{Beta}(\alpha, \alpha)$$
+```math
+\tilde{x} = \lambda x_i + (1 - \lambda) x_j \quad \text{where} \quad \lambda \sim \text{Beta}(\alpha, \alpha)
+```
 
-$$\tilde{y} = \lambda y_i + (1 - \lambda) y_j$$
+```math
+\tilde{y} = \lambda y_i + (1 - \lambda) y_j
+```
 
 This prevents overfitting on small-scale textures and improves generalization.
+
 
 ---
 
