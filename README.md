@@ -323,8 +323,6 @@ Standard ResNet-18 is optimized for 224×224 ImageNet inputs. Direct application
 
 ### Mathematical Weight Transfer
 
-### Mathematical Weight Transfer
-
 To retain ImageNet-learned feature detectors, we apply bicubic interpolation:
 
 **Source Tensor:**
