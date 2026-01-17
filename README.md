@@ -361,7 +361,7 @@ visionforge/
 ├── tests/                          # Diagnostic utilities
 │   ├── smoke_test.py               # 1-epoch E2E verification (~30s)
 │   ├── health_check.py             # Dataset integrity validation
-│   └── test.engine.py              # Unit test suite
+│   └── test_engine.py              # Unit test suite
 ├── tests/                          # Test suite (pytest)
 │   ├── test_dataset.py             # Dataset config tests
 │   ├── test_engine.py              # Config engine tests
