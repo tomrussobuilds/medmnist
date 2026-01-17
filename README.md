@@ -323,15 +323,25 @@ Standard ResNet-18 is optimized for 224×224 ImageNet inputs. Direct application
 
 ### Mathematical Weight Transfer
 
+### Mathematical Weight Transfer
+
 To retain ImageNet-learned feature detectors, we apply bicubic interpolation:
 
 **Source Tensor:**
-$$W_{\text{src}} \in \mathbb{R}^{C_{\text{out}} \times C_{\text{in}} \times 7 \times 7}$$
+
+```math
+W_{\text{src}} \in \mathbb{R}^{C_{\text{out}} \times C_{\text{in}} \times 7 \times 7}
+```
 
 **Transformation:**
-$$W_{\text{dest}} = \mathcal{I}_{\text{bicubic}}(W_{\text{src}}, \text{size}=(3, 3))$$
+
+```math
+W_{\text{dest}} = \mathcal{I}_{\text{bicubic}}(W_{\text{src}}, \text{size}=(3, 3))
+```
 
 **Result:** A 3×3 kernel preserving edge-detection patterns optimized for compact receptive fields, enabling faster convergence than random initialization.
+
+---
 
 ### Training Regularization
 
