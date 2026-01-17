@@ -1,40 +1,23 @@
 """
 Configuration Package Initialization.
 
-Exposes the core Experiment Manifest (Config), constituent sub-schemas, 
-and operational handlers. Centralizes exports for unified interface to 
-configuration engine and infrastructure orchestration.
+Provides a unified, flat public API for configuration components while
+avoiding eager imports of heavy or optional dependencies (e.g. torch).
+
+All heavy modules are imported lazily via __getattr__ (PEP 562).
 """
+# =========================================================================== #
+#                                   Standard Imports                          #
+# =========================================================================== #
+
+from __future__ import annotations
+from typing import Any
+from importlib import import_module
 
 # =========================================================================== #
-#                                 Main Engine                                 #
+#                                   PUBLIC API                                #
 # =========================================================================== #
-from .engine import Config
 
-# =========================================================================== #
-#                                Sub-Configurations                           #
-# =========================================================================== #
-from .hardware_config import HardwareConfig
-from .telemetry_config import TelemetryConfig
-from .training_config import TrainingConfig
-from .augmentation_config import AugmentationConfig
-from .dataset_config import DatasetConfig
-from .evaluation_config import EvaluationConfig
-from .models_config import ModelConfig
-from .optuna_config import OptunaConfig
-# =========================================================================== #
-#                             Operational Handlers                            #
-# =========================================================================== #
-from .infrastructure_config import InfrastructureManager
-
-# =========================================================================== #
-#                                    Types                                    #
-# =========================================================================== #
-from .types import ValidatedPath
-
-# =========================================================================== #
-#                                   EXPORTS                                   #
-# =========================================================================== #
 __all__ = [
     "Config",
     "HardwareConfig",
@@ -46,5 +29,51 @@ __all__ = [
     "ModelConfig",
     "InfrastructureManager",
     "ValidatedPath",
-    "OptunaConfig"
+    "OptunaConfig",
 ]
+
+# =========================================================================== #
+#                               LAZY IMPORTS MAPPING                          #
+# =========================================================================== #
+
+_LAZY_IMPORTS: dict[str, str] = {
+    "Config": "orchard.core.config.engine",
+    "HardwareConfig": "orchard.core.config.hardware_config",
+    "TelemetryConfig": "orchard.core.config.telemetry_config",
+    "TrainingConfig": "orchard.core.config.training_config",
+    "AugmentationConfig": "orchard.core.config.augmentation_config",
+    "DatasetConfig": "orchard.core.config.dataset_config",
+    "EvaluationConfig": "orchard.core.config.evaluation_config",
+    "ModelConfig": "orchard.core.config.models_config",
+    "InfrastructureManager": "orchard.core.config.infrastructure_config",
+    "ValidatedPath": "orchard.core.config.types",
+    "OptunaConfig": "orchard.core.config.optuna_config",
+}
+
+# =========================================================================== #
+#                               LAZY LOADER FUNCTION                          #
+# =========================================================================== #
+
+def __getattr__(name: str) -> Any:
+    """
+    Lazily import configuration components on first access.
+
+    Prevents importing heavy dependencies (e.g. torch) unless the
+    corresponding configuration class is actually used.
+    """
+    if name not in _LAZY_IMPORTS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+    module = import_module(_LAZY_IMPORTS[name])
+    attr = getattr(module, name)
+
+    # Cache on module for future access
+    globals()[name] = attr
+    return attr
+
+# =========================================================================== #
+#                                DIR SUPPORT                                  #
+# =========================================================================== #
+
+def __dir__() -> list[str]:
+    return sorted(__all__)

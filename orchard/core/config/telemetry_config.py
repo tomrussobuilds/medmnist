@@ -74,21 +74,13 @@ class TelemetryConfig(BaseModel):
         if data is None:
             return {}
         return data
-
-    @field_validator("data_dir", "output_dir", mode="before")
-    @classmethod
-    def resolve_relative_paths(cls, v):
-        """
-        Anchors relative paths to PROJECT_ROOT, preserves absolute paths.
-        
-        Allows external mounts via absolute paths while ensuring relative 
-        paths are properly resolved.
-        """
-        path = Path(v)
-        if not path.is_absolute():
-            return (PROJECT_ROOT / path).resolve()
-        return path.resolve()
-
+    
+    @property
+    def resolved_data_dir(self) -> Path:
+        if not self.data_dir.is_absolute():
+            return (PROJECT_ROOT / self.data_dir).resolve()
+        return self.data_dir.resolve()
+    
     def to_portable_dict(self) -> dict:
         """
         Converts to portable dictionary with environment-agnostic paths.
