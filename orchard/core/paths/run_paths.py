@@ -15,7 +15,7 @@ import re
 import time
 import hashlib
 from pathlib import Path
-from typing import Optional, Dict, Any, Final
+from typing import Optional, Dict, Any, Final, ClassVar
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
@@ -52,9 +52,13 @@ class RunPaths(BaseModel):
     )
 
     # Immutable blueprint for the directory tree
-    SUB_DIRS: Final[list[str]] = [
-        "figures", "models", "reports", "logs", "database"
-    ]
+    SUB_DIRS: ClassVar[tuple[str, ...]] = (
+        "figures",
+        "models",
+        "reports",
+        "logs",
+        "database",
+    )
 
     # Core Identifiers
     run_id: str

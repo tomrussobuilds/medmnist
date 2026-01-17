@@ -205,10 +205,9 @@ class DatasetConfig(BaseModel):
         # 4. Resolve other params
         is_pretrained = getattr(args, "pretrained", True)
         force_rgb_cli = getattr(args, "force_rgb", None)
-        resolved_force_rgb = (
-            force_rgb_cli if force_rgb_cli is not None 
-            else (resolved_metadata.in_channels == 1 and is_pretrained)
-        )
+
+        resolved_force_rgb = force_rgb_cli \
+            if force_rgb_cli is not None else True
 
         cli_max = getattr(args, "max_samples", None)
         resolved_max = None if (cli_max is not None and cli_max <= 0) else cli_max

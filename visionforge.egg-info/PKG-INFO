@@ -1,3 +1,22 @@
+Metadata-Version: 2.4
+Name: visionforge
+Version: 0.1.0
+Summary: Type-Safe Deep Learning Framework for Computer Vision
+Author-email: Tommaso Russo <tommaso@example.com>
+License: MIT
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: license-file
+Dynamic: requires-python
+
 # 🔮 VisionForge: Type-Safe Deep Learning Framework
 
 <!-- Badges Section -->
@@ -8,6 +27,9 @@
   </a>
   <a href="https://docs.pytest.org/">
     <img src="https://img.shields.io/badge/tested%20with-pytest-blue?logo=pytest&logoColor=white" alt="Tested with pytest">
+  </a>
+  <a href="https://codecov.io/gh/tomrussobuilds/visionforge">
+    <img src="https://codecov.io/gh/tomrussobuilds/visionforge/branch/main/graph/badge.svg" alt="Code Coverage">
   </a>
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
@@ -102,7 +124,7 @@ cd visionforge
 pip install -r requirements.txt
 
 # 2. Run a quick verification (1-epoch sanity check, ~30 seconds)
-python -m tests.smoke_test
+python -m tools.smoke_test
 
 # 3. Train with optimized recipe (ResNet-18, 28×28, ~5 min on GPU)
 python main.py --config recipes/config_resnet_18_adapted.yaml
@@ -358,10 +380,10 @@ visionforge/
 │   ├── config_efficientnet_b0.yaml
 │   ├── optuna_resnet_18_adapted.yaml
 │   └── optuna_efficientnet_b0.yaml
-├── tests/                          # Diagnostic utilities
+├── tools/                          # Diagnostic utilities
 │   ├── smoke_test.py               # 1-epoch E2E verification (~30s)
 │   ├── health_check.py             # Dataset integrity validation
-│   └── test.engine.py              # Unit test suite
+│   └── unit_test.py                # Unit test suite
 ├── tests/                          # Test suite (pytest)
 │   ├── test_dataset.py             # Dataset config tests
 │   ├── test_engine.py              # Config engine tests
@@ -397,7 +419,7 @@ visionforge/
 
 ```bash
 # Verify environment (~30 seconds)
-python -m tests.smoke_test
+python -m tools.smoke_test
 
 # Train with preset (ResNet-18, 28×28, ~5 min on GPU)
 python main.py --config recipes/config_resnet_18_adapted.yaml
@@ -437,7 +459,7 @@ python main.py --mixup_alpha 0 --no_tta
 
 ```bash
 # Install Optuna (if not already present)
-pip install optuna plotly
+pip install optuna plotly kaleido
 
 # Run optimization with preset (28×28, 50 trials, time varies)
 python optimize.py --config recipes/optuna_resnet_18_adapted.yaml
@@ -536,7 +558,7 @@ python -m tools.smoke_test
 
 **Health Check** (dataset integrity):
 ```bash
-python -m tests.health_check --dataset bloodmnist
+python -m tools.health_check --dataset bloodmnist
 ```
 
 **Output:** Verifies:
@@ -774,6 +796,8 @@ Contributions welcome! Please:
 3. Add tests for new functionality
 4. Ensure all tests pass: `pytest tests/ -v`
 5. Submit a pull request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ## 📧 Contact
 

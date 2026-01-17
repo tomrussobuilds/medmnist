@@ -65,8 +65,10 @@ class HardwareConfig(BaseModel):
         description="Allow terminating duplicate processes for cleanup"
     )
 
-    # Internal execution state (not serialized)
-    _reproducible_mode: bool = False
+    reproducible: bool = Field(
+        default=False,
+        description="Enable strict deterministic mode"
+    )
 
     @field_validator("device")
     @classmethod
@@ -121,22 +123,21 @@ class HardwareConfig(BaseModel):
             0 if reproducible mode (avoids non-determinism), 
             otherwise system-detected optimal count
         """
-        return 0 if self._reproducible_mode else get_num_workers()
+        return 0 if self.reproducible else get_num_workers()
 
     @property
     def use_deterministic_algorithms(self) -> bool:
         """Whether PyTorch should enforce deterministic operations."""
-        return self._reproducible_mode
+        return self.reproducible
 
     @classmethod
     def for_optuna(cls, **kwargs) -> "HardwareConfig":
         """
         Create HardwareConfig for Optuna trials with reproducibility enabled.
         """
-        cfg = cls(**kwargs)
-        cfg._reproducible_mode = True
-        return cfg
-
+        kwargs['reproducible'] = True
+        return cls(**kwargs)
+    
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> "HardwareConfig":
         """

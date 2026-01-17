@@ -73,13 +73,11 @@ class Config(BaseModel):
     evaluation: EvaluationConfig = Field(default_factory=EvaluationConfig)
     model: ModelConfig = Field(default_factory=ModelConfig)
     optuna: Optional[OptunaConfig] = Field(default=None)
-
-    metadata: Optional[dict] = None
     
     @model_validator(mode="after")
     def validate_logic(self) -> "Config":
         # Use object.__setattr__ to bypass frozen restriction
-        if self.metadata is None:
+        if self.dataset.metadata is None:
             object.__setattr__(self, "metadata", {})
         
         # 1. Model-specific resolution constraints
