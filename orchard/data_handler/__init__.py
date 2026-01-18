@@ -13,7 +13,7 @@ from .factory import DataLoaderFactory, get_dataloaders
 #                                Internal Imports                             #
 # =========================================================================== #
 from .fetcher import MedMNISTData, ensure_dataset_npz, load_medmnist
-from .transforms import get_pipeline_transforms
+from .transforms import get_pipeline_transforms, get_augmentations_description
 
 # =========================================================================== #
 #                                PUBLIC API                                   #
@@ -26,7 +26,8 @@ __all__ = [
     "get_dataloaders",
     "DataLoaderFactory",
     "show_sample_images",
-    "show_samples_for_dataset" "get_augmentations_description",
+    "show_samples_for_dataset",
+    "get_augmentations_description",
     "get_pipeline_transforms",
     "MedMNISTDataset",
 ]
