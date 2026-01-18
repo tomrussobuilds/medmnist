@@ -166,10 +166,10 @@ jobs:
           bandit -r orchard/ -ll || true
         continue-on-error: true
 
-      - name: Run Safety check
+      - name: Run Safety scan
         run: |
           pip install safety
-          safety check --json || true
+          safety scan --output text || true
         continue-on-error: true
 
   # Job 6: Build Status Summary

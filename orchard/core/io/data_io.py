@@ -55,7 +55,7 @@ def md5_checksum(path: Path) -> str:
     Returns:
         str: The calculated hexadecimal MD5 hash.
     """
-    hash_md5 = hashlib.md5()
+    hash_md5 = hashlib.md5(usedforsecurity=False)
     with path.open("rb") as f:
         # 8192 byte chunk size for memory efficiency
         for chunk in iter(lambda: f.read(8192), b""):
