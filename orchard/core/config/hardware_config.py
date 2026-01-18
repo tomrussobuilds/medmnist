@@ -1,8 +1,8 @@
 """
 Hardware Manifest.
 
-Declarative schema for hardware abstraction and execution policy. Resolves 
-compute device, enforces determinism constraints, and derives hardware-dependent 
+Declarative schema for hardware abstraction and execution policy. Resolves
+compute device, enforces determinism constraints, and derives hardware-dependent
 execution parameters.
 
 Single Source of Truth (SSOT) for:
@@ -23,31 +23,28 @@ from pathlib import Path
 #                                Third-Party Imports                          #
 # =========================================================================== #
 import torch
-from pydantic import (
-    BaseModel, Field, field_validator, ConfigDict
-)
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from ..environment import detect_best_device, get_num_workers
 
 # =========================================================================== #
 #                               Internal Imports                              #
 # =========================================================================== #
-from .types import (
-    ProjectSlug, DeviceType
-)
-from ..environment import (
-    detect_best_device, get_num_workers
-)
+from .types import DeviceType, ProjectSlug
 
 # =========================================================================== #
 #                             Hardware Manifest                               #
 # =========================================================================== #
 
+
 class HardwareConfig(BaseModel):
     """
     Hardware abstraction and execution policy configuration.
-    
+
     Manages device selection, reproducibility, process synchronization,
     and DataLoader parallelism.
     """
+
     model_config = ConfigDict(
         frozen=False,
         extra="forbid",
@@ -56,32 +53,27 @@ class HardwareConfig(BaseModel):
 
     # Core Configuration
     device: DeviceType = Field(
-        default="auto",
-        description="Device selection: 'cpu', 'cuda', 'mps', or 'auto'"
+        default="auto", description="Device selection: 'cpu', 'cuda', 'mps', or 'auto'"
     )
     project_name: ProjectSlug = "vision_experiment"
     allow_process_kill: bool = Field(
-        default=True,
-        description="Allow terminating duplicate processes for cleanup"
+        default=True, description="Allow terminating duplicate processes for cleanup"
     )
 
-    reproducible: bool = Field(
-        default=False,
-        description="Enable strict deterministic mode"
-    )
+    reproducible: bool = Field(default=False, description="Enable strict deterministic mode")
 
     @field_validator("device")
     @classmethod
     def resolve_device(cls, v: DeviceType) -> DeviceType:
         """
         Validates and resolves device to available hardware.
-        
-        Auto-selects best device if 'auto', falls back to CPU if 
+
+        Auto-selects best device if 'auto', falls back to CPU if
         requested accelerator unavailable.
-        
+
         Args:
             v: Requested device type
-            
+
         Returns:
             Resolved device string
         """
@@ -89,7 +81,7 @@ class HardwareConfig(BaseModel):
             return detect_best_device()
 
         requested = v.lower()
-        
+
         if requested == "cuda" and not torch.cuda.is_available():
             return "cpu"
         if requested == "mps" and not torch.backends.mps.is_available():
@@ -101,7 +93,7 @@ class HardwareConfig(BaseModel):
     def lock_file_path(self) -> Path:
         """
         Cross-platform lock file for preventing concurrent experiments.
-        
+
         Returns:
             Path in system temp directory based on project name
         """
@@ -118,9 +110,9 @@ class HardwareConfig(BaseModel):
     def effective_num_workers(self) -> int:
         """
         Optimal DataLoader workers respecting reproducibility constraints.
-        
+
         Returns:
-            0 if reproducible mode (avoids non-determinism), 
+            0 if reproducible mode (avoids non-determinism),
             otherwise system-detected optimal count
         """
         return 0 if self.reproducible else get_num_workers()
@@ -135,17 +127,17 @@ class HardwareConfig(BaseModel):
         """
         Create HardwareConfig for Optuna trials with reproducibility enabled.
         """
-        kwargs['reproducible'] = True
+        kwargs["reproducible"] = True
         return cls(**kwargs)
-    
+
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> "HardwareConfig":
         """
         Factory from command-line arguments.
-        
+
         Args:
             args: Parsed argparse namespace
-            
+
         Returns:
             Configured HardwareConfig instance
         """

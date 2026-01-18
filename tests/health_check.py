@@ -15,10 +15,10 @@ import logging
 from orchard.core import RootOrchestrator
 from orchard.core.cli import parse_args
 from orchard.core.config import Config
-from orchard.data_handler.fetcher import load_medmnist_health_check
+from orchard.core.metadata import DatasetRegistryWrapper
 from orchard.data_handler.data_explorer import show_samples_for_dataset
 from orchard.data_handler.factory import create_temp_loader
-from orchard.core.metadata import DatasetRegistryWrapper
+from orchard.data_handler.fetcher import load_medmnist_health_check
 
 # =========================================================================== #
 #                                Logging Setup                                #
@@ -27,11 +27,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-def health_check_single_dataset(
-    ds_meta,
-    orchestrator,
-    resolution: int = 28
-) -> None:
+def health_check_single_dataset(ds_meta, orchestrator, resolution: int = 28) -> None:
     """
     Perform a health check on a single dataset: file presence, DataLoader, sample images.
     """
@@ -61,7 +57,7 @@ def health_check_single_dataset(
             classes=ds_meta.classes,
             dataset_name=ds_meta.name,
             run_paths=orchestrator.paths,
-            resolution=resolution
+            resolution=resolution,
         )
 
         run_logger.info(f"Sample images saved for dataset: {ds_meta.display_name}")
@@ -92,9 +88,7 @@ def fetch_all_datasets_health_check() -> None:
             dataset_wrapper = DatasetRegistryWrapper(resolution=resolution)
             for _, ds_meta in dataset_wrapper.registry.items():
                 try:
-                    run_logger.info(
-                        f"Attempting health check for dataset '{ds_meta.name}'"
-                    )
+                    run_logger.info(f"Attempting health check for dataset '{ds_meta.name}'")
                     health_check_single_dataset(ds_meta, orchestrator, resolution=resolution)
                 except Exception as e:
                     run_logger.warning(

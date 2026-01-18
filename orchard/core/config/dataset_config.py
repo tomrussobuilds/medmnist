@@ -1,8 +1,8 @@
 """
 Dataset Registry Orchestration & Metadata Resolution.
 
-Bridges static dataset metadata with runtime execution requirements. Normalizes 
-datasets regardless of native format (Grayscale/RGB) to meet model architecture 
+Bridges static dataset metadata with runtime execution requirements. Normalizes
+datasets regardless of native format (Grayscale/RGB) to meet model architecture
 input specifications. Supports multi-resolution (28x28, 224x224) with proper
 YAML override while maintaining frozen immutability.
 
@@ -17,91 +17,81 @@ Key Responsibilities:
 #                                Standard Imports                             #
 # =========================================================================== #
 import argparse
-from typing import Optional
 from pathlib import Path
+from typing import Optional
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
 # =========================================================================== #
-from pydantic import BaseModel, Field, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from ..metadata import DatasetMetadata, DatasetRegistryWrapper
+from ..paths import DATASET_DIR
 
 # =========================================================================== #
 #                               Internal Imports                              #
 # =========================================================================== #
-from .types import ImageSize, ValidatedPath, PositiveInt
-from ..metadata import DatasetMetadata, DatasetRegistryWrapper
-from ..paths import DATASET_DIR
-
+from .types import ImageSize, PositiveInt, ValidatedPath
 
 # =========================================================================== #
 #                          Dataset Configuration                              #
 # =========================================================================== #
 
+
 class DatasetConfig(BaseModel):
     """
     Validated manifest for dataset execution context.
-    
-    Bridges static registry metadata with runtime preferences. Resolves 
+
+    Bridges static registry metadata with runtime preferences. Resolves
     channel promotion and sampling policies with multi-resolution support.
-    
+
     CRITICAL FIX: Auto-syncs img_size with resolution when not explicitly set.
     """
-    model_config = ConfigDict(
-        frozen=True,
-        extra="forbid",
-        arbitrary_types_allowed=True
-    )
+
+    model_config = ConfigDict(frozen=True, extra="forbid", arbitrary_types_allowed=True)
 
     name: Optional[str] = Field(
-        default="bloodmnist",
-        description="Dataset identifier (e.g., 'bloodmnist', 'organcmnist')"
+        default="bloodmnist", description="Dataset identifier (e.g., 'bloodmnist', 'organcmnist')"
     )
-    metadata: Optional[DatasetMetadata] = Field(
-        default=None,
-        exclude=True
-    )
+    metadata: Optional[DatasetMetadata] = Field(default=None, exclude=True)
 
     # Runtime parameters
     data_root: ValidatedPath = DATASET_DIR
     use_weighted_sampler: bool = True
     max_samples: Optional[PositiveInt] = Field(default=None)
-    
+
     img_size: ImageSize = Field(
         description="Target square resolution for model input",
         default=None,  # Changed from 28 to None for auto-detection
     )
     force_rgb: bool = Field(
-        default=True,
-        description="Convert grayscale to RGB for ImageNet weights"
+        default=True, description="Convert grayscale to RGB for ImageNet weights"
     )
-    resolution: int = Field(
-        default=28,
-        description="Target dataset resolution (28 or 224)"
-    )
+    resolution: int = Field(default=28, description="Target dataset resolution (28 or 224)")
 
     @model_validator(mode="before")
     @classmethod
     def sync_img_size_with_resolution(cls, values):
         """
         Auto-sync img_size with resolution if not explicitly set.
-        
+
         This runs BEFORE frozen instantiation, allowing us to modify values.
-        
+
         Logic:
         1. If img_size is explicitly set in YAML/args → keep it
         2. If img_size is None/missing → use resolution
         3. If metadata exists → use metadata.native_resolution
-        
+
         Args:
             values: Raw input dict before Pydantic validation
-            
+
         Returns:
             Modified values dict with synced img_size
         """
         img_size = values.get("img_size")
         resolution = values.get("resolution", 28)
         metadata = values.get("metadata")
-        
+
         if img_size is None:
             if metadata is not None:
                 # Use metadata's native resolution
@@ -109,18 +99,18 @@ class DatasetConfig(BaseModel):
             else:
                 # Use resolution parameter
                 img_size = resolution
-            
+
             values["img_size"] = img_size
-        
+
         return values
 
-    # --- Properties ---  
+    # --- Properties ---
 
     @property
     def _ensure_metadata(self) -> DatasetMetadata:
         """
         Return metadata, loading default if None.
-        
+
         Uses object.__setattr__ to bypass frozen restriction.
         """
         if self.metadata is None:
@@ -129,7 +119,7 @@ class DatasetConfig(BaseModel):
             metadata = wrapper.get_dataset(ds_name)
             object.__setattr__(self, "metadata", metadata)
         return self.metadata
-    
+
     @property
     def dataset_name(self) -> str:
         """Dataset identifier (e.g., 'bloodmnist')."""
@@ -175,18 +165,17 @@ class DatasetConfig(BaseModel):
     def from_args(cls, args: argparse.Namespace) -> "DatasetConfig":
         """
         Factory from CLI arguments with proper resolution handling.
-        
+
         Priority: YAML injection > CLI explicit > Inference > Default
-        
+
         Args:
             args: Parsed CLI arguments
-            
+
         Returns:
             Configured DatasetConfig with metadata
         """
         # 1. Determine dataset name
-        dataset_name = getattr(args, "dataset", None) \
-            or getattr(args, "name", None) or "bloodmnist"
+        dataset_name = getattr(args, "dataset", None) or getattr(args, "name", None) or "bloodmnist"
 
         # 2. Determine resolution
         resolution = getattr(args, "resolution", 28)
@@ -203,11 +192,10 @@ class DatasetConfig(BaseModel):
             )
 
         # 4. Resolve other params
-        is_pretrained = getattr(args, "pretrained", True)
+        getattr(args, "pretrained", True)
         force_rgb_cli = getattr(args, "force_rgb", None)
 
-        resolved_force_rgb = force_rgb_cli \
-            if force_rgb_cli is not None else True
+        resolved_force_rgb = force_rgb_cli if force_rgb_cli is not None else True
 
         cli_max = getattr(args, "max_samples", None)
         resolved_max = None if (cli_max is not None and cli_max <= 0) else cli_max
@@ -224,5 +212,5 @@ class DatasetConfig(BaseModel):
             use_weighted_sampler=getattr(args, "use_weighted_sampler", True),
             force_rgb=resolved_force_rgb,
             img_size=resolved_img_size,
-            resolution=resolution
+            resolution=resolution,
         )

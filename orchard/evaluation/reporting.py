@@ -1,11 +1,13 @@
 """
 Reporting & Experiment Summarization Module
 
-This module orchestrates the generation of human-readable artifacts following 
-the completion of a training pipeline. It leverages Pydantic for strict 
-validation of experiment results and transforms raw metrics into structured, 
+This module orchestrates the generation of human-readable artifacts following
+the completion of a training pipeline. It leverages Pydantic for strict
+validation of experiment results and transforms raw metrics into structured,
 professionally formatted Excel summaries.
 """
+
+import logging
 
 # =========================================================================== #
 #                                Standard Imports                             #
@@ -13,7 +15,6 @@ professionally formatted Excel summaries.
 from datetime import datetime
 from pathlib import Path
 from typing import Sequence
-import logging
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
@@ -24,7 +25,7 @@ from pydantic import BaseModel, ConfigDict, Field
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from orchard.core import Config, LOGGER_NAME
+from orchard.core import LOGGER_NAME, Config
 
 # =========================================================================== #
 #                               EXCEL REPORTS                                 #
@@ -32,12 +33,13 @@ from orchard.core import Config, LOGGER_NAME
 
 logger = logging.getLogger(LOGGER_NAME)
 
+
 class TrainingReport(BaseModel):
     """
     Validated data container for summarizing a complete training experiment.
-    
-    This model serves as a Schema for the final experimental metadata. It stores 
-    hardware, hyperparameter, and performance states to ensure full reproducibility 
+
+    This model serves as a Schema for the final experimental metadata. It stores
+    hardware, hyperparameter, and performance states to ensure full reproducibility
     and traceability of the medical imaging pipeline.
 
     Attributes:
@@ -59,24 +61,22 @@ class TrainingReport(BaseModel):
         log_path (str): Absolute path to the session execution log.
         seed (int): Global RNG seed for experiment replication.
     """
-    model_config = ConfigDict(
-        frozen=True,
-        arbitrary_types_allowed=True
-    )
+
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
     timestamp: str = Field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    
+
     # Model & Data Identity
     model: str
     dataset: str
-    
+
     # Core Metrics
     best_val_accuracy: float
     best_val_auc: float
     test_accuracy: float
     test_auc: float
     test_macro_f1: float
-    
+
     # Domain Logic Flags
     is_texture_based: bool
     is_anatomical: bool
@@ -87,28 +87,27 @@ class TrainingReport(BaseModel):
     learning_rate: float
     batch_size: int
     seed: int
-    
+
     # Metadata Strings
     augmentations: str
     normalization: str
     model_path: str
     log_path: str
 
-
     def to_vertical_df(self) -> pd.DataFrame:
         """
         Converts the Pydantic model into a vertical pandas DataFrame.
-        
+
         Returns:
             pd.DataFrame: A two-column DataFrame (Parameter, Value) for Excel export.
         """
         data = self.model_dump()
-        return pd.DataFrame(list(data.items()), columns=["Parameter", "Value"]) 
+        return pd.DataFrame(list(data.items()), columns=["Parameter", "Value"])
 
     def save(self, path: Path) -> None:
         """
         Saves the report DataFrame to an Excel file with professional formatting.
-        
+
         Applies conditional formatting and column widths to ensure the report
         is presentation-ready.
 
@@ -120,10 +119,10 @@ class TrainingReport(BaseModel):
         df = self.to_vertical_df()
 
         try:
-            with pd.ExcelWriter(path, engine='xlsxwriter', engine_kwargs={
-                'options': {'nan_inf_to_errors': True}
-            }) as writer:
-                df.to_excel(writer, sheet_name='Detailed Report', index=False)
+            with pd.ExcelWriter(
+                path, engine="xlsxwriter", engine_kwargs={"options": {"nan_inf_to_errors": True}}
+            ) as writer:
+                df.to_excel(writer, sheet_name="Detailed Report", index=False)
 
                 self._apply_excel_formatting(writer, df)
 
@@ -136,40 +135,32 @@ class TrainingReport(BaseModel):
         Internal helper to apply styles, formats and column widths to the worksheet.
         """
         workbook = writer.book
-        worksheet = writer.sheets['Detailed Report']
+        worksheet = writer.sheets["Detailed Report"]
 
         # Formatting Definitions
-        header_format = workbook.add_format({
-            'bold': True, 
-            'bg_color': '#D7E4BC', 
-            'border': 1, 
-            'align': 'center'
-        })
-                
+        header_format = workbook.add_format(
+            {"bold": True, "bg_color": "#D7E4BC", "border": 1, "align": "center"}
+        )
+
         # Base format for Floats.
-        float_format = workbook.add_format({
-            'border': 1, 
-            'align': 'left', 
-            'valign': 'top', 
-            'text_wrap': True, 
-            'font_size': 10,
-            'num_format': '0.0000'
-        })
+        float_format = workbook.add_format(
+            {
+                "border": 1,
+                "align": "left",
+                "valign": "top",
+                "text_wrap": True,
+                "font_size": 10,
+                "num_format": "0.0000",
+            }
+        )
 
         # Base format for Integers.
-        int_format = workbook.add_format({
-            'border': 1,
-            'num_format': '0',
-            'align': 'left'
-        })
-                
+        int_format = workbook.add_format({"border": 1, "num_format": "0", "align": "left"})
+
         # String format
-        string_format = workbook.add_format({
-            'border': 1,
-            'align': 'left',
-            'valign': 'vcenter',
-            'text_wrap': True
-        })
+        string_format = workbook.add_format(
+            {"border": 1, "align": "left", "valign": "vcenter", "text_wrap": True}
+        )
 
         # Column Setup
         for row_idx, (_, value) in enumerate(df.values):
@@ -181,14 +172,11 @@ class TrainingReport(BaseModel):
                 fmt = string_format
             worksheet.write(row_idx + 1, 1, value, fmt)
 
-        worksheet.set_column('A:A', 25, workbook.add_format({
-            'border': 1,
-            'bold': True
-        }))
-        worksheet.set_column('B:B', 70)
+        worksheet.set_column("A:A", 25, workbook.add_format({"border": 1, "bold": True}))
+        worksheet.set_column("B:B", 70)
 
         for col_num, value in enumerate(df.columns.values):
-            worksheet.write(0, col_num, value, header_format)   
+            worksheet.write(0, col_num, value, header_format)
 
 
 def create_structured_report(
@@ -223,16 +211,16 @@ def create_structured_report(
     # Auto-generate augmentation info if not provided
     aug_info = aug_info or _format_augmentation_string(cfg)
 
-    best_val_acc = max((m['accuracy'] for m in val_metrics), default=0.0)
-    best_val_auc = max((m['auc'] for m in val_metrics), default=0.0)
+    best_val_acc = max((m["accuracy"] for m in val_metrics), default=0.0)
+    best_val_auc = max((m["auc"] for m in val_metrics), default=0.0)
 
     return TrainingReport(
         model=cfg.model.name,
         dataset=cfg.dataset.dataset_name,
         best_val_accuracy=best_val_acc,
         best_val_auc=best_val_auc,
-        test_accuracy=test_metrics['accuracy'],
-        test_auc=test_metrics['auc'],
+        test_accuracy=test_metrics["accuracy"],
+        test_auc=test_metrics["auc"],
         test_macro_f1=macro_f1,
         is_texture_based=cfg.dataset.metadata.is_texture_based,
         is_anatomical=cfg.dataset.metadata.is_anatomical,
@@ -247,10 +235,8 @@ def create_structured_report(
         seed=cfg.training.seed,
     )
 
+
 def _format_augmentation_string(cfg: Config) -> str:
     """Internal helper to transform the aug dictionary into a readable string."""
     aug_dict = cfg.augmentation.model_dump()
-    return ", ".join([
-        f"{k.replace('_', ' ').capitalize()}: {v}" 
-        for k, v in aug_dict.items()
-    ])
+    return ", ".join([f"{k.replace('_', ' ').capitalize()}: {v}" for k, v in aug_dict.items()])

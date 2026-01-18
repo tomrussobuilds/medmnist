@@ -1,29 +1,30 @@
 """
 Model Training & Lifecycle Orchestration.
 
-This module encapsulates the `ModelTrainer` engine, responsible for executing 
-the training loop, validation phases, and learning rate scheduling. It bridges 
-validated configurations with execution kernels, ensuring atomic state management 
+This module encapsulates the `ModelTrainer` engine, responsible for executing
+the training loop, validation phases, and learning rate scheduling. It bridges
+validated configurations with execution kernels, ensuring atomic state management
 through specialized checkpointing and weight restoration logic.
 
 Key Features:
-    - Automated Checkpointing: Tracks performance metrics (AUC/Accuracy) and 
+    - Automated Checkpointing: Tracks performance metrics (AUC/Accuracy) and
       persists the optimal model state.
-    - Deterministic Restoration: Guarantees that the model instance in memory 
+    - Deterministic Restoration: Guarantees that the model instance in memory
       reflects the 'best' found parameters upon completion.
-    - Modern Training Utilities: Native support for Mixed Precision (AMP), 
+    - Modern Training Utilities: Native support for Mixed Precision (AMP),
       Gradient Clipping, and Mixup augmentation.
-    - Lifecycle Telemetry: Unified logging of loss trajectories, metric 
+    - Lifecycle Telemetry: Unified logging of loss trajectories, metric
       evolution, and resource utilization.
 """
+
+import logging
+from functools import partial
+from pathlib import Path
 
 # =========================================================================== #
 #                                Standard Imports                             #
 # =========================================================================== #
-from typing import Tuple, List
-import logging
-from pathlib import Path
-from functools import partial
+from typing import List, Tuple
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
@@ -35,12 +36,9 @@ from torch.utils.data import DataLoader
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from orchard.core import (
-    Config, LOGGER_NAME, load_model_weights
-)
-from .engine import (
-    train_one_epoch, validate_epoch, mixup_data
-)
+from orchard.core import LOGGER_NAME, Config, load_model_weights
+
+from .engine import mixup_data, train_one_epoch, validate_epoch
 
 # =========================================================================== #
 #                                TRAINING LOGIC                               #
@@ -48,10 +46,12 @@ from .engine import (
 # Global logger instance
 logger = logging.getLogger(LOGGER_NAME)
 
+
 class ModelTrainer:
     """
     Encapsulates the core training, validation, and scheduling logic.
     """
+
     def __init__(
         self,
         model: nn.Module,
@@ -86,12 +86,8 @@ class ModelTrainer:
         # Mixup configuration
         self.mixup_fn = None
         if cfg.training.mixup_alpha > 0:
-            self.mixup_fn = partial(
-                mixup_data,
-                alpha=cfg.training.mixup_alpha,
-                device=device
-            )
-        
+            self.mixup_fn = partial(mixup_data, alpha=cfg.training.mixup_alpha, device=device)
+
         # Output Management
         self.best_path = output_path or Path("./best_model.pth")
         self.best_path.parent.mkdir(parents=True, exist_ok=True)
@@ -102,7 +98,7 @@ class ModelTrainer:
         self.val_aucs: List[float] = []
 
         logger.info(f"Trainer initialized. Best model checkpoint: {self.best_path.name}")
-        
+
     def train(self) -> Tuple[Path, List[float], List[dict]]:
         """
         Executes the main training loop with checkpointing and early stopping.
@@ -112,7 +108,7 @@ class ModelTrainer:
 
             mixup_cutoff = int(self.cfg.training.cosine_fraction * self.epochs)
             current_mixup = self.mixup_fn if epoch <= mixup_cutoff else None
-                
+
             # --- 1. Training Phase ---
             epoch_loss = train_one_epoch(
                 model=self.model,
@@ -124,16 +120,16 @@ class ModelTrainer:
                 scaler=self.scaler,
                 grad_clip=self.cfg.training.grad_clip,
                 epoch=epoch,
-                total_epochs=self.epochs
+                total_epochs=self.epochs,
             )
             self.train_losses.append(epoch_loss)
 
             # --- 2. Validation Phase ---
             val_metrics = validate_epoch(
-                model=self.model, 
-                val_loader=self.val_loader, 
+                model=self.model,
+                val_loader=self.val_loader,
                 criterion=self.criterion,
-                device=self.device
+                device=self.device,
             )
             self.val_metrics_history.append(val_metrics)
 
@@ -141,8 +137,9 @@ class ModelTrainer:
             val_loss = val_metrics["loss"]
             val_auc = val_metrics.get("auc", 0.0)
 
-            logger.info(f"Epoch {epoch} Validation AUC: {val_auc:.4f} "
-                        f"Previous Best AUC: {self.best_auc:.4f}"
+            logger.info(
+                f"Epoch {epoch} Validation AUC: {val_auc:.4f} "
+                f"Previous Best AUC: {self.best_auc:.4f}"
             )
             self.val_aucs.append(val_auc)
 
@@ -156,9 +153,9 @@ class ModelTrainer:
             if self._handle_checkpointing(val_metrics):
                 logger.warning(f"Early stopping triggered at epoch {epoch}.")
                 break
-            
+
             # --- 5. Unified Logging ---
-            current_lr = self.optimizer.param_groups[0]['lr']
+            current_lr = self.optimizer.param_groups[0]["lr"]
             logger.info(
                 f"Loss: [T: {epoch_loss:.4f} | V: {val_loss:.4f}] | "
                 f"Acc: {val_acc:.4f} (Best Acc: {self.best_acc:.4f}) | "
@@ -171,19 +168,19 @@ class ModelTrainer:
         )
 
         if self.best_path.exists():
-            self.load_best_weights() 
+            self.load_best_weights()
         else:
             logger.warning("Forcing checkpoint save for smoke test integrity.")
             torch.save(self.model.state_dict(), self.best_path)
 
         return self.best_path, self.train_losses, self.val_metrics_history
-    
+
     def _smart_step_scheduler(self, val_loss: float) -> None:
         """
         Updates the learning rate scheduler based on its type.
-        
-        If the scheduler is an instance of ReduceLROnPlateau, it requires 
-        the validation loss to determine the next step. Otherwise, it 
+
+        If the scheduler is an instance of ReduceLROnPlateau, it requires
+        the validation loss to determine the next step. Otherwise, it
         performs a standard step.
 
         Args:
@@ -194,14 +191,11 @@ class ModelTrainer:
         else:
             self.scheduler.step()
 
-    def _handle_checkpointing(
-            self,
-            val_metrics: dict
-        ) -> bool:
+    def _handle_checkpointing(self, val_metrics: dict) -> bool:
         """
         Manages model checkpointing and tracks early stopping progress.
-        
-        Saves the model state if the current validation accuracy exceeds 
+
+        Saves the model state if the current validation accuracy exceeds
         the previous best. Increments the patience counter otherwise.
 
         Args:
@@ -212,7 +206,7 @@ class ModelTrainer:
         """
         val_acc = val_metrics["accuracy"]
         val_auc = val_metrics.get("auc", 0.0)
-    
+
         if val_acc > self.best_acc:
             self.best_acc = val_acc
 
@@ -223,28 +217,24 @@ class ModelTrainer:
             torch.save(self.model.state_dict(), self.best_path)
         else:
             self.epochs_no_improve += 1
-        
+
         return self.epochs_no_improve >= self.patience
-    
+
     def load_best_weights(self) -> None:
         """
         Restores the optimal parameters into the model from the best checkpoint.
 
-        After the training loop completes or is interrupted by early stopping, 
-        the model instance in memory retains the weights from the final epoch. 
-        This method reloads the 'best' state-dict saved during the execution 
-        to ensure subsequent evaluations or inference tasks use the top-performing 
+        After the training loop completes or is interrupted by early stopping,
+        the model instance in memory retains the weights from the final epoch.
+        This method reloads the 'best' state-dict saved during the execution
+        to ensure subsequent evaluations or inference tasks use the top-performing
         model iteration.
 
-        The restoration process is device-aware, ensuring weights are mapped 
+        The restoration process is device-aware, ensuring weights are mapped
         correctly to the active compute device (CUDA/MPS/CPU).
         """
         try:
-            load_model_weights(
-                model=self.model, 
-                path=self.best_path, 
-                device=self.device
-            )
+            load_model_weights(model=self.model, path=self.best_path, device=self.device)
             logger.info(
                 f" » [LIFECYCLE] Success: Model state restored to best checkpoint ({self.best_path.name})"
             )

@@ -6,13 +6,15 @@ avoiding eager imports of heavy or optional dependencies (e.g. torch).
 
 All heavy modules are imported lazily via __getattr__ (PEP 562).
 """
+
 # =========================================================================== #
 #                                   Standard Imports                          #
 # =========================================================================== #
 
 from __future__ import annotations
-from typing import Any
+
 from importlib import import_module
+from typing import Any
 
 # =========================================================================== #
 #                                   PUBLIC API                                #
@@ -54,6 +56,7 @@ _LAZY_IMPORTS: dict[str, str] = {
 #                               LAZY LOADER FUNCTION                          #
 # =========================================================================== #
 
+
 def __getattr__(name: str) -> Any:
     """
     Lazily import configuration components on first access.
@@ -71,9 +74,11 @@ def __getattr__(name: str) -> Any:
     globals()[name] = attr
     return attr
 
+
 # =========================================================================== #
 #                                DIR SUPPORT                                  #
 # =========================================================================== #
+
 
 def __dir__() -> list[str]:
     return sorted(__all__)

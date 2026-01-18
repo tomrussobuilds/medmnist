@@ -4,6 +4,7 @@ Test Suite for Config Engine.
 Tests main Config class integration, cross-validation,
 YAML hydration, and from_args factory.
 """
+
 # =========================================================================== #
 #                         Standard Imports                                    #
 # =========================================================================== #
@@ -24,22 +25,24 @@ from orchard.core.config import Config
 #                    CONFIG: BASIC CONSTRUCTION                               #
 # =========================================================================== #
 
+
 @pytest.mark.unit
 def test_config_defaults():
     """Test Config with all default sub-configs."""
     config = Config()
-    
+
     # Sub-configs should be instantiated
     assert config.hardware is not None
     assert config.training is not None
     assert config.dataset is not None
     assert config.model is not None
 
+
 @pytest.mark.unit
 def test_config_from_args_basic(basic_args):
     """Test Config.from_args() with basic arguments."""
     config = Config.from_args(basic_args)
-    
+
     assert config.dataset.dataset_name == "bloodmnist"
     assert config.model.name == "resnet_18_adapted"
     assert config.training.epochs == 60
@@ -49,31 +52,31 @@ def test_config_from_args_basic(basic_args):
 #                    CONFIG: CROSS-VALIDATION                                 #
 # =========================================================================== #
 
+
 @pytest.mark.unit
 def test_resnet_18_requires_resolution_28():
     """Test resnet_18_adapted validation enforces resolution=28."""
     args = argparse.Namespace(
         dataset="bloodmnist",
         model_name="resnet_18_adapted",
-        resolution=224, # Wrong
-        pretrained=True
+        resolution=224,  # Wrong
+        pretrained=True,
     )
-    
+
     with pytest.raises(ValidationError, match="resnet_18_adapted requires resolution=28"):
         Config.from_args(args)
+
 
 @pytest.mark.unit
 def test_amp_requires_gpu():
     """Test AMP validation rejects CPU + AMP."""
     args = argparse.Namespace(
-        dataset="bloodmnist",
-        device="cpu",
-        use_amp=True,  # Invalid with CPU
-        pretrained=True
+        dataset="bloodmnist", device="cpu", use_amp=True, pretrained=True  # Invalid with CPU
     )
-    
+
     with pytest.raises(ValidationError, match="AMP requires GPU"):
         Config.from_args(args)
+
 
 @pytest.mark.unit
 def test_pretrained_requires_rgb():
@@ -83,22 +86,20 @@ def test_pretrained_requires_rgb():
         model_name="resnet_18_adapted",
         pretrained=True,
         force_rgb=False,  # This will cause validation error
-        resolution=28
+        resolution=28,
     )
-    
+
     with pytest.raises(ValidationError, match="Pretrained.*requires RGB"):
         Config.from_args(args)
+
 
 @pytest.mark.unit
 def test_min_lr_less_than_lr_validation():
     """Test min_lr < learning_rate validation."""
     args = argparse.Namespace(
-        dataset="bloodmnist",
-        learning_rate=0.001,
-        min_lr=0.01,  # Greater than LR!
-        pretrained=True
+        dataset="bloodmnist", learning_rate=0.001, min_lr=0.01, pretrained=True  # Greater than LR!
     )
-    
+
     with pytest.raises(ValidationError, match="min_lr.*must be"):
         Config.from_args(args)
 
@@ -107,25 +108,28 @@ def test_min_lr_less_than_lr_validation():
 #                    CONFIG: YAML HYDRATION                                   #
 # =========================================================================== #
 
+
 @pytest.mark.integration
 def test_from_yaml_loads_correctly(temp_yaml_config, mock_metadata_28):
     """Test Config.from_yaml() loads YAML correctly."""
     config = Config.from_yaml(temp_yaml_config, metadata=mock_metadata_28)
-    
+
     assert config.dataset.dataset_name == "bloodmnist"
     assert config.model.name == "resnet_18_adapted"
     assert config.training.epochs == 60
     assert config.training.batch_size == 128
 
+
 @pytest.mark.integration
 def test_yaml_optuna_section_loaded(temp_yaml_config, mock_metadata_28):
     """Test YAML with optuna section loads OptunaConfig."""
     config = Config.from_yaml(temp_yaml_config, metadata=mock_metadata_28)
-    
+
     # Optuna section should be loaded
     assert config.optuna is not None
     assert config.optuna.study_name == "yaml_test_study"
     assert config.optuna.n_trials == 20
+
 
 @pytest.mark.integration
 def test_yaml_precedence_over_args(temp_yaml_config, mock_metadata_28):
@@ -135,11 +139,11 @@ def test_yaml_precedence_over_args(temp_yaml_config, mock_metadata_28):
         epochs=999,  # Should be ignored
         batch_size=999,  # Should be ignored
         dataset="bloodmnist",
-        pretrained=True
+        pretrained=True,
     )
-    
+
     config = Config.from_args(args)
-    
+
     # YAML values should take precedence
     assert config.training.epochs == 60  # From YAML
     assert config.training.batch_size == 128  # From YAML
@@ -149,24 +153,26 @@ def test_yaml_precedence_over_args(temp_yaml_config, mock_metadata_28):
 #                    CONFIG: SERIALIZATION                                    #
 # =========================================================================== #
 
+
 @pytest.mark.unit
 def test_dump_portable_converts_paths():
     """Test dump_portable() makes paths relative."""
     config = Config()
-    
+
     portable = config.dump_portable()
-    
+
     # Paths should be relative or portable
     assert "dataset" in portable
     assert "telemetry" in portable
+
 
 @pytest.mark.unit
 def test_dump_serialized_json_compatible():
     """Test dump_serialized() produces JSON-compatible dict."""
     config = Config()
-    
+
     serialized = config.dump_serialized()
-    
+
     # Should be dict with all sub-configs
     assert isinstance(serialized, dict)
     assert "hardware" in serialized
@@ -177,21 +183,23 @@ def test_dump_serialized_json_compatible():
 #                    CONFIG: PROPERTIES                                       #
 # =========================================================================== #
 
+
 @pytest.mark.unit
 def test_run_slug_property():
     """Test run_slug combines dataset and model names."""
     config = Config()
-    
+
     slug = config.run_slug
-    
+
     assert "bloodmnist" in slug
     assert config.model.name in slug
+
 
 @pytest.mark.unit
 def test_num_workers_property():
     """Test num_workers delegates to hardware config."""
     config = Config()
-    
+
     workers = config.num_workers
 
     assert workers >= 0
@@ -202,13 +210,15 @@ def test_num_workers_property():
 #                    CONFIG: EDGE CASES                                       #
 # =========================================================================== #
 
+
 @pytest.mark.unit
 def test_frozen_immutability():
     """Test Config is frozen (immutable)."""
     config = Config()
-    
+
     with pytest.raises(ValidationError):
         config.training = None
+
 
 @pytest.mark.integration
 def test_invalid_yaml_raises_error(temp_invalid_yaml):
@@ -216,8 +226,6 @@ def test_invalid_yaml_raises_error(temp_invalid_yaml):
     # This YAML has min_lr > learning_rate
     with pytest.raises(ValidationError):
         args = argparse.Namespace(
-            config=str(temp_invalid_yaml),
-            dataset="bloodmnist",
-            pretrained=True
+            config=str(temp_invalid_yaml), dataset="bloodmnist", pretrained=True
         )
         Config.from_args(args)

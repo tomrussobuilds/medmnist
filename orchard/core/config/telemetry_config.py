@@ -1,8 +1,8 @@
 """
 Telemetry & Filesystem Manifest.
 
-Declarative schema for filesystem orchestration, logging policy, and 
-experiment identity. Resolves paths, configures logging, and exports 
+Declarative schema for filesystem orchestration, logging policy, and
+experiment identity. Resolves paths, configures logging, and exports
 environment-agnostic manifests.
 
 Single Source of Truth (SSOT) for:
@@ -11,7 +11,7 @@ Single Source of Truth (SSOT) for:
     * Experiment identity and run-level metadata
     * Portable, host-independent configuration serialization
 
-Centralizes telemetry and filesystem concerns to ensure traceable, 
+Centralizes telemetry and filesystem concerns to ensure traceable,
 reproducible artifacts free from host-specific filesystem leakage.
 """
 
@@ -24,32 +24,33 @@ from pathlib import Path
 # =========================================================================== #
 #                                Third-Party Imports                          #
 # =========================================================================== #
-from pydantic import (
-    BaseModel, Field, ConfigDict, model_validator
-)
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from ..paths import PROJECT_ROOT
 
 # =========================================================================== #
 #                               Internal Imports                              #
 # =========================================================================== #
-from .types import ValidatedPath, LogFrequency, LogLevel
-from ..paths import PROJECT_ROOT
+from .types import LogFrequency, LogLevel, ValidatedPath
 
 # =========================================================================== #
 #                           Telemetry Configuration                           #
 # =========================================================================== #
 
+
 class TelemetryConfig(BaseModel):
     """
     Declarative manifest for telemetry, logging, and filesystem strategy.
-    
-    Manages experiment artifacts location, logging behavior, and path 
+
+    Manages experiment artifacts location, logging behavior, and path
     portability across environments.
     """
+
     model_config = ConfigDict(
         frozen=True,
         extra="forbid",
         arbitrary_types_allowed=True,
-        json_encoders={Path: lambda v: str(v)}
+        json_encoders={Path: lambda v: str(v)},
     )
 
     # Filesystem
@@ -67,26 +68,26 @@ class TelemetryConfig(BaseModel):
     def handle_empty_config(cls, data):
         """
         Handles empty YAML section (telemetry:) by returning default dict.
-        
+
         When YAML contains 'telemetry:' with no values, Pydantic receives None.
         This validator converts None to empty dict, allowing defaults to apply.
         """
         if data is None:
             return {}
         return data
-    
+
     @property
     def resolved_data_dir(self) -> Path:
         if not self.data_dir.is_absolute():
             return (PROJECT_ROOT / self.data_dir).resolve()
         return self.data_dir.resolve()
-    
+
     def to_portable_dict(self) -> dict:
         """
         Converts to portable dictionary with environment-agnostic paths.
-        
-        Reconciles absolute paths to project-relative paths (e.g., 
-        '/home/user/project/dataset' → './dataset') to prevent 
+
+        Reconciles absolute paths to project-relative paths (e.g.,
+        '/home/user/project/dataset' → './dataset') to prevent
         filesystem leakage in exported configs.
         """
         data = self.model_dump()
@@ -105,10 +106,10 @@ class TelemetryConfig(BaseModel):
     def from_args(cls, args: argparse.Namespace) -> "TelemetryConfig":
         """
         Factory from CLI arguments.
-        
+
         Args:
             args: Parsed argparse namespace
-            
+
         Returns:
             Configured TelemetryConfig instance
         """

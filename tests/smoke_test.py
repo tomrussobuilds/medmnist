@@ -11,7 +11,7 @@ with minimal computational overhead. Verifies all 5 orchestration stages:
 
 Usage:
     python -m tests.smoke_test
-    
+
 Expected Runtime: ~30 seconds on GPU, ~2 minutes on CPU
 """
 
@@ -23,26 +23,21 @@ import argparse
 # =========================================================================== #
 #                            INTERNAL IMPORTS                                 #
 # =========================================================================== #
-from orchard.core import (
-    Config, parse_args, DATASET_REGISTRY, RootOrchestrator, LogStyle
-)
-from orchard.data_handler import (
-    load_medmnist, get_dataloaders, get_augmentations_description
-)
-from orchard.models import get_model
-from orchard.trainer import (
-    ModelTrainer, get_criterion, get_optimizer, get_scheduler
-)
+from orchard.core import DATASET_REGISTRY, Config, LogStyle, RootOrchestrator, parse_args
+from orchard.data_handler import get_augmentations_description, get_dataloaders, load_medmnist
 from orchard.evaluation import run_final_evaluation
+from orchard.models import get_model
+from orchard.trainer import ModelTrainer, get_criterion, get_optimizer, get_scheduler
 
 # =========================================================================== #
 #                           SMOKE TEST EXECUTION                              #
 # =========================================================================== #
 
+
 def run_smoke_test(args: argparse.Namespace) -> None:
     """
     Orchestrates lightweight pipeline validation for regression testing.
-    
+
     Overrides configuration with minimal resource requirements:
         - 1 epoch training
         - 4 samples per batch
@@ -50,46 +45,46 @@ def run_smoke_test(args: argparse.Namespace) -> None:
         - No AMP (CPU compatibility)
         - No MixUp (epoch count too low)
         - Single worker (determinism)
-    
+
     Args:
         args: CLI arguments (will be overridden for smoke test)
-    
+
     Raises:
         Exception: Any failure during pipeline execution
     """
     # ================================================================ #
     #                   SMOKE TEST CONFIGURATION                       #
     # ================================================================ #
-    
+
     # Disable AMP for CPU compatibility
     args.use_amp = False
-    
+
     # Set minimal training parameters
     args.epochs = 1
     args.batch_size = 4
     args.max_samples = 32
     args.num_workers = 0
-    
+
     # Disable MixUp (requires multiple epochs)
     args.mixup_alpha = 0.0
     args.mixup_epochs = 0
-    
+
     # Remove Optuna config if present (incompatible with 1 epoch)
-    if hasattr(args, 'study_name'):
-        delattr(args, 'study_name')
-    
+    if hasattr(args, "study_name"):
+        delattr(args, "study_name")
+
     # Create Config with smoke-test overrides
     cfg = Config.from_args(args)
 
     # ================================================================ #
     #                   PIPELINE VALIDATION                            #
     # ================================================================ #
-    
+
     with RootOrchestrator(cfg) as orchestrator:
-        paths      = orchestrator.paths
+        paths = orchestrator.paths
         run_logger = orchestrator.run_logger
-        device     = orchestrator.get_device()
-        
+        device = orchestrator.get_device()
+
         # Resolve dataset metadata
         ds_meta = DATASET_REGISTRY[cfg.dataset.metadata.name.lower()]
 
@@ -110,50 +105,50 @@ def run_smoke_test(args: argparse.Namespace) -> None:
             #                     MODEL TRAINING                           #
             # ============================================================ #
             run_logger.info("[Stage 3/5] Testing Model & Optimizer Factories...")
-            model     = get_model(device=device, cfg=cfg)
+            model = get_model(device=device, cfg=cfg)
             criterion = get_criterion(cfg)
             optimizer = get_optimizer(model, cfg)
             scheduler = get_scheduler(optimizer, cfg)
 
             trainer = ModelTrainer(
-                model        = model,
-                train_loader = train_loader,
-                val_loader   = val_loader,
-                optimizer    = optimizer,
-                scheduler    = scheduler,
-                criterion    = criterion,
-                device       = device,
-                cfg          = cfg,
-                output_path  = paths.best_model_path
+                model=model,
+                train_loader=train_loader,
+                val_loader=val_loader,
+                optimizer=optimizer,
+                scheduler=scheduler,
+                criterion=criterion,
+                device=device,
+                cfg=cfg,
+                output_path=paths.best_model_path,
             )
-            
+
             _, train_losses, val_metrics_history = trainer.train()
 
             # ============================================================ #
             #                     MODEL EVALUATION                         #
             # ============================================================ #
             run_logger.info("[Stage 4/5] Recovering weights and running inference...")
-            
+
             if not paths.best_model_path.exists():
                 raise FileNotFoundError(f"Checkpoint not found: {paths.best_model_path}")
-            
+
             trainer.load_best_weights()
-            
+
             # ============================================================ #
             #                     REPORT GENERATION                        #
             # ============================================================ #
             run_logger.info("[Stage 5/5] Verifying reporting utilities...")
-            
+
             _, test_acc = run_final_evaluation(
-                model               = model,
-                test_loader         = test_loader,
-                train_losses        = train_losses,
-                val_metrics_history = val_metrics_history,
-                class_names         = ds_meta.classes,
-                paths               = paths,
-                cfg                 = cfg,
-                aug_info            = get_augmentations_description(cfg),
-                log_path            = paths.logs / "smoke_test.log"
+                model=model,
+                test_loader=test_loader,
+                train_losses=train_losses,
+                val_metrics_history=val_metrics_history,
+                class_names=ds_meta.classes,
+                paths=paths,
+                cfg=cfg,
+                aug_info=get_augmentations_description(cfg),
+                log_path=paths.logs / "smoke_test.log",
             )
 
             # ============================================================ #
@@ -164,7 +159,9 @@ def run_smoke_test(args: argparse.Namespace) -> None:
             run_logger.info(f"{'SMOKE TEST PASSED':^80}")
             run_logger.info(LogStyle.DOUBLE)
             run_logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Test Accuracy : {test_acc:.2%}")
-            run_logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Dataset       : {ds_meta.display_name}")
+            run_logger.info(
+                f"{LogStyle.INDENT}{LogStyle.ARROW} Dataset       : {ds_meta.display_name}"
+            )
             run_logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Architecture  : {cfg.model.name}")
             run_logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Device        : {device}")
             run_logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Artifacts     : {paths.root}")
@@ -174,6 +171,7 @@ def run_smoke_test(args: argparse.Namespace) -> None:
         except Exception as e:
             run_logger.error(f"\n{LogStyle.WARNING} SMOKE TEST FAILED: {str(e)}", exc_info=True)
             raise
+
 
 # =========================================================================== #
 #                           ENTRY POINT                                       #

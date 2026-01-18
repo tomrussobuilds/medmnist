@@ -25,10 +25,10 @@ import pytest
 # =========================================================================== #
 from orchard.core.metadata import DatasetMetadata
 
-
 # =========================================================================== #
 #                          DATASET METADATA FIXTURES                          #
 # =========================================================================== #
+
 
 @pytest.fixture
 def mock_metadata_28():
@@ -45,7 +45,7 @@ def mock_metadata_28():
         in_channels=3,
         native_resolution=28,
         is_anatomical=False,
-        is_texture_based=False
+        is_texture_based=False,
     )
 
 
@@ -64,7 +64,7 @@ def mock_metadata_224():
         in_channels=1,
         native_resolution=224,
         is_anatomical=True,
-        is_texture_based=False
+        is_texture_based=False,
     )
 
 
@@ -83,13 +83,14 @@ def mock_grayscale_metadata():
         in_channels=1,
         native_resolution=28,
         is_anatomical=True,
-        is_texture_based=False
+        is_texture_based=False,
     )
 
 
 # =========================================================================== #
 #                        CLI ARGUMENT FIXTURES                                #
 # =========================================================================== #
+
 
 @pytest.fixture
 def basic_args():
@@ -148,13 +149,14 @@ def optuna_args():
         n_trials=10,
         epochs=15,
         metric_name="auc",
-        direction="maximize"
+        direction="maximize",
     )
 
 
 # =========================================================================== #
 #                        YAML CONFIGURATION FIXTURES                          #
 # =========================================================================== #
+
 
 @pytest.fixture
 def temp_yaml_config(tmp_path):
@@ -197,11 +199,12 @@ training:
 #                        MINIMAL CONFIG                                       #
 # =========================================================================== #
 
+
 @pytest.fixture
 def minimal_config():
     """Minimal valid Config for testing."""
     from orchard.core import Config
-    
+
     return Config(
         dataset={"name": "bloodmnist", "resolution": 28},
         model={"name": "resnet_18_adapted", "pretrained": False},
@@ -212,5 +215,5 @@ def minimal_config():
             "use_amp": False,
         },
         hardware={"device": "cpu", "project_name": "test-project"},
-        telemetry={"data_dir": "./dataset", "output_dir": "./outputs"}
+        telemetry={"data_dir": "./dataset", "output_dir": "./outputs"},
     )

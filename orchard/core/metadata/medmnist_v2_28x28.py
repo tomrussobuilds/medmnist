@@ -9,12 +9,12 @@ Contains DatasetMetadata instances for the MedMNIST v2 collection at 28x28 resol
 # =========================================================================== #
 from typing import Dict, Final
 
+from ..paths import DATASET_DIR
+
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
 from .base import DatasetMetadata
-from ..paths import DATASET_DIR
-
 
 # =========================================================================== #
 #                             Dataset Registry                                #
@@ -28,16 +28,22 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         url="https://zenodo.org/records/5208230/files/pathmnist.npz",
         path=DATASET_DIR / "pathmnist_28.npz",
         classes=[
-            "adipose", "background", "debris", "lymphocytes", "mucus",
-            "smooth muscle", "normal colon mucosa", "cancer-associated stroma",
-            "colorectal adenocarcinoma epithelium"
+            "adipose",
+            "background",
+            "debris",
+            "lymphocytes",
+            "mucus",
+            "smooth muscle",
+            "normal colon mucosa",
+            "cancer-associated stroma",
+            "colorectal adenocarcinoma epithelium",
         ],
         mean=(0.485, 0.456, 0.406),
         std=(0.229, 0.224, 0.225),
         in_channels=3,
         native_resolution=28,
         is_anatomical=False,
-        is_texture_based=True
+        is_texture_based=True,
     ),
     "bloodmnist": DatasetMetadata(
         name="bloodmnist",
@@ -46,15 +52,21 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         url="https://zenodo.org/records/5208230/files/bloodmnist.npz",
         path=DATASET_DIR / "bloodmnist_28.npz",
         classes=[
-            "basophil", "eosinophil", "erythroblast", "immature granulocyte",
-            "lymphocyte", "monocyte", "neutrophil", "platelet"
+            "basophil",
+            "eosinophil",
+            "erythroblast",
+            "immature granulocyte",
+            "lymphocyte",
+            "monocyte",
+            "neutrophil",
+            "platelet",
         ],
         mean=(0.4914, 0.4822, 0.4465),
         std=(0.2023, 0.1994, 0.2010),
         in_channels=3,
         native_resolution=28,
         is_anatomical=False,
-        is_texture_based=False
+        is_texture_based=False,
     ),
     "dermamnist": DatasetMetadata(
         name="dermamnist",
@@ -63,15 +75,20 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         url="https://zenodo.org/records/5208230/files/dermamnist.npz",
         path=DATASET_DIR / "dermamnist_28.npz",
         classes=[
-            "actinic keratoses", "basal cell carcinoma", "benign keratosis",
-            "dermatofibroma", "melanocytic nevi", "melanoma", "vascular lesions"
+            "actinic keratoses",
+            "basal cell carcinoma",
+            "benign keratosis",
+            "dermatofibroma",
+            "melanocytic nevi",
+            "melanoma",
+            "vascular lesions",
         ],
         mean=(0.485, 0.456, 0.406),
         std=(0.229, 0.224, 0.225),
         in_channels=3,
         native_resolution=28,
         is_anatomical=False,
-        is_texture_based=True
+        is_texture_based=True,
     ),
     "octmnist": DatasetMetadata(
         name="octmnist",
@@ -79,16 +96,13 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         md5_checksum="c68d92d5b585d8d81f7112f81e2d0842",
         url="https://zenodo.org/records/5208230/files/octmnist.npz",
         path=DATASET_DIR / "octmnist_28.npz",
-        classes=[
-            "choroidal neovascularization", "diabetic macular edema",
-            "drusen", "normal"
-        ],
+        classes=["choroidal neovascularization", "diabetic macular edema", "drusen", "normal"],
         mean=(0.5,),
         std=(0.5,),
         in_channels=1,
         native_resolution=28,
         is_anatomical=True,
-        is_texture_based=True
+        is_texture_based=True,
     ),
     "pneumoniamnist": DatasetMetadata(
         name="pneumoniamnist",
@@ -102,7 +116,7 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         in_channels=1,
         native_resolution=28,
         is_anatomical=True,
-        is_texture_based=False
+        is_texture_based=False,
     ),
     "retinamnist": DatasetMetadata(
         name="retinamnist",
@@ -110,15 +124,13 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         md5_checksum="bd4c0672f1bba3e3a89f0e4e876791e4",
         url="https://zenodo.org/records/5208230/files/retinamnist.npz",
         path=DATASET_DIR / "retinamnist_28.npz",
-        classes=[
-            "No DR", "Mild DR", "Moderate DR", "Severe DR", "Proliferative DR"
-        ],
+        classes=["No DR", "Mild DR", "Moderate DR", "Severe DR", "Proliferative DR"],
         mean=(0.485, 0.456, 0.406),
         std=(0.229, 0.224, 0.225),
         in_channels=3,
         native_resolution=28,
         is_anatomical=False,
-        is_texture_based=True
+        is_texture_based=True,
     ),
     "breastmnist": DatasetMetadata(
         name="breastmnist",
@@ -132,7 +144,7 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         in_channels=1,
         native_resolution=28,
         is_anatomical=True,
-        is_texture_based=False
+        is_texture_based=False,
     ),
     "organmnist": DatasetMetadata(
         name="organmnist",
@@ -141,16 +153,24 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         url="https://zenodo.org/records/5208230/files/organamnist.npz",
         path=DATASET_DIR / "organamnist_28.npz",
         classes=[
-            "bladder", "femur-left", "femur-right", "heart",
-            "kidney-left", "kidney-right", "liver",
-            "lung-left", "lung-right", "pancreas", "spleen"
+            "bladder",
+            "femur-left",
+            "femur-right",
+            "heart",
+            "kidney-left",
+            "kidney-right",
+            "liver",
+            "lung-left",
+            "lung-right",
+            "pancreas",
+            "spleen",
         ],
         mean=(0.5,),
         std=(0.5,),
         in_channels=1,
         native_resolution=28,
         is_anatomical=True,
-        is_texture_based=False
+        is_texture_based=False,
     ),
     "tissuemnist": DatasetMetadata(
         name="tissuemnist",
@@ -159,15 +179,21 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         url="https://zenodo.org/records/5208230/files/tissuemnist.npz",
         path=DATASET_DIR / "tissuemnist_28.npz",
         classes=[
-            "Collecting Duct", "Distal Tubule", "Glomerulus", "Medulla",
-            "Proximal Tubule", "Capsule", "Large Vessel", "Small Vessel"
+            "Collecting Duct",
+            "Distal Tubule",
+            "Glomerulus",
+            "Medulla",
+            "Proximal Tubule",
+            "Capsule",
+            "Large Vessel",
+            "Small Vessel",
         ],
         mean=(0.5,),
         std=(0.5,),
         in_channels=1,
         native_resolution=28,
         is_anatomical=False,
-        is_texture_based=True
+        is_texture_based=True,
     ),
     "organcmnist": DatasetMetadata(
         name="organcmnist",
@@ -176,15 +202,23 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         url="https://zenodo.org/records/5208230/files/organcmnist.npz",
         path=DATASET_DIR / "organcmnist_28.npz",
         classes=[
-            "bladder", "femur-left", "femur-right", "heart",
-            "kidney-left", "kidney-right", "liver",
-            "lung-left", "lung-right", "pancreas", "spleen"
+            "bladder",
+            "femur-left",
+            "femur-right",
+            "heart",
+            "kidney-left",
+            "kidney-right",
+            "liver",
+            "lung-left",
+            "lung-right",
+            "pancreas",
+            "spleen",
         ],
         mean=(0.5,),
         std=(0.5,),
         in_channels=1,
         native_resolution=28,
         is_anatomical=True,
-        is_texture_based=False
+        is_texture_based=False,
     ),
 }

@@ -8,11 +8,10 @@ Provides components for automated hyperparameter search:
     - run_optimization: Convenience function for complete workflow
 """
 
-from .search_spaces import SearchSpaceRegistry, get_search_space
+from .early_stopping import StudyEarlyStoppingCallback, get_early_stopping_callback
 from .objective import OptunaObjective, PrunableTrainer
 from .orchestrator import OptunaOrchestrator, run_optimization
-from .early_stopping import StudyEarlyStoppingCallback, get_early_stopping_callback
-
+from .search_spaces import SearchSpaceRegistry, get_search_space
 
 __all__ = [
     "SearchSpaceRegistry",

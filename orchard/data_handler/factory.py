@@ -1,8 +1,8 @@
 """Data Loader Orchestration Module.
 
-This module provides the DataLoaderFactory class, which encapsulates the 
-logic for building PyTorch DataLoaders. It handles dataset instantiation, 
-class balancing via WeightedRandomSampler, and hardware-aware infrastructure 
+This module provides the DataLoaderFactory class, which encapsulates the
+logic for building PyTorch DataLoaders. It handles dataset instantiation,
+class balancing via WeightedRandomSampler, and hardware-aware infrastructure
 setup (seeding, workers, memory pinning).
 """
 
@@ -18,14 +18,13 @@ from typing import Dict, Optional, Tuple
 # =========================================================================== #
 import numpy as np
 import torch
-from torch.utils.data import (
-    DataLoader, WeightedRandomSampler, Dataset
-)
+from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
 from orchard.core import DATASET_REGISTRY, Config, worker_init_fn
+
 from .dataset import MedMNISTDataset
 from .fetcher import MedMNISTData
 from .transforms import get_pipeline_transforms
@@ -34,11 +33,12 @@ from .transforms import get_pipeline_transforms
 #                               DATALOADER FACTORY                            #
 # =========================================================================== #
 
+
 class DataLoaderFactory:
     """Orchestrates the creation of optimized PyTorch DataLoaders.
 
-    This factory centralizes the configuration of training, validation, and 
-    testing pipelines. It ensures that data transformations, class balancing, 
+    This factory centralizes the configuration of training, validation, and
+    testing pipelines. It ensures that data transformations, class balancing,
     and hardware settings are synchronized across all splits.
 
     Attributes:
@@ -60,9 +60,7 @@ class DataLoaderFactory:
         self.ds_meta = DATASET_REGISTRY[cfg.dataset.dataset_name]
         self.logger = logging.getLogger("visionforge")
 
-    def _get_transformation_pipelines(
-            self
-    ) -> Tuple[torch.nn.Module, torch.nn.Module]:
+    def _get_transformation_pipelines(self) -> Tuple[torch.nn.Module, torch.nn.Module]:
         """Retrieves specialized vision pipelines.
 
         Returns:
@@ -70,13 +68,10 @@ class DataLoaderFactory:
         """
         return get_pipeline_transforms(self.cfg, self.ds_meta)
 
-    def _get_balancing_sampler(
-            self,
-            dataset: MedMNISTDataset
-    ) -> Optional[WeightedRandomSampler]:
+    def _get_balancing_sampler(self, dataset: MedMNISTDataset) -> Optional[WeightedRandomSampler]:
         """Calculates class weights and builds a WeightedRandomSampler.
 
-        This method addresses class imbalance by assigning higher sampling 
+        This method addresses class imbalance by assigning higher sampling
         probabilities to under-represented classes.
 
         Args:
@@ -90,70 +85,66 @@ class DataLoaderFactory:
 
         labels = dataset.labels.flatten()
         classes, counts = np.unique(labels, return_counts=True)
-        
+
         # Inverse frequency balancing: weight = 1 / frequency
         class_weights = 1.0 / counts
         weight_map: Dict[int, float] = dict(zip(classes, class_weights))
-        
+
         sample_weights = torch.tensor(
-            [weight_map[int(label)] for label in labels], 
-            dtype=torch.float
+            [weight_map[int(label)] for label in labels], dtype=torch.float
         )
 
         self.logger.info("Class balancing: WeightedRandomSampler generated.")
         return WeightedRandomSampler(
-            weights=sample_weights,
-            num_samples=len(sample_weights),
-            replacement=True
+            weights=sample_weights, num_samples=len(sample_weights), replacement=True
         )
 
     def _get_infrastructure_kwargs(self, is_optuna: bool = False) -> dict:
         """
         Determines hardware and process-level parameters for DataLoaders.
-        
+
         CRITICAL FIX: Adjust workers and persistence for Optuna compatibility.
-        
+
         Args:
             is_optuna: If True, optimize for trial stability over performance
-        
+
         Returns:
             A dictionary of DataLoader arguments (num_workers, pin_memory, etc.).
         """
         num_workers = self.cfg.num_workers
-        
+
         # OPTUNA MODE: Reduce workers to prevent file descriptor exhaustion
         if is_optuna:
             if self.cfg.dataset.resolution >= 224:
                 num_workers = min(num_workers, 4)
             else:
                 num_workers = min(num_workers, 6)
-            
+
             self.logger.info(
                 f"Optuna mode: Reducing workers to {num_workers} "
                 f"(resolution={self.cfg.dataset.resolution})"
             )
-        
+
         # Hardware acceleration: Pin memory for CUDA or MPS
         has_cuda = torch.cuda.is_available()
         has_mps = hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
-        
+
         return {
             "num_workers": num_workers,
             "pin_memory": has_cuda or has_mps,
             "worker_init_fn": worker_init_fn if num_workers > 0 else None,
-            "persistent_workers": (num_workers > 0) and (not is_optuna)
+            "persistent_workers": (num_workers > 0) and (not is_optuna),
         }
-
 
     def build(self, is_optuna: bool = False) -> Tuple[DataLoader, DataLoader, DataLoader]:
         """
         Constructs and returns the full suite of DataLoaders.
-        
+
         MODIFIED: Added is_optuna flag for optimization-specific configuration.
-        
+
         Args:
             is_optuna: If True, use memory-conservative settings
-        
+
         Returns:
             A tuple of (train_loader, val_loader, test_loader).
         """
@@ -162,11 +153,12 @@ class DataLoaderFactory:
 
         # 2. Instantiate Dataset splits
         ds_params = {"path": self.metadata.path, "cfg": self.cfg}
-        
+
         train_ds = MedMNISTDataset(
-            **ds_params, split="train", 
-            transform=train_trans, 
-            max_samples=self.cfg.dataset.max_samples
+            **ds_params,
+            split="train",
+            transform=train_trans,
+            max_samples=self.cfg.dataset.max_samples,
         )
 
         # Proportional downsizing for validation/testing if max_samples is set
@@ -175,16 +167,10 @@ class DataLoaderFactory:
             sub_samples = max(1, int(self.cfg.dataset.max_samples * 0.10))
 
         val_ds = MedMNISTDataset(
-            **ds_params,
-            split="val",
-            transform=val_trans,
-            max_samples=sub_samples
+            **ds_params, split="val", transform=val_trans, max_samples=sub_samples
         )
         test_ds = MedMNISTDataset(
-            **ds_params,
-            split="test",
-            transform=val_trans,
-            max_samples=sub_samples
+            **ds_params, split="test", transform=val_trans, max_samples=sub_samples
         )
 
         # 3. Resolve Sampler and Infrastructure
@@ -198,21 +184,15 @@ class DataLoaderFactory:
             shuffle=(sampler is None),
             sampler=sampler,
             drop_last=True,
-            **infra_kwargs
+            **infra_kwargs,
         )
 
         val_loader = DataLoader(
-            val_ds, 
-            batch_size=self.cfg.training.batch_size, 
-            shuffle=False, 
-            **infra_kwargs
+            val_ds, batch_size=self.cfg.training.batch_size, shuffle=False, **infra_kwargs
         )
-        
+
         test_loader = DataLoader(
-            test_ds, 
-            batch_size=self.cfg.training.batch_size, 
-            shuffle=False, 
-            **infra_kwargs
+            test_ds, batch_size=self.cfg.training.batch_size, shuffle=False, **infra_kwargs
         )
 
         mode_str = "RGB" if self.ds_meta.in_channels == 3 else "Grayscale"
@@ -224,29 +204,31 @@ class DataLoaderFactory:
         )
 
         return train_loader, val_loader, test_loader
-    
+
 
 def get_dataloaders(metadata, cfg, is_optuna: bool = False):
     """
     Convenience method for direct DataLoader retrieval.
-    
+
     MODIFIED: Added is_optuna parameter.
     """
     factory = DataLoaderFactory(cfg, metadata)
     return factory.build(is_optuna=is_optuna)
 
+
 # =========================================================================== #
 #                               HEALTH UTILITIES                              #
 # =========================================================================== #
+
 
 class LazyNPZDataset(Dataset):
     """Torch Dataset that lazily loads images from a .npz file using memmap."""
 
     def __init__(self, npz_path: Path):
         self.npz_path = npz_path
-        self.data = np.load(npz_path, mmap_mode='r')
-        self.images = self.data['train_images']
-        self.labels = self.data['train_labels']
+        self.data = np.load(npz_path, mmap_mode="r")
+        self.images = self.data["train_images"]
+        self.labels = self.data["train_labels"]
 
     def __len__(self):
         return len(self.labels)
@@ -254,22 +236,19 @@ class LazyNPZDataset(Dataset):
     def __getitem__(self, idx):
         img = self.images[idx]
         # Ensure channel dimension (C,H,W)
-        if img.ndim == 2:          # (H,W) grayscale
+        if img.ndim == 2:  # (H,W) grayscale
             img = np.expand_dims(img, axis=0)
-        elif img.ndim == 3:        # (H,W,C)
+        elif img.ndim == 3:  # (H,W,C)
             img = np.transpose(img, (2, 0, 1))
         else:
             raise ValueError(f"Unexpected image shape: {img.shape}")
-        
+
         img = torch.from_numpy(img).float() / 255.0
         label = int(self.labels[idx][0])
         return img, label
 
 
-def create_temp_loader(
-        dataset_path: Path,
-        batch_size: int = 16
-) -> DataLoader:
+def create_temp_loader(dataset_path: Path, batch_size: int = 16) -> DataLoader:
     """
     Load a NPZ dataset lazily and return a DataLoader for health checks.
 

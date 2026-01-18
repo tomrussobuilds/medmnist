@@ -1,8 +1,8 @@
 """
 Logging Management Module
 
-Handles centralized logging configuration. Supports dynamic reconfiguration 
-to switch from console-only logging to file-based logging once experiment 
+Handles centralized logging configuration. Supports dynamic reconfiguration
+to switch from console-only logging to file-based logging once experiment
 directories are initialized.
 """
 
@@ -12,10 +12,10 @@ directories are initialized.
 import logging
 import os
 import sys
-from pathlib import Path
 from datetime import datetime, timezone
-from typing import Dict, Optional, Final
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
+from typing import Dict, Final, Optional
 
 # =========================================================================== #
 #                                Internal Imports                             #
@@ -26,10 +26,12 @@ from ..paths import LOGGER_NAME
 #                                LOGGER CLASS                                 #
 # =========================================================================== #
 
+
 class Logger:
     """
     Manages centralized logging configuration with singleton-like behavior.
     """
+
     _configured_names: Final[Dict[str, bool]] = {}
     _active_log_file: Optional[Path] = None
 
@@ -48,9 +50,9 @@ class Logger:
         self.level = level
         self.max_bytes = max_bytes
         self.backup_count = backup_count
-        
+
         self.logger = logging.getLogger(name)
-        
+
         if name not in Logger._configured_names or log_dir is not None:
             self._setup_logger()
             Logger._configured_names[name] = True
@@ -71,7 +73,7 @@ class Logger:
             for handler in self.logger.handlers[:]:
                 handler.close()
                 self.logger.removeHandler(handler)
-        
+
         # 1. Console Handler (Standard Output)
         console_h = logging.StreamHandler(sys.stdout)
         console_h.setFormatter(formatter)
@@ -80,37 +82,30 @@ class Logger:
         # 2. Rotating File Handler (Activated when log_dir is known)
         if self.log_to_file and self.log_dir:
             self.log_dir.mkdir(parents=True, exist_ok=True)
-            
+
             timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             filename = self.log_dir / f"{self.name}_{timestamp}.log"
 
             file_h = RotatingFileHandler(
-                filename, 
-                maxBytes=self.max_bytes, 
-                backupCount=self.backup_count,
-                encoding='utf-8'
+                filename, maxBytes=self.max_bytes, backupCount=self.backup_count, encoding="utf-8"
             )
             file_h.setFormatter(formatter)
             self.logger.addHandler(file_h)
-            
+
             Logger._active_log_file = filename
 
     def get_logger(self) -> logging.Logger:
         """Returns the configured logging.Logger instance."""
         return self.logger
-    
+
     @classmethod
     def get_log_file(cls) -> Optional[Path]:
         """Returns the current active log file path for auditing."""
         return cls._active_log_file
-    
+
     @classmethod
     def setup(
-        cls,
-        name: str,
-        log_dir: Optional[Path] = None,
-        level: str = "INFO",
-        **kwargs
+        cls, name: str, log_dir: Optional[Path] = None, level: str = "INFO", **kwargs
     ) -> logging.Logger:
         """
         Main entry point for configuring the logger, called by RootOrchestrator.
@@ -121,17 +116,13 @@ class Logger:
         else:
             numeric_level = getattr(logging, level.upper(), logging.INFO)
 
-        return cls(
-            name=name,
-            log_dir=log_dir,
-            level=numeric_level,
-            **kwargs
-        ).get_logger()
+        return cls(name=name, log_dir=log_dir, level=numeric_level, **kwargs).get_logger()
+
 
 # =========================================================================== #
 #                                GLOBAL INSTANCE                              #
 # =========================================================================== #
 
-# Initial bootstrap instance (Console-only). 
+# Initial bootstrap instance (Console-only).
 # Level is set to INFO by default, overridden by setup() during orchestration.
 logger: Final[logging.Logger] = Logger().get_logger()

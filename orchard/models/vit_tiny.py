@@ -2,7 +2,7 @@
 Vision Transformer Tiny (ViT-Tiny) for 224×224 Medical Imaging.
 
 Implements the Vision Transformer architecture via timm library with support for
-multiple pretrained weight variants. Designed for efficient medical image 
+multiple pretrained weight variants. Designed for efficient medical image
 classification with transfer learning capabilities.
 
 Key Features:
@@ -22,17 +22,18 @@ Pretrained Weight Options:
 # =========================================================================== #
 import logging
 
+import timm
+
 # =========================================================================== #
 #                           THIRD-PARTY IMPORTS                               #
 # =========================================================================== #
 import torch
 import torch.nn as nn
-import timm
 
 # =========================================================================== #
 #                           INTERNAL IMPORTS                                  #
 # =========================================================================== #
-from orchard.core import Config, LOGGER_NAME
+from orchard.core import LOGGER_NAME, Config
 
 # =========================================================================== #
 #                           LOGGER CONFIGURATION                              #
@@ -45,10 +46,7 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 def build_vit_tiny(
-    device: torch.device,
-    num_classes: int,
-    in_channels: int,
-    cfg: Config
+    device: torch.device, num_classes: int, in_channels: int, cfg: Config
 ) -> nn.Module:
     """
     Constructs Vision Transformer Tiny adapted for medical imaging datasets.
@@ -74,7 +72,7 @@ def build_vit_tiny(
     """
     # --- Step 1: Resolve Weight Variant ---
     weight_variant = cfg.model.weight_variant or "vit_tiny_patch16_224.augreg_in21k_ft_in1k"
-    
+
     if cfg.model.pretrained:
         logger.info(f"Loading ViT-Tiny with pretrained weights: {weight_variant}")
         pretrained_flag = True
@@ -89,7 +87,7 @@ def build_vit_tiny(
             weight_variant,
             pretrained=pretrained_flag,
             num_classes=num_classes,
-            in_chans=3  # Initially load for 3 channels (will adapt below)
+            in_chans=3,  # Initially load for 3 channels (will adapt below)
         )
     except Exception as e:
         logger.error(f"Failed to load ViT variant '{weight_variant}': {e}")
@@ -98,40 +96,40 @@ def build_vit_tiny(
     # --- Step 3: Adapt Patch Embedding Layer ---
     if in_channels != 3:
         logger.info(f"Adapting patch embedding from 3 to {in_channels} channels")
-        
+
         old_proj = model.patch_embed.proj  # Original Conv2d: [3 → 192]
-        
+
         # Create new projection layer
         new_proj = nn.Conv2d(
             in_channels=in_channels,
             out_channels=old_proj.out_channels,  # 192 for ViT-Tiny
-            kernel_size=old_proj.kernel_size,    # (16, 16)
-            stride=old_proj.stride,              # (16, 16)
+            kernel_size=old_proj.kernel_size,  # (16, 16)
+            stride=old_proj.stride,  # (16, 16)
             padding=old_proj.padding,
-            bias=old_proj.bias is not None
+            bias=old_proj.bias is not None,
         )
-        
+
         # --- Step 4: Weight Morphing (Transfer Pretrained Knowledge) ---
         if cfg.model.pretrained:
             with torch.no_grad():
                 w = old_proj.weight  # Shape: [192, 3, 16, 16]
-                
+
                 if in_channels == 1:
                     # Compress RGB channels by averaging (preserves learned patterns)
                     w = w.mean(dim=1, keepdim=True)  # [192, 1, 16, 16]
-                
+
                 new_proj.weight.copy_(w)
-                
+
                 if old_proj.bias is not None:
                     new_proj.bias.copy_(old_proj.bias)
-        
+
         # Replace patch embedding projection
         model.patch_embed.proj = new_proj
 
     # --- Step 5: Device Placement ---
     model = model.to(device)
-    
+
     total_params = sum(p.numel() for p in model.parameters())
     logger.info(f"ViT-Tiny deployed | Parameters: {total_params:,}")
-    
+
     return model

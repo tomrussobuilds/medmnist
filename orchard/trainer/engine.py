@@ -17,12 +17,13 @@ from typing import Tuple
 import numpy as np
 import torch
 import torch.nn as nn
-from tqdm.auto import tqdm
 from sklearn.metrics import roc_auc_score
+from tqdm.auto import tqdm
 
 # =========================================================================== #
 #                           TRAINING ENGINE                                   #
 # =========================================================================== #
+
 
 def train_one_epoch(
     model: nn.Module,
@@ -35,7 +36,7 @@ def train_one_epoch(
     grad_clip: float = 0.0,
     epoch: int = 0,
     total_epochs: int = 1,
-    use_tqdm: bool = True
+    use_tqdm: bool = True,
 ) -> float:
     """
     Performs a single full pass over the training dataset.
@@ -62,15 +63,10 @@ def train_one_epoch(
 
     # Create iterator with or without progress bar
     if use_tqdm:
-        iterator = tqdm(
-            loader,
-            desc=f"Train Epoch {epoch}/{total_epochs}",
-            leave=True,
-            ncols=100
-        )
+        iterator = tqdm(loader, desc=f"Train Epoch {epoch}/{total_epochs}", leave=True, ncols=100)
     else:
         iterator = loader
-    
+
     # Training loop - iterate directly without enumerate
     for inputs, targets in iterator:
         inputs, targets = inputs.to(device), targets.to(device)
@@ -103,10 +99,10 @@ def train_one_epoch(
         batch_size = inputs.size(0)
         running_loss += loss.item() * batch_size
         total_samples += batch_size
-        
+
         # Update progress bar with current loss
         if use_tqdm:
-            iterator.set_postfix({'loss': f'{loss.item():.4f}'})
+            iterator.set_postfix({"loss": f"{loss.item():.4f}"})
 
     return running_loss / total_samples
 
@@ -115,11 +111,12 @@ def train_one_epoch(
 #                         VALIDATION ENGINE                                   #
 # =========================================================================== #
 
+
 def validate_epoch(
     model: nn.Module,
     val_loader: torch.utils.data.DataLoader,
     criterion: nn.Module,
-    device: torch.device
+    device: torch.device,
 ) -> dict:
     """
     Evaluates model performance on held-out validation set.
@@ -144,18 +141,18 @@ def validate_epoch(
     val_loss = 0.0
     correct = 0
     total = 0
-    
+
     # Buffers for global metrics (CPU to save VRAM)
     all_targets = []
     all_probs = []
-    
+
     with torch.no_grad():
         for inputs, targets in val_loader:
             inputs, targets = inputs.to(device), targets.to(device)
-            
+
             # Forward pass
             outputs = model(inputs)
-            
+
             # Collect probabilities for AUC (move to CPU to save VRAM)
             probs = torch.softmax(outputs, dim=1)
             all_targets.append(targets.cpu())
@@ -164,7 +161,7 @@ def validate_epoch(
             # Loss computation
             loss = criterion(outputs, targets)
             val_loss += loss.item() * inputs.size(0)
-            
+
             # Accuracy computation
             _, predicted = torch.max(outputs, 1)
             total += targets.size(0)
@@ -175,7 +172,7 @@ def validate_epoch(
     y_score = torch.cat(all_probs).numpy()
 
     num_classes = y_score.shape[1]
-    all_labels = np.arange(num_classes)
+    np.arange(num_classes)
 
     # Compute ROC-AUC
     try:
@@ -184,29 +181,23 @@ def validate_epoch(
             auc = roc_auc_score(y_true, y_score[:, 1])
         else:
             # Multi-class: use macro-averaged One-vs-Rest
-            auc = roc_auc_score(
-                y_true,
-                y_score,
-                multi_class="ovr",
-                average="macro"
-            )
+            auc = roc_auc_score(y_true, y_score, multi_class="ovr", average="macro")
     except (ValueError, IndexError) as e:
         # Log error for debugging
         import logging
+
         logger = logging.getLogger("VisionForge")
         logger.warning(f"AUC calculation failed: {e}. Setting auc=0.0")
         auc = 0.0
 
     # Ensure we always return a dict
-    return {
-        "loss": val_loss / total,
-        "accuracy": correct / total,
-        "auc": auc
-    }
+    return {"loss": val_loss / total, "accuracy": correct / total, "auc": auc}
+
 
 # =========================================================================== #
 #                           MIXUP UTILITY                                     #
 # =========================================================================== #
+
 
 def mixup_data(
     x: torch.Tensor,
@@ -240,7 +231,7 @@ def mixup_data(
     # Draw mixing coefficient from Beta distribution
     lam: float = np.random.beta(alpha, alpha)
     batch_size: int = x.size(0)
-    
+
     # Generate random permutation (device-aware)
     index = torch.randperm(batch_size)
     if x.is_cuda:
@@ -248,9 +239,9 @@ def mixup_data(
 
     # Create mixed input
     mixed_x: torch.Tensor = lam * x + (1 - lam) * x[index, :]
-    
+
     # Get corresponding targets
     y_a: torch.Tensor = y
     y_b: torch.Tensor = y[index]
-    
+
     return mixed_x, y_a, y_b, lam

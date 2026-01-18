@@ -10,27 +10,26 @@ robust download logic, MD5 verification, and metadata preparation for lazy loadi
 # =========================================================================== #
 import logging
 import time
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
+
+import numpy as np
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
 # =========================================================================== #
 import requests
-import numpy as np
 
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from orchard.core import (
-    md5_checksum, validate_npz_keys, 
-    DatasetMetadata
-)
+from orchard.core import DatasetMetadata, md5_checksum, validate_npz_keys
 
 # =========================================================================== #
 #                                DATA CONTAINERS                              #
 # =========================================================================== #
+
 
 @dataclass(frozen=True)
 class MedMNISTData:
@@ -38,10 +37,12 @@ class MedMNISTData:
     Metadata container for a MedMNIST dataset.
     Stores path and format info instead of raw arrays to save RAM.
     """
+
     path: Path
     name: str
     is_rgb: bool
     num_classes: int
+
 
 # =========================================================================== #
 #                                FETCHING LOGIC                               #
@@ -49,11 +50,12 @@ class MedMNISTData:
 # Global logger instance
 logger = logging.getLogger("visionforge")
 
+
 def ensure_dataset_npz(
-        metadata: Optional[DatasetMetadata],
-        retries: int = 5,
-        delay: float = 5.0,
-    ) -> Path:
+    metadata: Optional[DatasetMetadata],
+    retries: int = 5,
+    delay: float = 5.0,
+) -> Path:
     """
     Downloads a MedMNIST dataset NPZ file robustly with retries and MD5 validation.
 
@@ -89,11 +91,10 @@ def ensure_dataset_npz(
             if not _is_valid_npz(tmp_path, metadata.md5_checksum):
                 actual_md5 = md5_checksum(tmp_path)
                 logger.error(
-                    f"MD5 mismatch: expected {metadata.md5_checksum}, "
-                    f"got {actual_md5}"
+                    f"MD5 mismatch: expected {metadata.md5_checksum}, " f"got {actual_md5}"
                 )
                 raise ValueError("Downloaded file failed MD5 or header validation")
-            
+
             # Atomic move
             tmp_path.replace(target_npz)
             logger.info(f"Successfully downloaded and verified: {metadata.name}")
@@ -102,14 +103,11 @@ def ensure_dataset_npz(
         except Exception as e:
             if tmp_path.exists():
                 tmp_path.unlink()
-            
+
             # Backoff calculation
-            if (hasattr(e, 'response') and e.response is not None 
-                and e.response.status_code == 429):
-                actual_delay = delay * (attempt ** 2)
-                logger.warning(
-                    f"Rate limited (429). Waiting {actual_delay}s before retrying..."
-                    )
+            if hasattr(e, "response") and e.response is not None and e.response.status_code == 429:
+                actual_delay = delay * (attempt**2)
+                logger.warning(f"Rate limited (429). Waiting {actual_delay}s before retrying...")
             else:
                 actual_delay = delay
 
@@ -118,8 +116,7 @@ def ensure_dataset_npz(
                 raise RuntimeError(f"Could not download {metadata.name}") from e
 
             logger.warning(
-                f"Attempt {attempt}/{retries} failed: {e}. "
-                f"Retrying in {actual_delay}s..."
+                f"Attempt {attempt}/{retries} failed: {e}. " f"Retrying in {actual_delay}s..."
             )
             time.sleep(actual_delay)
 
@@ -129,6 +126,7 @@ def ensure_dataset_npz(
 # =========================================================================== #
 #                                LOADING INTERFACE                            #
 # =========================================================================== #
+
 
 def load_medmnist(metadata: DatasetMetadata) -> MedMNISTData:
     """
@@ -140,23 +138,16 @@ def load_medmnist(metadata: DatasetMetadata) -> MedMNISTData:
         validate_npz_keys(data)
 
         train_shape = data["train_images"].shape
-        is_rgb = (len(train_shape) == 4 and train_shape[-1] == 3)
+        is_rgb = len(train_shape) == 4 and train_shape[-1] == 3
 
         num_classes = len(np.unique(data["train_labels"]))
-        
-        return MedMNISTData(
-            path=path,
-            name=metadata.name,
-            is_rgb=is_rgb,
-            num_classes=num_classes
-        )
 
-def load_medmnist_health_check(
-        metadata: DatasetMetadata,
-        chunk_size: int = 100
-    ) -> MedMNISTData:
+        return MedMNISTData(path=path, name=metadata.name, is_rgb=is_rgb, num_classes=num_classes)
+
+
+def load_medmnist_health_check(metadata: DatasetMetadata, chunk_size: int = 100) -> MedMNISTData:
     """
-    Loads a small "chunk" of data (e.g., the first 100 images and labels) 
+    Loads a small "chunk" of data (e.g., the first 100 images and labels)
     for an initial health check, while retaining the download and verification logic.
 
     Args:
@@ -174,20 +165,17 @@ def load_medmnist_health_check(
         images_chunk = data["train_images"][:chunk_size]
         labels_chunk = data["train_labels"][:chunk_size]
 
-        is_rgb = (images_chunk.ndim == 4 and images_chunk.shape[-1] == 3)
-        
+        is_rgb = images_chunk.ndim == 4 and images_chunk.shape[-1] == 3
+
         num_classes = len(np.unique(labels_chunk))
-        
-        return MedMNISTData(
-            path=path,
-            name=metadata.name,
-            is_rgb=is_rgb,
-            num_classes=num_classes
-        )
+
+        return MedMNISTData(path=path, name=metadata.name, is_rgb=is_rgb, num_classes=num_classes)
+
 
 # =========================================================================== #
 #                                PRIVATE HELPERS                              #
 # =========================================================================== #
+
 
 def _is_valid_npz(path: Path, expected_md5: str) -> bool:
     """Checks file existence, header (ZIP/NPZ), and MD5 checksum."""
@@ -200,7 +188,7 @@ def _is_valid_npz(path: Path, expected_md5: str) -> bool:
                 return False
     except IOError:
         return False
-        
+
     return md5_checksum(path) == expected_md5
 
 
@@ -211,21 +199,13 @@ def _stream_download(url: str, tmp_path: Path):
         "Accept": "application/octet-stream",
         "Accept-Encoding": "identity",
     }
-    
-    with requests.get(
-        url,
-        headers=headers,
-        timeout=60,
-        stream=True,
-        allow_redirects=True
-    ) as r:
+
+    with requests.get(url, headers=headers, timeout=60, stream=True, allow_redirects=True) as r:
         r.raise_for_status()
 
         content_type = r.headers.get("Content-Type", "")
-        if 'text/html' in content_type:
-            raise ValueError(
-                "Downloaded file is an HTML page, not the expected NPZ file."
-            )
+        if "text/html" in content_type:
+            raise ValueError("Downloaded file is an HTML page, not the expected NPZ file.")
 
         with open(tmp_path, "wb") as f:
             for chunk in r.iter_content(chunk_size=8192):

@@ -6,12 +6,14 @@ seamlessly with the existing ModelTrainer and Config architecture.
 
 Preserves dataset metadata across trial config reconstruction.
 """
+
+import gc
+
 # =========================================================================== #
 #                         Standard Imports                                    #
 # =========================================================================== #
 import logging
-from typing import Dict, Any
-import gc
+from typing import Any, Dict
 
 # =========================================================================== #
 #                         Third-Party Imports                                 #
@@ -22,14 +24,16 @@ import torch
 # =========================================================================== #
 #                         Internal Imports                                    #
 # =========================================================================== #
-from orchard.core import (
-    Config, LOGGER_NAME, log_trial_start, LogStyle
-)
-from orchard.data_handler import load_medmnist, get_dataloaders
+from orchard.core import LOGGER_NAME, Config, LogStyle, log_trial_start
+from orchard.data_handler import get_dataloaders, load_medmnist
 from orchard.models import get_model
 from orchard.trainer import (
-    ModelTrainer, validate_epoch, train_one_epoch,
-    get_optimizer, get_scheduler, get_criterion
+    ModelTrainer,
+    get_criterion,
+    get_optimizer,
+    get_scheduler,
+    train_one_epoch,
+    validate_epoch,
 )
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -39,19 +43,20 @@ logger = logging.getLogger(LOGGER_NAME)
 #                          OBJECTIVE FUNCTION                                 #
 # =========================================================================== #
 
+
 class OptunaObjective:
     """
     Objective function wrapper for Optuna optimization.
-    
+
     Encapsulates the training pipeline and exposes a metric for optimization.
     Handles trial pruning based on intermediate validation results.
-    
+
     Critical Design:
         - Caches resolved dataset metadata in __init__
         - Re-injects metadata into trial configs (lost during serialization)
         - Loads MedMNISTData once and reuses across trials
     """
-    
+
     def __init__(
         self,
         cfg: Config,
@@ -63,7 +68,7 @@ class OptunaObjective:
     ):
         """
         Initialize objective function.
-        
+
         Args:
             cfg: Base Config to override with trial suggestions
             search_space: Dict of {param_name: suggest_function}
@@ -78,25 +83,27 @@ class OptunaObjective:
         self.metric_name = metric_name
         self.enable_pruning = enable_pruning
         self.warmup_epochs = warmup_epochs
-        
+
         # This ensures _ensure_metadata has been called and prevents None errors
         self.base_metadata = self.cfg.dataset._ensure_metadata
-        
+
         # This is shared across all trials to avoid repeated downloads
         self.medmnist_data = load_medmnist(self.base_metadata)
-        
+
         logger.info(f"Objective initialized with metric: {metric_name}")
-        logger.info(f"Cached dataset metadata: {self.base_metadata.name} "
-                   f"({self.base_metadata.num_classes} classes)")
+        logger.info(
+            f"Cached dataset metadata: {self.base_metadata.name} "
+            f"({self.base_metadata.num_classes} classes)"
+        )
         logger.info(f"Dataset loaded from: {self.medmnist_data.path}")
 
     def __call__(self, trial: optuna.Trial) -> float:
         """
         Objective function called by Optuna for each trial.
-        
+
         Args:
             trial: Optuna trial object for hyperparameter sampling
-            
+
         Returns:
             Best validation metric achieved during training
         """
@@ -104,32 +111,26 @@ class OptunaObjective:
         if hasattr(self.search_space, "sample_params"):
             params = self.search_space.sample_params(trial)
         else:
-            params = {
-                key: fn(trial) for key, fn in self.search_space.items()
-            }
-        
+            params = {key: fn(trial) for key, fn in self.search_space.items()}
+
         # Build trial-specific config (with metadata re-injected)
         trial_cfg = self._build_trial_config(params)
-        
+
         # Log trial parameters with LogStyle formatting
         log_trial_start(trial.number, params)
-        
+
         # Create data loaders using cached MedMNISTData
         # Pass is_optuna=True to prevent worker leaks
-        train_loader, val_loader, _ = get_dataloaders(
-            self.medmnist_data,
-            trial_cfg,
-            is_optuna=True
-        )
-            
+        train_loader, val_loader, _ = get_dataloaders(self.medmnist_data, trial_cfg, is_optuna=True)
+
         # Initialize model (get_model returns model already on device)
         model = get_model(self.device, trial_cfg)
-        
+
         # Initialize optimizer, scheduler, and criterion
         optimizer = get_optimizer(model, trial_cfg)
         scheduler = get_scheduler(optimizer, trial_cfg)
         criterion = get_criterion(trial_cfg)
-        
+
         # Initialize trainer with all required components
         trainer = PrunableTrainer(
             model=model,
@@ -139,9 +140,9 @@ class OptunaObjective:
             scheduler=scheduler,
             criterion=criterion,
             cfg=trial_cfg,
-            device=self.device
+            device=self.device,
         )
-        
+
         # Train with pruning
         try:
             best_metric = self._train_with_pruning(trainer, trial)
@@ -151,67 +152,71 @@ class OptunaObjective:
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
             gc.collect()
-        
+
         return best_metric
-    
+
     def _build_trial_config(self, trial_params: Dict[str, Any]) -> Config:
         """
         Create Config instance with trial-specific hyperparameters.
-        
+
         CRITICAL: Re-injects cached metadata that gets excluded during
         model_dump() serialization.
-        
+
         Args:
             trial_params: Sampled hyperparameters from Optuna
-            
+
         Returns:
             Validated Config with trial parameters and metadata
         """
         config_dict = self.cfg.model_dump()
-        
+
         # Ensure resolution is preserved
         if config_dict["dataset"].get("resolution") is None:
             config_dict["dataset"]["resolution"] = self.cfg.dataset.resolution
-        
+
         # Re-inject cached metadata (excluded from serialization)
         config_dict["dataset"]["metadata"] = self.base_metadata
-        
+
         # Override epochs with Optuna-specific value (shorter trials)
         config_dict["training"]["epochs"] = self.cfg.optuna.epochs
-        
+
         # Apply trial-specific parameter overrides
         for param_name, value in trial_params.items():
-            if param_name in ["learning_rate", "weight_decay", "momentum", "min_lr",
-                              "mixup_alpha", "label_smoothing", "batch_size",
-                              "cosine_fraction", "scheduler_patience"]:
+            if param_name in [
+                "learning_rate",
+                "weight_decay",
+                "momentum",
+                "min_lr",
+                "mixup_alpha",
+                "label_smoothing",
+                "batch_size",
+                "cosine_fraction",
+                "scheduler_patience",
+            ]:
                 config_dict["training"][param_name] = value
             elif param_name == "dropout":
                 config_dict["model"][param_name] = value
             elif param_name in ["rotation_angle", "jitter_val", "min_scale"]:
                 config_dict["augmentation"][param_name] = value
-        
+
         # Reconstruct Config (triggers Pydantic validation)
         return Config(**config_dict)
-    
-    def _train_with_pruning(
-        self, 
-        trainer: "PrunableTrainer", 
-        trial: optuna.Trial
-    ) -> float:
+
+    def _train_with_pruning(self, trainer: "PrunableTrainer", trial: optuna.Trial) -> float:
         """
         Execute training loop with Optuna pruning integration.
-        
+
         Args:
             trainer: PrunableTrainer instance
             trial: Optuna trial for reporting and pruning
-            
+
         Returns:
             Best validation metric achieved
-            
+
         Raises:
             optuna.TrialPruned: If trial should be terminated early
         """
-        best_metric = -float('inf')
+        best_metric = -float("inf")
 
         for epoch in range(1, trainer.epochs + 1):
             # Train one epoch
@@ -247,25 +252,27 @@ class OptunaObjective:
                     f"{self.metric_name}:{current_metric:.4f} "
                     f"(Best:{best_metric:.4f})"
                 )
-        
+
         logger.info("")
         logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Trial {trial.number} completed")
-        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Best {self.metric_name.upper():<10} : {best_metric:.6f}")
+        logger.info(
+            f"{LogStyle.INDENT}{LogStyle.ARROW} Best {self.metric_name.upper():<10} : {best_metric:.6f}"
+        )
         logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Final Loss       : {epoch_loss:.4f}")
         logger.info("")
 
         return best_metric
-    
+
     def _extract_metric(self, val_metrics: Dict[str, float]) -> float:
         """
         Extract target metric from validation results.
-        
+
         Args:
             val_metrics: Dict of validation metrics
-            
+
         Returns:
             Value of target metric
-            
+
         Raises:
             KeyError: If metric_name not found in validation results
         """
@@ -282,10 +289,11 @@ class OptunaObjective:
 #                          PRUNABLE TRAINER                                   #
 # =========================================================================== #
 
+
 class PrunableTrainer(ModelTrainer):
     """
     Extension of ModelTrainer with Optuna pruning support.
-    
+
     Provides wrapper methods for epoch-level training and validation
     that integrate cleanly with Optuna's pruning callbacks.
     """
@@ -293,10 +301,10 @@ class PrunableTrainer(ModelTrainer):
     def train_one_epoch_wrapper(self, epoch: int) -> float:
         """
         Train a single epoch and return average loss.
-        
+
         Args:
             epoch: Current epoch number
-            
+
         Returns:
             Average training loss for the epoch
         """
@@ -315,7 +323,7 @@ class PrunableTrainer(ModelTrainer):
             grad_clip=self.cfg.training.grad_clip,
             epoch=epoch,
             total_epochs=self.epochs,
-            use_tqdm=False  # Disabled during optimization for cleaner logs
+            use_tqdm=False,  # Disabled during optimization for cleaner logs
         )
 
         self.train_losses.append(epoch_loss)
@@ -324,7 +332,7 @@ class PrunableTrainer(ModelTrainer):
     def validate_epoch_wrapper(self) -> dict:
         """
         Validate one epoch and return metrics dictionary.
-        
+
         Returns:
             Dict of validation metrics (loss, accuracy, auc, etc.)
         """
@@ -333,9 +341,9 @@ class PrunableTrainer(ModelTrainer):
                 model=self.model,
                 val_loader=self.val_loader,
                 criterion=self.criterion,
-                device=self.device
+                device=self.device,
             )
-            
+
             # Safety check: ensure we got a valid dict
             if val_metrics is None:
                 logger.error("validate_epoch returned None!")
@@ -343,13 +351,14 @@ class PrunableTrainer(ModelTrainer):
             elif not isinstance(val_metrics, dict):
                 logger.error(f"validate_epoch returned non-dict: {type(val_metrics)}")
                 val_metrics = {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}
-            
+
             self.val_metrics_history.append(val_metrics)
             return val_metrics
-            
+
         except Exception as e:
             logger.error(f"Validation failed with exception: {e}")
             import traceback
+
             traceback.print_exc()
             # Return default metrics to allow training to continue
             return {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}

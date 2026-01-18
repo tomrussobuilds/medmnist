@@ -1,22 +1,22 @@
 """
 Semantic Type Definitions & Validation Primitives.
 
-Foundational type-system for the configuration engine. Leverages Pydantic's 
-Annotated types and Functional Validators to enforce domain-specific 
-constraints (probability ranges, learning rate boundaries, path integrity) 
+Foundational type-system for the configuration engine. Leverages Pydantic's
+Annotated types and Functional Validators to enforce domain-specific
+constraints (probability ranges, learning rate boundaries, path integrity)
 before reaching orchestration logic.
 
 Core Responsibilities:
-    * Path sanitization: Resolves paths to absolute forms with home directory 
+    * Path sanitization: Resolves paths to absolute forms with home directory
       expansion (~), ensuring consistency without disk I/O
-    * Boundary enforcement: Strict validation of hyperparameters (LR, 
+    * Boundary enforcement: Strict validation of hyperparameters (LR,
       probabilities, smoothing) using field constraints to prevent unstable states
-    * Type aliasing: Centralized registry of domain-specific types (WorkerCount, 
+    * Type aliasing: Centralized registry of domain-specific types (WorkerCount,
       ProjectSlug, LearningRate) for semantic consistency
-    * Serialization policy: Custom serialization for complex objects (Path) 
+    * Serialization policy: Custom serialization for complex objects (Path)
       ensuring JSON/YAML compatibility
 
-Catches invalid states at application edge during schema initialization, 
+Catches invalid states at application edge during schema initialization,
 preventing runtime failures in deeper orchestration layers.
 """
 
@@ -29,12 +29,12 @@ from typing import Annotated, Literal
 # =========================================================================== #
 #                                Third-Party Imports                          #
 # =========================================================================== #
-from pydantic import Field, AfterValidator, PlainSerializer
-
+from pydantic import AfterValidator, Field, PlainSerializer
 
 # =========================================================================== #
 #                                VALIDATORS                                   #
 # =========================================================================== #
+
 
 def _sanitize_path(v: Path) -> Path:
     """Resolve path to absolute form without disk side-effects."""
@@ -45,12 +45,12 @@ def _sanitize_path(v: Path) -> Path:
 #                                1. GENERIC PRIMITIVES                        #
 # =========================================================================== #
 
-PositiveInt      = Annotated[int, Field(gt=0)]
-NonNegativeInt   = Annotated[int, Field(ge=0)]
-PositiveFloat    = Annotated[float, Field(gt=0)]
+PositiveInt = Annotated[int, Field(gt=0)]
+NonNegativeInt = Annotated[int, Field(ge=0)]
+PositiveFloat = Annotated[float, Field(gt=0)]
 NonNegativeFloat = Annotated[float, Field(ge=0.0)]
-Percentage       = Annotated[float, Field(gt=0.0, le=1.0)]
-Probability      = Annotated[float, Field(ge=0.0, le=1.0)]
+Percentage = Annotated[float, Field(gt=0.0, le=1.0)]
+Probability = Annotated[float, Field(ge=0.0, le=1.0)]
 
 # =========================================================================== #
 #                                2. FILESYSTEM                                #
@@ -59,7 +59,7 @@ Probability      = Annotated[float, Field(ge=0.0, le=1.0)]
 ValidatedPath = Annotated[
     Path,
     AfterValidator(_sanitize_path),
-    PlainSerializer(lambda v: str(v), when_used="json", return_type=str)
+    PlainSerializer(lambda v: str(v), when_used="json", return_type=str),
 ]
 
 # =========================================================================== #
@@ -67,43 +67,40 @@ ValidatedPath = Annotated[
 # =========================================================================== #
 
 WorkerCount = Annotated[int, Field(ge=0)]
-BatchSize   = Annotated[int, Field(ge=1, le=2048)]
+BatchSize = Annotated[int, Field(ge=1, le=2048)]
 
 # =========================================================================== #
 #                                4. MODEL GEOMETRY                            #
 # =========================================================================== #
 
-ImageSize   = Annotated[int, Field(ge=28, le=1024)]
-Channels    = Annotated[int, Field(ge=1, le=4)]
+ImageSize = Annotated[int, Field(ge=28, le=1024)]
+Channels = Annotated[int, Field(ge=1, le=4)]
 DropoutRate = Annotated[float, Field(ge=0.0, le=0.9)]
 
 # =========================================================================== #
 #                                5. OPTIMIZATION                              #
 # =========================================================================== #
 
-LearningRate   = Annotated[float, Field(gt=1e-8, lt=1.0)]
-WeightDecay    = Annotated[float, Field(ge=0.0, le=0.2)]
-Momentum       = Annotated[float, Field(ge=0.0, lt=1.0)]
+LearningRate = Annotated[float, Field(gt=1e-8, lt=1.0)]
+WeightDecay = Annotated[float, Field(ge=0.0, le=0.2)]
+Momentum = Annotated[float, Field(ge=0.0, lt=1.0)]
 SmoothingValue = Annotated[float, Field(ge=0.0, le=0.3)]
-GradNorm       = Annotated[float, Field(ge=0.0, le=100.0)]
+GradNorm = Annotated[float, Field(ge=0.0, le=100.0)]
 
 # =========================================================================== #
 #                                6. AUGMENTATIONS & TTA                       #
 # =========================================================================== #
 
 RotationDegrees = Annotated[int, Field(ge=0, le=360)]
-ZoomScale       = Annotated[float, Field(gt=0.0, le=2.0)]
-PixelShift      = Annotated[float, Field(ge=0.0, le=50.0)]
-BlurSigma       = Annotated[float, Field(ge=0.0, le=5.0)]
+ZoomScale = Annotated[float, Field(gt=0.0, le=2.0)]
+PixelShift = Annotated[float, Field(ge=0.0, le=50.0)]
+BlurSigma = Annotated[float, Field(ge=0.0, le=5.0)]
 
 # =========================================================================== #
 #                                7. SYSTEM & METADATA                         #
 # =========================================================================== #
 
-ProjectSlug  = Annotated[
-    str,
-    Field(pattern=r"^[a-z0-9_-]+$", min_length=3, max_length=50)
-]
+ProjectSlug = Annotated[str, Field(pattern=r"^[a-z0-9_-]+$", min_length=3, max_length=50)]
 LogFrequency = Annotated[int, Field(ge=1, le=1000)]
-LogLevel     = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-DeviceType   = Literal["auto", "cpu", "cuda", "mps"]
+LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+DeviceType = Literal["auto", "cpu", "cuda", "mps"]

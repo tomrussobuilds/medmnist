@@ -14,19 +14,19 @@ import logging
 from pathlib import Path
 from typing import List, Optional
 
+import matplotlib.pyplot as plt
+
 # =========================================================================== #
 #                                Third-Party Imports                          #
 # =========================================================================== #
 import torch
-import matplotlib.pyplot as plt
 from torchvision.utils import make_grid
 
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from orchard.core import (
-    Config, LOGGER_NAME, RunPaths
-)
+from orchard.core import LOGGER_NAME, Config, RunPaths
+
 from .factory import DataLoader
 
 # =========================================================================== #
@@ -37,14 +37,14 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 def show_sample_images(
-        loader: DataLoader,
-        save_path: Path,
-        cfg: Optional[Config] = None,
-        num_samples: int = 16,
-        title_prefix: Optional[str] = None,
+    loader: DataLoader,
+    save_path: Path,
+    cfg: Optional[Config] = None,
+    num_samples: int = 16,
+    title_prefix: Optional[str] = None,
 ) -> None:
     """
-    Extracts a batch from the DataLoader and saves a grid of sample images 
+    Extracts a batch from the DataLoader and saves a grid of sample images
     with their corresponding labels to verify data integrity and augmentations.
 
     Args:
@@ -77,7 +77,7 @@ def show_sample_images(
     # Convert to numpy HWC for matplotlib
     if grid.shape[0] == 1:
         # Grayscale
-        plt.imshow(grid.squeeze(0).cpu().numpy(), cmap='gray')
+        plt.imshow(grid.squeeze(0).cpu().numpy(), cmap="gray")
     else:
         # RGB
         plt.imshow(grid.permute(1, 2, 0).cpu().numpy())
@@ -101,12 +101,12 @@ def show_sample_images(
 
 
 def show_samples_for_dataset(
-        loader: DataLoader,
-        classes: List[str],
-        dataset_name: str,
-        run_paths: RunPaths,
-        num_samples: int = 16,
-        resolution: int | None = None,
+    loader: DataLoader,
+    classes: List[str],
+    dataset_name: str,
+    run_paths: RunPaths,
+    num_samples: int = 16,
+    resolution: int | None = None,
 ) -> None:
     """
     Generates a grid of sample images from a dataset and saves it in the
@@ -121,5 +121,5 @@ def show_samples_for_dataset(
         save_path=save_path,
         cfg=None,
         num_samples=num_samples,
-        title_prefix=f"{dataset_name}{res_str}"
+        title_prefix=f"{dataset_name}{res_str}",
     )

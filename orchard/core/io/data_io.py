@@ -1,7 +1,7 @@
 """
 Data Integrity & Dataset I/O Utilities.
 
-Provides tools for verifying file integrity via checksums and validating 
+Provides tools for verifying file integrity via checksums and validating
 the structure of NPZ dataset archives.
 """
 
@@ -20,6 +20,7 @@ import numpy as np
 #                               Data Verification                             #
 # =========================================================================== #
 
+
 def validate_npz_keys(data: np.lib.npyio.NpzFile) -> None:
     """
     Validates that the loaded NPZ dataset contains all required MedMNIST keys.
@@ -31,9 +32,12 @@ def validate_npz_keys(data: np.lib.npyio.NpzFile) -> None:
         ValueError: If any required key (images/labels) is missing.
     """
     required_keys = {
-        "train_images", "train_labels",
-        "val_images", "val_labels",
-        "test_images", "test_labels",
+        "train_images",
+        "train_labels",
+        "val_images",
+        "val_labels",
+        "test_images",
+        "test_labels",
     }
 
     missing = required_keys - set(data.files)

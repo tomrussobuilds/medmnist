@@ -1,71 +1,64 @@
 """
 Dataset Metadata Base Definitions.
 
-Defines dataset metadata schema using Pydantic for immutability, type safety, 
+Defines dataset metadata schema using Pydantic for immutability, type safety,
 and seamless integration with the global configuration engine.
 """
+
+from pathlib import Path
 
 # =========================================================================== #
 #                                Standard Imports                             #
 # =========================================================================== #
 from typing import List, Tuple
-from pathlib import Path
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
 # =========================================================================== #
-from pydantic import BaseModel, Field, ConfigDict
-
+from pydantic import BaseModel, ConfigDict, Field
 
 # =========================================================================== #
 #                              Metadata Schema                                #
 # =========================================================================== #
 
+
 class DatasetMetadata(BaseModel):
     """
     Metadata container for a MedMNIST dataset.
-    
-    Ensures dataset-specific constants are grouped and immutable throughout 
-    pipeline execution. Serves as static definition feeding into dynamic 
+
+    Ensures dataset-specific constants are grouped and immutable throughout
+    pipeline execution. Serves as static definition feeding into dynamic
     DatasetConfig.
     """
-    model_config = ConfigDict(
-        frozen=True,
-        extra="forbid",
-        arbitrary_types_allowed=True
-    )
+
+    model_config = ConfigDict(frozen=True, extra="forbid", arbitrary_types_allowed=True)
 
     # Identity
     name: str = Field(..., description="Short identifier (e.g., 'pathmnist')")
     display_name: str = Field(..., description="Full name for reporting")
-    
+
     # Source
     md5_checksum: str = Field(..., description="MD5 hash for integrity")
     url: str = Field(..., description="Source URL for downloads")
     path: Path = Field(..., description="Path to .npz archive")
-    
+
     # Classification
     classes: List[str] = Field(..., description="Class labels in index order")
-    
+
     # Image properties
     in_channels: int = Field(..., description="1 for grayscale, 3 for RGB")
-    native_resolution: int = Field(
-        default=None, 
-        description="Native pixel resolution (28 or 224)"
-    )
-    
+    native_resolution: int = Field(default=None, description="Native pixel resolution (28 or 224)")
+
     # Normalization
     mean: Tuple[float, ...] = Field(..., description="Channel-wise mean")
     std: Tuple[float, ...] = Field(..., description="Channel-wise std")
-    
+
     # Behavioral flags
     is_anatomical: bool = Field(
-        default=True, 
-        description="Fixed anatomical orientation (e.g., ChestMNIST)"
+        default=True, description="Fixed anatomical orientation (e.g., ChestMNIST)"
     )
     is_texture_based: bool = Field(
-        default=True,
-        description="Classification relies on texture (e.g., PathMNIST)"
+        default=True, description="Classification relies on texture (e.g., PathMNIST)"
     )
 
     @property

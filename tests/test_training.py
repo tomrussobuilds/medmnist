@@ -4,6 +4,7 @@ Test Suite for TrainingConfig.
 Tests hyperparameter validation, LR bounds, batch size limits,
 and cross-field validation logic.
 """
+
 # =========================================================================== #
 #                         Standard Imports                                    #
 # =========================================================================== #
@@ -24,11 +25,12 @@ from orchard.core.config import TrainingConfig
 #                         UNIT TESTS: DEFAULTS                                #
 # =========================================================================== #
 
+
 @pytest.mark.unit
 def test_training_config_defaults():
     """Test TrainingConfig with default values."""
     config = TrainingConfig()
-    
+
     assert config.seed == 42
     assert config.batch_size == 16
     assert config.epochs == 60
@@ -42,11 +44,12 @@ def test_training_config_defaults():
 #                         UNIT TESTS: LEARNING RATE VALIDATION                #
 # =========================================================================== #
 
+
 @pytest.mark.unit
 def test_lr_within_bounds():
     """Test valid learning rate values."""
     config = TrainingConfig(learning_rate=0.001, min_lr=1e-7)
-    
+
     assert config.learning_rate == 0.001
     assert config.min_lr == 1e-7
 
@@ -90,6 +93,7 @@ def test_min_lr_equal_to_lr_rejected():
 #                         UNIT TESTS: BATCH SIZE VALIDATION                   #
 # =========================================================================== #
 
+
 @pytest.mark.unit
 def test_batch_size_valid_range():
     """Test batch size within valid range."""
@@ -122,6 +126,7 @@ def test_batch_size_negative_rejected():
 #                         UNIT TESTS: AMP VALIDATION                          #
 # =========================================================================== #
 
+
 @pytest.mark.unit
 def test_amp_with_small_batch_rejected():
     """Test AMP + batch_size < 4 is rejected."""
@@ -133,7 +138,7 @@ def test_amp_with_small_batch_rejected():
 def test_amp_with_sufficient_batch_allowed():
     """Test AMP + batch_size >= 4 is allowed."""
     config = TrainingConfig(use_amp=True, batch_size=16)
-    
+
     assert config.use_amp is True
     assert config.batch_size == 16
 
@@ -142,12 +147,13 @@ def test_amp_with_sufficient_batch_allowed():
 #                         UNIT TESTS: REGULARIZATION                          #
 # =========================================================================== #
 
+
 @pytest.mark.unit
 def test_label_smoothing_bounds():
     """Test label_smoothing within valid range."""
     config = TrainingConfig(label_smoothing=0.1)
     assert config.label_smoothing == 0.1
-    
+
     # Maximum
     config = TrainingConfig(label_smoothing=0.3)
     assert config.label_smoothing == 0.3
@@ -172,7 +178,7 @@ def test_mixup_alpha_non_negative():
     """Test mixup_alpha >= 0."""
     config = TrainingConfig(mixup_alpha=0.2)
     assert config.mixup_alpha == 0.2
-    
+
     # Zero is valid (disables mixup)
     config = TrainingConfig(mixup_alpha=0.0)
     assert config.mixup_alpha == 0.0
@@ -183,7 +189,7 @@ def test_weight_decay_bounds():
     """Test weight_decay within valid range."""
     config = TrainingConfig(weight_decay=1e-4)
     assert config.weight_decay == 1e-4
-    
+
     # Maximum
     config = TrainingConfig(weight_decay=0.2)
     assert config.weight_decay == 0.2
@@ -200,12 +206,13 @@ def test_weight_decay_too_large_rejected():
 #                         UNIT TESTS: MOMENTUM                                #
 # =========================================================================== #
 
+
 @pytest.mark.unit
 def test_momentum_bounds():
     """Test momentum within valid range [0, 1)."""
     config = TrainingConfig(momentum=0.9)
     assert config.momentum == 0.9
-    
+
     # Minimum
     config = TrainingConfig(momentum=0.0)
     assert config.momentum == 0.0
@@ -228,6 +235,7 @@ def test_momentum_negative_rejected():
 # =========================================================================== #
 #                         UNIT TESTS: GRADIENT CLIPPING                       #
 # =========================================================================== #
+
 
 @pytest.mark.unit
 def test_grad_clip_valid():
@@ -254,19 +262,16 @@ def test_grad_clip_too_large_rejected():
 #                         UNIT TESTS: FROM_ARGS FACTORY                       #
 # =========================================================================== #
 
+
 @pytest.mark.unit
 def test_from_args_basic():
     """Test TrainingConfig.from_args() with basic arguments."""
     args = argparse.Namespace(
-        epochs=100,
-        batch_size=32,
-        learning_rate=0.001,
-        min_lr=1e-7,
-        use_amp=True
+        epochs=100, batch_size=32, learning_rate=0.001, min_lr=1e-7, use_amp=True
     )
-    
+
     config = TrainingConfig.from_args(args)
-    
+
     assert config.epochs == 100
     assert config.batch_size == 32
     assert config.learning_rate == 0.001
@@ -276,13 +281,10 @@ def test_from_args_basic():
 @pytest.mark.unit
 def test_from_args_ignores_none_values():
     """Test from_args uses defaults for None values."""
-    args = argparse.Namespace(
-        epochs=100,
-        batch_size=None  # Should use default
-    )
-    
+    args = argparse.Namespace(epochs=100, batch_size=None)  # Should use default
+
     config = TrainingConfig.from_args(args)
-    
+
     assert config.epochs == 100
     assert config.batch_size == 16  # Default
 
@@ -290,13 +292,10 @@ def test_from_args_ignores_none_values():
 @pytest.mark.unit
 def test_from_args_only_valid_fields():
     """Test from_args ignores invalid field names."""
-    args = argparse.Namespace(
-        epochs=100,
-        invalid_field="should_be_ignored"
-    )
-    
+    args = argparse.Namespace(epochs=100, invalid_field="should_be_ignored")
+
     config = TrainingConfig.from_args(args)
-    
+
     assert config.epochs == 100
     assert not hasattr(config, "invalid_field")
 
@@ -305,11 +304,12 @@ def test_from_args_only_valid_fields():
 #                         EDGE CASES & REGRESSION TESTS                       #
 # =========================================================================== #
 
+
 @pytest.mark.unit
 def test_frozen_immutability():
     """Test TrainingConfig is frozen (immutable)."""
     config = TrainingConfig()
-    
+
     with pytest.raises(ValidationError):
         config.epochs = 200
 
@@ -335,6 +335,6 @@ def test_cosine_fraction_probability():
     """Test cosine_fraction is probability [0, 1]."""
     config = TrainingConfig(cosine_fraction=0.5)
     assert config.cosine_fraction == 0.5
-    
+
     with pytest.raises(ValidationError):
         TrainingConfig(cosine_fraction=1.5)

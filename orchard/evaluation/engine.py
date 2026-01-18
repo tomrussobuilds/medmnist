@@ -5,11 +5,12 @@ Orchestrates the model inference lifecycle on test datasets.
 Handles batch processing, TTA integration, and results consolidation.
 """
 
+import logging
+
 # =========================================================================== #
 #                                Standard Imports                             #
 # =========================================================================== #
-from typing import Tuple, List
-import logging
+from typing import List, Tuple
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
@@ -22,15 +23,17 @@ from torch.utils.data import DataLoader
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from orchard.core import Config, LOGGER_NAME
-from .tta import adaptive_tta_predict
+from orchard.core import LOGGER_NAME, Config
+
 from .metrics import compute_classification_metrics
+from .tta import adaptive_tta_predict
 
 # =========================================================================== #
 #                               EVALUATION ENGINE                             #
 # =========================================================================== #
 
 logger = logging.getLogger(LOGGER_NAME)
+
 
 def evaluate_model(
     model: nn.Module,
@@ -39,11 +42,11 @@ def evaluate_model(
     use_tta: bool = False,
     is_anatomical: bool = False,
     is_texture_based: bool = False,
-    cfg: Config = None
+    cfg: Config = None,
 ) -> Tuple[np.ndarray, np.ndarray, dict, float]:
     """
     Performs full-set inference and coordinates metric calculation.
-    
+
     Args:
         model: The trained neural network.
         test_loader: DataLoader for the evaluation set.
@@ -52,7 +55,7 @@ def evaluate_model(
         is_anatomical: Dataset-specific orientation constraint.
         is_texture_based: Dataset-specific texture preservation flag.
         cfg: Global configuration manifest.
-        
+
     Returns:
         Tuple containing predictions, labels, metrics dict, and macro-f1 scalar.
     """
@@ -67,8 +70,7 @@ def evaluate_model(
             if actual_tta:
                 # TTA logic handles its own device placement and softmax
                 probs = adaptive_tta_predict(
-                    model, inputs, device, 
-                    is_anatomical, is_texture_based, cfg
+                    model, inputs, device, is_anatomical, is_texture_based, cfg
                 )
             else:
                 # Standard single-pass inference
@@ -83,7 +85,7 @@ def evaluate_model(
     all_probs = np.concatenate(all_probs_list)
     all_labels = np.concatenate(all_labels_list)
     all_preds = all_probs.argmax(axis=1)
-    
+
     # Delegate statistical analysis to the metrics module
     metrics = compute_classification_metrics(all_labels, all_preds, all_probs)
 
@@ -93,9 +95,9 @@ def evaluate_model(
         f"AUC: {metrics['auc']:.4f} | F1: {metrics['f1']:.4f}"
     )
     if actual_tta:
-        mode = 'Full' if device.type != 'cpu' else 'Light'
+        mode = "Full" if device.type != "cpu" else "Light"
         log_msg += f" | TTA ENABLED (Mode: {mode})"
-    
+
     logger.info(log_msg)
 
-    return all_preds, all_labels, metrics, metrics['f1']
+    return all_preds, all_labels, metrics, metrics["f1"]

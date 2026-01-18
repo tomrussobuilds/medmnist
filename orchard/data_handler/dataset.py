@@ -2,27 +2,28 @@
 PyTorch Dataset Definition Module
 
 This module contains the custom Dataset class for MedMNIST, handling
-the conversion from NumPy arrays to PyTorch tensors and applying 
+the conversion from NumPy arrays to PyTorch tensors and applying
 image transformations for training and inference.
 
 It implements selective RAM loading to balance I/O speed with memory
 efficiency and ensures deterministic subsampling for reproducible research.
 """
 
+from pathlib import Path
+
 # =========================================================================== #
 #                                Standard Imports                             #
 # =========================================================================== #
-from typing import Tuple, Final
-from pathlib import Path
+from typing import Final, Tuple
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
 # =========================================================================== #
 import numpy as np
 import torch
+from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
-from PIL import Image
 
 # =========================================================================== #
 #                              Internal Imports                               #
@@ -33,23 +34,25 @@ from orchard.core import Config
 #                                DATASET CLASS                                #
 # =========================================================================== #
 
+
 class MedMNISTDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
     """
     Enhanced PyTorch Dataset for MedMNIST data.
-    
+
     Features:
         - In-memory caching of specific splits to eliminate disk I/O bottlenecks.
         - Seed-aware deterministic subsampling for rapid smoke testing.
         - Automatic dimensionality standardization (N, H, W, C).
     """
+
     def __init__(
-            self,
-            path: Path,
-            split: str = "train",
-            transform: transforms.Compose | None = None,
-            max_samples: int | None = None,
-            cfg: Config = None
-            ):
+        self,
+        path: Path,
+        split: str = "train",
+        transform: transforms.Compose | None = None,
+        max_samples: int | None = None,
+        cfg: Config = None,
+    ):
         """
         Initializes the dataset by loading the specified .npz split into RAM.
 
@@ -64,19 +67,19 @@ class MedMNISTDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
             raise ValueError("A valid Config instance is required.")
         if not path.exists():
             raise FileNotFoundError(f"Dataset file not found at: {path}")
-        
+
         self.cfg: Final[Config] = cfg
         self.path: Final[Path] = path
         self.transform: Final[transforms.Compose | None] = transform
         self.split: Final[str] = split
-        
+
         # Open NPZ once and load target arrays into system memory
         with np.load(path) as data:
             raw_images = data[f"{split}_images"]
             raw_labels = data[f"{split}_labels"].ravel().astype(np.int64)
-            
+
             total_available = len(raw_labels)
-            
+
             # Deterministic subsampling logic
             if max_samples and max_samples < total_available:
                 rng = np.random.default_rng(cfg.training.seed)
@@ -99,15 +102,15 @@ class MedMNISTDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Retrieves a standardized sample-label pair.
-        
-        The image is converted to a PIL object to ensure compatibility with 
+
+        The image is converted to a PIL object to ensure compatibility with
         Torchvision V1 transforms before being returned as a PyTorch Tensor.
         """
         img = self.images[idx]
         label = self.labels[idx]
 
         pil_img = Image.fromarray(img.squeeze() if img.shape[-1] == 1 else img)
-        
+
         if self.transform:
             img = self.transform(pil_img)
         else:
