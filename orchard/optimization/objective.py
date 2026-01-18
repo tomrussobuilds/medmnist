@@ -23,7 +23,7 @@ import torch
 #                         Internal Imports                                    #
 # =========================================================================== #
 from orchard.core import (
-    Config, LOGGER_NAME, log_trial_start
+    Config, LOGGER_NAME, log_trial_start, LogStyle
 )
 from orchard.data_handler import load_medmnist, get_dataloaders
 from orchard.models import get_model
@@ -247,6 +247,12 @@ class OptunaObjective:
                     f"{self.metric_name}:{current_metric:.4f} "
                     f"(Best:{best_metric:.4f})"
                 )
+        
+        logger.info("")
+        logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Trial {trial.number} completed")
+        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Best {self.metric_name.upper():<10} : {best_metric:.6f}")
+        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Final Loss       : {epoch_loss:.4f}")
+        logger.info("")
 
         return best_metric
     
@@ -322,12 +328,28 @@ class PrunableTrainer(ModelTrainer):
         Returns:
             Dict of validation metrics (loss, accuracy, auc, etc.)
         """
-        val_metrics = validate_epoch(
-            model=self.model,
-            val_loader=self.val_loader,
-            criterion=self.criterion,
-            device=self.device
-        )
-
-        self.val_metrics_history.append(val_metrics)
-        return val_metrics
+        try:
+            val_metrics = validate_epoch(
+                model=self.model,
+                val_loader=self.val_loader,
+                criterion=self.criterion,
+                device=self.device
+            )
+            
+            # Safety check: ensure we got a valid dict
+            if val_metrics is None:
+                logger.error("validate_epoch returned None!")
+                val_metrics = {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}
+            elif not isinstance(val_metrics, dict):
+                logger.error(f"validate_epoch returned non-dict: {type(val_metrics)}")
+                val_metrics = {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}
+            
+            self.val_metrics_history.append(val_metrics)
+            return val_metrics
+            
+        except Exception as e:
+            logger.error(f"Validation failed with exception: {e}")
+            import traceback
+            traceback.print_exc()
+            # Return default metrics to allow training to continue
+            return {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}

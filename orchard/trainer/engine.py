@@ -177,18 +177,27 @@ def validate_epoch(
     num_classes = y_score.shape[1]
     all_labels = np.arange(num_classes)
 
-    # Compute ROC-AUC (Macro-averaged, One-vs-Rest)
+    # Compute ROC-AUC
     try:
-        auc = roc_auc_score(
-            y_true,
-            y_score,
-            labels=all_labels,
-            multi_class="ovr",
-            average="macro"
-        )
-    except ValueError:
+        if num_classes == 2:
+            # Binary classification: use only positive class probabilities
+            auc = roc_auc_score(y_true, y_score[:, 1])
+        else:
+            # Multi-class: use macro-averaged One-vs-Rest
+            auc = roc_auc_score(
+                y_true,
+                y_score,
+                multi_class="ovr",
+                average="macro"
+            )
+    except (ValueError, IndexError) as e:
+        # Log error for debugging
+        import logging
+        logger = logging.getLogger("VisionForge")
+        logger.warning(f"AUC calculation failed: {e}. Setting auc=0.0")
         auc = 0.0
-    
+
+    # Ensure we always return a dict
     return {
         "loss": val_loss / total,
         "accuracy": correct / total,

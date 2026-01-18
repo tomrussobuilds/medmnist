@@ -137,7 +137,8 @@ class OptunaOrchestrator:
             warmup_epochs=self.cfg.optuna.pruning_warmup_epochs
         )
         
-        # Log optimization header (ONLY ONCE)
+        # Log optimization header
+        optuna.logging.set_verbosity(optuna.logging.WARNING)
         log_optimization_header(self.cfg)
         
         early_stop_callback = get_early_stopping_callback(
