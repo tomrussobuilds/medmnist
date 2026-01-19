@@ -63,6 +63,9 @@ from .logger import (
     log_optimization_header,
     log_study_summary,
     log_trial_start,
+    log_trial_params_compact,
+    log_optimization_summary,
+    log_training_summary,
 )
 
 # =========================================================================== #
@@ -124,6 +127,9 @@ __all__ = [
     "log_best_config_export",
     "LogStyle",
     "log_trial_start",
+    "log_trial_params_compact",
+    "log_optimization_summary",
+    "log_training_summary",
     # Environment
     "set_seed",
     "detect_best_device",
