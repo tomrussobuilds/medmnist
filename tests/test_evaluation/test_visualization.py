@@ -215,15 +215,6 @@ def test_show_predictions_without_config(mock_get_batch, mock_plt):
     preds = np.array([0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1])
     mock_get_batch.return_value = (images, labels, preds)
 
-    mock_model = MagicMock()
-    mock_loader = MagicMock()
-    device = torch.device("cpu")
-    classes = ["class0", "class1"]
-
-    # No save_path, no config - need to handle _setup_prediction_grid with cfg=None
-    # Skip this test as it requires cfg for fig_size_predictions
-    pytest.skip("Requires config for fig_size_predictions")
-
 
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
