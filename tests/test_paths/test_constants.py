@@ -84,10 +84,10 @@ def test_get_project_root_finds_git_marker(tmp_path):
     project_root = tmp_path / "project"
     nested_dir = project_root / "orchard" / "core" / "paths"
     nested_dir.mkdir(parents=True)
-    
+
     # Create .git marker at project root
     (project_root / ".git").mkdir()
-    
+
     # Mock __file__ to be in nested directory
     with patch.dict(os.environ, {"IN_DOCKER": "0"}, clear=True):
         with patch("orchard.core.paths.constants.Path") as mock_path:
@@ -98,7 +98,7 @@ def test_get_project_root_finds_git_marker(tmp_path):
                 project_root,
                 tmp_path,
             ]
-            
+
             # The actual function uses Path(__file__), so we need more specific mocking
             # For this test, we'll verify the logic conceptually
             pass
@@ -110,10 +110,10 @@ def test_get_project_root_finds_requirements_marker(tmp_path):
     project_root = tmp_path / "project"
     nested_dir = project_root / "orchard" / "core" / "paths"
     nested_dir.mkdir(parents=True)
-    
+
     # Create requirements.txt marker at project root
     (project_root / "requirements.txt").touch()
-    
+
     with patch.dict(os.environ, {"IN_DOCKER": "0"}, clear=True):
         # Verify marker exists
         assert (project_root / "requirements.txt").exists()
@@ -125,10 +125,10 @@ def test_get_project_root_finds_readme_marker(tmp_path):
     project_root = tmp_path / "project"
     nested_dir = project_root / "orchard" / "core" / "paths"
     nested_dir.mkdir(parents=True)
-    
+
     # Create README.md marker at project root
     (project_root / "README.md").touch()
-    
+
     with patch.dict(os.environ, {"IN_DOCKER": "0"}, clear=True):
         # Verify marker exists
         assert (project_root / "README.md").exists()
@@ -144,13 +144,13 @@ def test_get_project_root_fallback_sufficient_parents(tmp_path):
     """Test get_project_root() fallback when no markers but enough parent dirs."""
     deep_path = tmp_path / "a" / "b" / "c" / "d"
     deep_path.mkdir(parents=True)
-    
+
     with patch.dict(os.environ, {"IN_DOCKER": "0"}, clear=True):
         with patch("orchard.core.paths.constants.Path") as mock_path:
             mock_instance = mock_path.return_value.resolve.return_value
             mock_instance.parent = deep_path
             mock_instance.parents = list(deep_path.parents)
-            
+
             # With 4+ parents, fallback should use parents[2]
             assert len(deep_path.parents) >= 3
 
@@ -192,7 +192,7 @@ def test_static_dirs_list():
     assert len(STATIC_DIRS) == 2
     assert DATASET_DIR in STATIC_DIRS
     assert OUTPUTS_ROOT in STATIC_DIRS
-    
+
     # All entries should be Path objects
     for directory in STATIC_DIRS:
         assert isinstance(directory, Path)
@@ -210,15 +210,15 @@ def test_setup_static_directories_creates_dirs(tmp_path):
     # Create temporary static dirs
     test_dataset = tmp_path / "dataset"
     test_outputs = tmp_path / "outputs"
-    
+
     # Ensure they don't exist yet
     assert not test_dataset.exists()
     assert not test_outputs.exists()
-    
+
     # Patch STATIC_DIRS and run setup
     with patch("orchard.core.paths.constants.STATIC_DIRS", [test_dataset, test_outputs]):
         setup_static_directories()
-    
+
     # Verify directories were created
     assert test_dataset.exists()
     assert test_dataset.is_dir()
@@ -230,19 +230,19 @@ def test_setup_static_directories_creates_dirs(tmp_path):
 def test_setup_static_directories_idempotent(tmp_path):
     """Test setup_static_directories() is idempotent (safe to call multiple times)."""
     test_dir = tmp_path / "test_static"
-    
+
     with patch("orchard.core.paths.constants.STATIC_DIRS", [test_dir]):
         # First call creates directory
         setup_static_directories()
         assert test_dir.exists()
-        
+
         # Get creation time
         mtime_first = test_dir.stat().st_mtime
-        
+
         # Second call should not fail
         setup_static_directories()
         assert test_dir.exists()
-        
+
         # Directory should still exist and be the same
         mtime_second = test_dir.stat().st_mtime
         assert mtime_first == mtime_second
@@ -252,13 +252,13 @@ def test_setup_static_directories_idempotent(tmp_path):
 def test_setup_static_directories_creates_parents(tmp_path):
     """Test setup_static_directories() creates parent directories if needed."""
     nested_dir = tmp_path / "level1" / "level2" / "dataset"
-    
+
     assert not nested_dir.exists()
     assert not nested_dir.parent.exists()
-    
+
     with patch("orchard.core.paths.constants.STATIC_DIRS", [nested_dir]):
         setup_static_directories()
-    
+
     assert nested_dir.exists()
     assert nested_dir.is_dir()
     assert nested_dir.parent.exists()
@@ -287,9 +287,9 @@ def test_all_constants_are_defined():
         "OUTPUTS_ROOT",
         "STATIC_DIRS",
     ]
-    
+
     import orchard.core.paths.constants as constants_module
-    
+
     for const_name in expected_constants:
         assert hasattr(constants_module, const_name), f"Missing constant: {const_name}"
 
@@ -301,7 +301,7 @@ def test_constants_are_final():
     original_root = PROJECT_ROOT
     original_dataset = DATASET_DIR
     original_outputs = OUTPUTS_ROOT
-    
+
     # These should remain unchanged throughout test
     assert PROJECT_ROOT == original_root
     assert DATASET_DIR == original_dataset
@@ -313,7 +313,7 @@ def test_static_directories_creation_on_import():
     """Test that importing the module doesn't auto-create directories."""
     # The module should define constants but setup_static_directories()
     # must be explicitly called
-    
+
     # Constants should exist
     assert PROJECT_ROOT is not None
     assert DATASET_DIR is not None

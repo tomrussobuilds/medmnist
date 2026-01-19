@@ -21,6 +21,9 @@ from .reporter import (
     log_optimization_header,
     log_study_summary,
     log_trial_start,
+    log_training_summary,
+    log_optimization_summary,
+    log_trial_params_compact,
 )
 
 # =========================================================================== #
@@ -34,4 +37,7 @@ __all__ = [
     "log_best_config_export",
     "LogStyle",
     "log_trial_start",
+    "log_training_summary",
+    "log_optimization_summary",
+    "log_trial_params_compact",
 ]

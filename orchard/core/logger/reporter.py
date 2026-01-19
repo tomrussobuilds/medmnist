@@ -239,54 +239,60 @@ class Reporter(BaseModel):
 # =========================================================================== #
 
 
-def log_optimization_header(cfg: "Config") -> None:
+def log_optimization_header(cfg: "Config", logger_instance: logging.Logger = None) -> None:
     """
     Log Optuna optimization session header.
 
     Args:
         cfg: Configuration with optuna settings
+        logger_instance: Logger instance to use (defaults to module logger)
     """
-    logger.info("")
-    logger.info(LogStyle.DOUBLE)
-    logger.info(f"{'OPTUNA HYPERPARAMETER OPTIMIZATION':^80}")
-    logger.info(LogStyle.DOUBLE)
-    logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Dataset      : {cfg.dataset.dataset_name}")
-    logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Model        : {cfg.model.name}")
+    log = logger_instance or logger
+
+    log.info("")
+    log.info(LogStyle.DOUBLE)
+    log.info(f"{'OPTUNA HYPERPARAMETER OPTIMIZATION':^80}")
+    log.info(LogStyle.DOUBLE)
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Dataset      : {cfg.dataset.dataset_name}")
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Model        : {cfg.model.name}")
 
     if cfg.model.weight_variant:
-        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Weight Var.  : {cfg.model.weight_variant}")
+        log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Weight Var.  : {cfg.model.weight_variant}")
 
-    logger.info(
+    log.info(
         f"{LogStyle.INDENT}{LogStyle.ARROW} Search Space : {cfg.optuna.search_space_preset}"
     )
-    logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Trials       : {cfg.optuna.n_trials}")
-    logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Epochs/Trial : {cfg.optuna.epochs}")
-    logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Metric       : {cfg.optuna.metric_name}")
-    logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Device       : {cfg.hardware.device}")
-    logger.info(
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Trials       : {cfg.optuna.n_trials}")
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Epochs/Trial : {cfg.optuna.epochs}")
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Metric       : {cfg.optuna.metric_name}")
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Device       : {cfg.hardware.device}")
+    log.info(
         f"{LogStyle.INDENT}{LogStyle.ARROW} Pruning      : {'Enabled' if cfg.optuna.enable_pruning else 'Disabled'}"
     )
 
     if cfg.optuna.enable_early_stopping:
         threshold = cfg.optuna.early_stopping_threshold or "auto"
-        logger.info(
+        log.info(
             f"{LogStyle.INDENT}{LogStyle.ARROW} Early Stop   : Enabled (threshold={threshold}, patience={cfg.optuna.early_stopping_patience})"
         )
 
-    logger.info(LogStyle.DOUBLE)
-    logger.info("")
+    log.info(LogStyle.DOUBLE)
+    log.info("")
 
 
-def log_trial_start(trial_number: int, params: Dict[str, Any]) -> None:
+def log_trial_start(trial_number: int, params: Dict[str, Any], logger_instance: logging.Logger = None) -> None:
     """
     Log trial start with formatted parameters (grouped by category).
 
     Args:
         trial_number: Trial index
         params: Sampled hyperparameters
+        logger_instance: Logger instance to use (defaults to module logger)
     """
-    logger.info(f"{LogStyle.LIGHT}")
-    logger.info(f"Trial {trial_number} Hyperparameters:")
+    log = logger_instance or logger
+
+    log.info(f"{LogStyle.LIGHT}")
+    log.info(f"Trial {trial_number} Hyperparameters:")
 
     categories = [
         ("Optimization", ["learning_rate", "weight_decay", "momentum", "min_lr"]),
@@ -299,24 +305,24 @@ def log_trial_start(trial_number: int, params: Dict[str, Any]) -> None:
     for category_name, param_list in categories:
         category_params = {k: v for k, v in params.items() if k in param_list}
         if category_params:
-            logger.info(f"{LogStyle.INDENT}[{category_name}]")
+            log.info(f"{LogStyle.INDENT}[{category_name}]")
             for key, value in category_params.items():
                 if isinstance(value, float):
                     if value < 0.001:
-                        logger.info(
+                        log.info(
                             f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {value:.2e}"
                         )
                     else:
-                        logger.info(
+                        log.info(
                             f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {value:.4f}"
                         )
                 else:
-                    logger.info(f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {value}")
+                    log.info(f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {value}")
 
-    logger.info(LogStyle.LIGHT)
+    log.info(LogStyle.LIGHT)
 
 
-def log_study_summary(study: "optuna.Study", metric_name: str) -> None:
+def log_study_summary(study: "optuna.Study", metric_name: str, logger_instance: logging.getLogger = None) -> None:
     """
     Log optimization study completion summary.
 
@@ -324,45 +330,51 @@ def log_study_summary(study: "optuna.Study", metric_name: str) -> None:
         study: Completed Optuna study
         metric_name: Name of optimization metric
     """
+    log = logger or logger_instance
+
     completed = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
     pruned = [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]
     failed = [t for t in study.trials if t.state == optuna.trial.TrialState.FAIL]
 
-    logger.info("")
-    logger.info(LogStyle.DOUBLE)
-    logger.info(f"{'OPTIMIZATION COMPLETE':^80}")
-    logger.info(LogStyle.DOUBLE)
-    logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Total Trials   : {len(study.trials)}")
-    logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Completed      : {len(completed)}")
-    logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Pruned         : {len(pruned)}")
+    log.info("")
+    log.info(LogStyle.DOUBLE)
+    log.info(f"{'OPTIMIZATION COMPLETE':^80}")
+    log.info(LogStyle.DOUBLE)
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Total Trials   : {len(study.trials)}")
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Completed      : {len(completed)}")
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Pruned         : {len(pruned)}")
     if failed:
-        logger.info(f"{LogStyle.INDENT}{LogStyle.WARNING} Failed         : {len(failed)}")
-    logger.info("")
+        log.info(f"{LogStyle.INDENT}{LogStyle.WARNING} Failed         : {len(failed)}")
+    log.info("")
 
     if completed:
         try:
-            logger.info(
+            log.info(
                 f"{LogStyle.INDENT}{LogStyle.SUCCESS} Best {metric_name.upper():<10} : {study.best_value:.6f}"
             )
-            logger.info(
+            log.info(
                 f"{LogStyle.INDENT}{LogStyle.SUCCESS} Best Trial     : {study.best_trial.number}"
             )
-            logger.info(LogStyle.DOUBLE)
-            logger.info("")
+            log.info(LogStyle.DOUBLE)
+            log.info("")
 
-            logger.info("Best Hyperparameters:")
+            log.info("Best Hyperparameters:")
             log_trial_params_compact(study.best_trial.number, study.best_params)
         except ValueError:
-            logger.warning(f"{LogStyle.INDENT}{LogStyle.WARNING} Best trial lookup failed")
-            logger.info(LogStyle.DOUBLE)
+            log.warning(f"{LogStyle.INDENT}{LogStyle.WARNING} Best trial lookup failed")
+            log.info(LogStyle.DOUBLE)
     else:
-        logger.warning(f"{LogStyle.INDENT}{LogStyle.WARNING} No trials completed successfully")
-        logger.info(LogStyle.DOUBLE)
+        log.warning(f"{LogStyle.INDENT}{LogStyle.WARNING} No trials completed successfully")
+        log.info(LogStyle.DOUBLE)
 
-    logger.info("")
+    log.info("")
 
 
-def log_trial_params_compact(trial_number: int, params: Dict[str, Any]) -> None:
+def log_trial_params_compact(
+        trial_number: int,
+        params: Dict[str, Any],
+        logger_instance: logging.getLogger = None
+) -> None:
     """
     Compact parameter logging for best trial summary.
 
@@ -370,6 +382,8 @@ def log_trial_params_compact(trial_number: int, params: Dict[str, Any]) -> None:
         trial_number: Trial index
         params: Trial hyperparameters
     """
+    log = logger or logger_instance
+
     categories = [
         ("Optimization", ["learning_rate", "weight_decay", "momentum", "min_lr"]),
         ("Regularization", ["mixup_alpha", "label_smoothing", "dropout"]),
@@ -381,38 +395,137 @@ def log_trial_params_compact(trial_number: int, params: Dict[str, Any]) -> None:
     for category_name, param_list in categories:
         category_params = {k: v for k, v in params.items() if k in param_list}
         if category_params:
-            logger.info(f"{LogStyle.INDENT}[{category_name}]")
+            log.info(f"{LogStyle.INDENT}[{category_name}]")
             for key, value in category_params.items():
                 if isinstance(value, float):
                     if value < 0.001:
-                        logger.info(
+                        log.info(
                             f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {value:.2e}"
                         )
                     else:
-                        logger.info(
+                        log.info(
                             f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {value:.4f}"
                         )
                 else:
-                    logger.info(f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {value}")
+                    log.info(f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {value}")
 
 
-def log_best_config_export(config_path: Any) -> None:
+def log_best_config_export(config_path: Any, logger_instance: logging.getLogger = None) -> None:
     """
     Log best configuration export information.
 
     Args:
         config_path: Path to exported YAML config
     """
-    logger.info(f"\n{LogStyle.DOUBLE}")
-    logger.info(f"{'BEST CONFIGURATION EXPORTED':^80}")
-    logger.info(LogStyle.DOUBLE)
-    logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Configuration saved to: {config_path}")
-    logger.info("")
-    logger.info(f"{LogStyle.INDENT}To train with optimized hyperparameters:")
-    logger.info(f"{LogStyle.DOUBLE_INDENT}python main.py --config {config_path}")
-    logger.info("")
-    logger.info(f"{LogStyle.INDENT}To visualize optimization results:")
-    logger.info(
+    log = logger or logger_instance
+
+    log.info(f"\n{LogStyle.DOUBLE}")
+    log.info(f"{'BEST CONFIGURATION EXPORTED':^80}")
+    log.info(LogStyle.DOUBLE)
+    log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Configuration saved to: {config_path}")
+    log.info("")
+    log.info(f"{LogStyle.INDENT}To train with optimized hyperparameters:")
+    log.info(f"{LogStyle.DOUBLE_INDENT}python main.py --config {config_path}")
+    log.info("")
+    log.info(f"{LogStyle.INDENT}To visualize optimization results:")
+    log.info(
         f"{LogStyle.DOUBLE_INDENT}firefox {config_path.parent.parent}/figures/param_importances.html"
     )
-    logger.info(f"{LogStyle.DOUBLE}\n")
+    log.info(f"{LogStyle.DOUBLE}")
+    log.info("")
+
+
+def log_training_summary(
+    cfg: "Config",
+    test_acc: float,
+    macro_f1: float,
+    device: "torch.device",
+    paths: "RunPaths",
+    logger_instance: logging.Logger = None,
+) -> None:
+    """
+    Log training pipeline completion summary.
+
+    Args:
+        cfg: Configuration object
+        test_acc: Final test accuracy
+        macro_f1: Final macro F1 score
+        device: PyTorch device used
+        paths: Run paths for artifacts
+        logger_instance: Logger instance to use (defaults to module logger)
+    """
+    log = logger_instance or logger
+
+    log.info(f"{LogStyle.DOUBLE}")
+    log.info(f"{'PIPELINE EXECUTION SUMMARY':^80}")
+    log.info(LogStyle.DOUBLE)
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Dataset      : {cfg.dataset.dataset_name}")
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Architecture : {cfg.model.name}")
+
+    if cfg.model.weight_variant:
+        log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Weight Var.  : {cfg.model.weight_variant}")
+
+    log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Test Accuracy: {test_acc:>8.2%}")
+    log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Macro F1     : {macro_f1:>8.4f}")
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Device       : {str(device).upper()}")
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Artifacts    : {paths.root}")
+    log.info(f"{LogStyle.DOUBLE}")
+    log.info("")
+
+
+def log_optimization_summary(
+    study: "optuna.Study",
+    cfg: "Config",
+    device: "torch.device",
+    paths: "RunPaths",
+    logger_instance: logging.Logger = None,
+) -> None:
+    """
+    Log optimization study completion summary.
+
+    Args:
+        study: Completed Optuna study
+        cfg: Configuration object
+        device: PyTorch device used
+        paths: Run paths for artifacts
+        logger_instance: Logger instance to use (defaults to module logger)
+    """
+    log = logger_instance or logger
+
+    completed = [t for t in study.trials if t.state.name == "COMPLETE"]
+    pruned = [t for t in study.trials if t.state.name == "PRUNED"]
+    failed = [t for t in study.trials if t.state.name == "FAIL"]
+
+    log.info(f"\n{LogStyle.DOUBLE}")
+    log.info(f"{'OPTIMIZATION EXECUTION SUMMARY':^80}")
+    log.info(LogStyle.DOUBLE)
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Dataset        : {cfg.dataset.dataset_name}")
+    log.info(
+        f"{LogStyle.INDENT}{LogStyle.ARROW} Search Space   : {cfg.optuna.search_space_preset}"
+    )
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Total Trials   : {len(study.trials)}")
+    log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Completed      : {len(completed)}")
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Pruned         : {len(pruned)}")
+
+    if failed:
+        log.info(f"{LogStyle.INDENT}{LogStyle.WARNING} Failed         : {len(failed)}")
+
+    if completed:
+        try:
+            log.info(
+                f"{LogStyle.INDENT}{LogStyle.SUCCESS} Best {cfg.optuna.metric_name.upper():<9} : {study.best_value:.6f}"
+            )
+            log.info(
+                f"{LogStyle.INDENT}{LogStyle.SUCCESS} Best Trial     : {study.best_trial.number}"
+            )
+        except ValueError:
+            log.warning(
+                f"{LogStyle.INDENT}{LogStyle.WARNING} Best trial lookup failed (check study integrity)"
+            )
+    else:
+        log.warning(f"{LogStyle.INDENT}{LogStyle.WARNING} No trials completed")
+
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Device         : {str(device).upper()}")
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Artifacts      : {paths.root}")
+    log.info(f"{LogStyle.DOUBLE}")
+    log.info("")

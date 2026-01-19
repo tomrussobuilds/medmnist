@@ -8,7 +8,7 @@
 # Search Space: Includes architecture comparison vs ResNet-18-Adapted
 
 dataset:
-  name: "tissuemnist"
+  name: "organcmnist"
   data_root: ./dataset
   resolution: 28
   force_rgb: true
@@ -86,7 +86,7 @@ evaluation:
   save_predictions_grid: false
 
 optuna:
-  study_name: "bloodmnist_minicnn_optimized"
+  study_name: "organcmnist_minicnn_optimized"
   n_trials: 50                  # More trials for fast architecture
   epochs: 10                    # Very short for speed
   timeout: null
