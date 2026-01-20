@@ -7,12 +7,11 @@ Quick tests to cover core training/validation functions and eliminate codecov wa
 # =========================================================================== #
 #                         Standard Imports                                    #
 # =========================================================================== #
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 # =========================================================================== #
 #                         Third-Party Imports                                 #
 # =========================================================================== #
-import numpy as np
 import pytest
 import torch
 import torch.nn as nn
