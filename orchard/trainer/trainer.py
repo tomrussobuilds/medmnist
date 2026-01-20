@@ -17,13 +17,12 @@ Key Features:
       evolution, and resource utilization.
 """
 
-import logging
-from functools import partial
-from pathlib import Path
-
 # =========================================================================== #
 #                                Standard Imports                             #
 # =========================================================================== #
+import logging
+from functools import partial
+from pathlib import Path
 from typing import List, Tuple
 
 # =========================================================================== #
@@ -189,7 +188,8 @@ class ModelTrainer:
         if isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
             self.scheduler.step(val_loss)
         else:
-            self.scheduler.step()
+            if not isinstance(self.scaler, torch.amp.GradScaler):
+                self.scheduler.step()
 
     def _handle_checkpointing(self, val_metrics: dict) -> bool:
         """
