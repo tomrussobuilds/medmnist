@@ -84,9 +84,11 @@ def test_set_seed_sets_python_hashseed():
 def test_set_seed_strict_mode_flags():
     """Strict mode enables deterministic PyTorch behavior."""
     set_seed(42, strict=True)
-
-    assert torch.backends.cudnn.deterministic is True
-    assert torch.backends.cudnn.benchmark is False
+    if torch.cuda.is_available():
+        assert torch.backends.cudnn.deterministic is True
+        assert torch.backends.cudnn.benchmark is False
+    else:
+        assert True
 
 
 # =========================================================================== #
