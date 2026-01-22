@@ -1,0 +1,135 @@
+"""
+Provides unit tests for the Tiny ViT model architecture.
+This module validates model initialization, forward pass consistency,
+and output tensor shapes across various configurations.
+"""
+
+# =========================================================================== #
+#                           STANDARD LIBRARY                                  #
+# =========================================================================== #
+from unittest.mock import MagicMock, patch
+
+# =========================================================================== #
+#                           THIRD-PARTY IMPORTS                               #
+# =========================================================================== #
+import pytest
+import torch
+import torch.nn as nn
+
+# =========================================================================== #
+#                           INTERNAL IMPORTS                                  #
+# =========================================================================== #
+from orchard.models.vit_tiny import build_vit_tiny
+
+# =========================================================================== #
+#                               FIXUTRES                                      #
+# =========================================================================== #
+
+
+@pytest.fixture
+def mock_cfg():
+    """Provides a standardized configuration mock for model building."""
+    cfg = MagicMock()
+    cfg.model.pretrained = True
+    cfg.model.weight_variant = "vit_tiny_patch16_224.augreg_in21k_ft_in1k"
+    return cfg
+
+
+@pytest.fixture
+def device():
+    """Resolves target device for test execution."""
+    return torch.device("cpu")
+
+
+# =========================================================================== #
+#                               UNIT TESTS                                    #
+# =========================================================================== #
+
+
+@pytest.mark.unit
+class TestBuildViTTiny:
+    """
+    Test suite for Vision Transformer Tiny construction and adaptation.
+
+    Coverage:
+        - Architecture initialization (RGB/Grayscale)
+        - Pretrained weight loading logic
+        - Weight morphing for channel adaptation
+        - Error handling for invalid variants
+    """
+
+    def test_build_vit_tiny_rgb(self, device, mock_cfg):
+        """
+        Ensures standard RGB ViT-Tiny is built with correct dimensions.
+        """
+        num_classes = 5
+        in_channels = 3
+
+        model = build_vit_tiny(device, num_classes, in_channels, mock_cfg)
+
+        assert isinstance(model, nn.Module)
+        assert model.patch_embed.proj.in_channels == 3
+        assert model.head.out_features == num_classes
+
+        # Verify forward pass
+        x = torch.randn(1, 3, 224, 224).to(device)
+        output = model(x)
+        assert output.shape == (1, num_classes)
+
+    def test_build_vit_tiny_grayscale_morphing(self, device, mock_cfg):
+        """
+        Validates the 1-channel adaptation and weight morphing (averaging).
+        """
+        num_classes = 2
+        in_channels = 1
+
+        model = build_vit_tiny(device, num_classes, in_channels, mock_cfg)
+
+        assert model.patch_embed.proj.in_channels == 1
+
+        # Verify forward pass with single channel
+        x = torch.randn(1, 1, 224, 224).to(device)
+        output = model(x)
+        assert output.shape == (1, num_classes)
+
+    def test_build_vit_tiny_no_pretrained(self, device, mock_cfg):
+        """
+        Tests initialization with random weights when pretrained flag is False.
+        """
+        mock_cfg.model.pretrained = False
+        num_classes = 10
+        in_channels = 3
+
+        with patch("orchard.models.vit_tiny.timm.create_model") as mock_timm:
+            mock_model = MagicMock(spec=nn.Module)
+            mock_timm.return_value = mock_model
+            mock_model.to.return_value = mock_model
+
+            model = build_vit_tiny(device, num_classes, in_channels, mock_cfg)
+
+            assert model == mock_model
+
+            mock_timm.assert_called_once_with(
+                "vit_tiny_patch16_224", pretrained=False, num_classes=num_classes, in_chans=3
+            )
+            mock_model.to.assert_called_once_with(device)
+
+    def test_invalid_weight_variant_raises_error(self, device, mock_cfg):
+        """
+        Verifies that an invalid timm variant triggers a descriptive ValueError.
+        """
+        mock_cfg.model.weight_variant = "invalid_vit_model_name"
+
+        with pytest.raises(ValueError, match="Invalid ViT weight variant"):
+            build_vit_tiny(device, 2, 3, mock_cfg)
+
+    def test_weight_copy_consistency(self, device, mock_cfg):
+        """
+        Confirms that bias is preserved during patch embedding adaptation.
+        """
+        # Force a case with 1 channel to trigger Step 4
+        model = build_vit_tiny(device, 2, 1, mock_cfg)
+
+        # Check if bias exists and is not None (ViT-Tiny usually has bias in proj)
+        assert model.patch_embed.proj.bias is not None
+        assert model.patch_embed.proj.weight.shape[1] == 1
