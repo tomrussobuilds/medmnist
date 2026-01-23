@@ -5,11 +5,10 @@ Quick tests to eliminate codecov warnings for newly created modules.
 Focuses on testing the most critical functions in each module.
 """
 
-import tempfile
-
 # =========================================================================== #
 #                         Standard Imports                                    #
 # =========================================================================== #
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -228,9 +227,9 @@ def test_save_plot_success(completed_trial):
     mock_plot_fn.return_value = mock_fig
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        output_path = Path(tmpdir) / "test_plot.html"
+        output_dir = Path(tmpdir)
 
-        save_plot(study, "test", mock_plot_fn, output_path)
+        save_plot(study, "test", mock_plot_fn, output_dir)
 
         mock_plot_fn.assert_called_once_with(study)
         mock_fig.write_html.assert_called_once()
@@ -245,10 +244,89 @@ def test_save_plot_handles_exception(completed_trial):
     mock_plot_fn = MagicMock(side_effect=Exception("Plot failed"))
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        output_path = Path(tmpdir) / "test_plot.html"
+        output_dir = Path(tmpdir)
 
         # Should not raise
-        save_plot(study, "test", mock_plot_fn, output_path)
+        save_plot(study, "test", mock_plot_fn, output_dir)
+
+
+@pytest.mark.unit
+def test_generate_visualizations_no_completed_trials():
+    """Test generate_visualizations skips when no completed trials (lines 68-91)."""
+    from orchard.optimization.orchestrator.visualizers import generate_visualizations
+
+    study = MagicMock()
+    study.trials = []  # No completed trials
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output_dir = Path(tmpdir)
+
+        # Should return early without trying to import plotly
+        generate_visualizations(study, output_dir)
+
+        # No HTML files should be created
+        html_files = list(output_dir.glob("*.html"))
+        assert len(html_files) == 0
+
+
+@pytest.mark.unit
+@patch("orchard.optimization.orchestrator.visualizers.has_completed_trials")
+def test_generate_visualizations_plotly_not_installed(mock_has_trials, completed_trial):
+    """Test generate_visualizations handles missing plotly gracefully (lines 68-91)."""
+    from orchard.optimization.orchestrator.visualizers import generate_visualizations
+
+    study = MagicMock()
+    study.trials = [completed_trial]
+    mock_has_trials.return_value = True
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output_dir = Path(tmpdir)
+
+        # Mock the import to raise ImportError
+        with patch("builtins.__import__", side_effect=ImportError("No module named 'plotly'")):
+            # Should handle ImportError gracefully
+            generate_visualizations(study, output_dir)
+
+
+@pytest.mark.unit
+@patch("orchard.optimization.orchestrator.visualizers.has_completed_trials")
+@patch("orchard.optimization.orchestrator.visualizers.save_plot")
+def test_generate_visualizations_creates_all_plots(
+    mock_save_plot, mock_has_trials, completed_trial
+):
+    """Test generate_visualizations creates all four plot types (lines 68-91)."""
+    from orchard.optimization.orchestrator.visualizers import generate_visualizations
+
+    study = MagicMock()
+    study.trials = [completed_trial]
+    mock_has_trials.return_value = True
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output_dir = Path(tmpdir)
+
+        # Mock the optuna.visualization imports
+        with patch.dict(
+            "sys.modules",
+            {
+                "optuna.visualization": MagicMock(
+                    plot_optimization_history=MagicMock(),
+                    plot_param_importances=MagicMock(),
+                    plot_slice=MagicMock(),
+                    plot_parallel_coordinate=MagicMock(),
+                )
+            },
+        ):
+            generate_visualizations(study, output_dir)
+
+            # Should call save_plot 4 times (one for each plot type)
+            assert mock_save_plot.call_count == 4
+
+            # Verify the plot names
+            plot_names = [call[0][1] for call in mock_save_plot.call_args_list]
+            assert "optimization_history" in plot_names
+            assert "param_importances" in plot_names
+            assert "slice" in plot_names
+            assert "parallel_coordinate" in plot_names
 
 
 if __name__ == "__main__":
