@@ -10,6 +10,7 @@ coverage through isolated and deterministic unit tests.
 from unittest.mock import MagicMock, patch
 
 # Third-Party Imports
+import optuna
 import pytest
 import torch
 
@@ -356,7 +357,6 @@ def test_optuna_objective_sample_params_object():
 @pytest.mark.unit
 def test_optuna_objective_call_with_pruning():
     """Test OptunaObjective.__call__ handles pruning correctly."""
-    import optuna
 
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10

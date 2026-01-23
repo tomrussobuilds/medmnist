@@ -105,7 +105,7 @@ def trainer(simple_model, mock_loaders, optimizer, scheduler, criterion, mock_cf
         yield trainer
 
 
-#                    TESTS: Initialization                                    #
+# TESTS: INITIALIZATION
 @pytest.mark.unit
 def test_trainer_init(trainer):
     """Test ModelTrainer initializes correctly."""
@@ -174,7 +174,7 @@ def test_trainer_amp_scaler_enabled(simple_model, mock_loaders, optimizer, sched
     assert trainer.scaler is not None
 
 
-#                    TESTS: Checkpointing                                     #
+# TESTS: CHECKPOINTING
 @pytest.mark.unit
 def test_handle_checkpointing_improves(trainer):
     """Test checkpointing saves when AUC improves."""
@@ -216,7 +216,7 @@ def test_handle_checkpointing_early_stop(trainer):
     assert should_stop is True
 
 
-#                    TESTS: Scheduler                                         #
+# TESTS: SCHEDULER
 @pytest.mark.unit
 def test_smart_step_scheduler_reduce_on_plateau(
     simple_model, mock_loaders, optimizer, criterion, mock_cfg
@@ -249,7 +249,7 @@ def test_smart_step_scheduler_step_lr(trainer):
     trainer._smart_step_scheduler(0.5)
 
 
-#                    TESTS: Load Best Weights                                 #
+# TESTS: LOAD BEST WEIGHTS
 @pytest.mark.unit
 def test_load_best_weights_success(trainer):
     """Test loading best weights from checkpoint."""
@@ -280,7 +280,7 @@ def test_load_best_weights_file_not_found(trainer):
         trainer.load_best_weights()
 
 
-#                    TESTS: Training Loop                                     #
+# TESTS: TRAINING LOOP
 @pytest.mark.integration
 @patch("orchard.trainer.trainer.train_one_epoch")
 @patch("orchard.trainer.trainer.validate_epoch")
@@ -380,6 +380,7 @@ def test_train_mixup_cutoff(
 
 
 @pytest.mark.unit
+@pytest.mark.filterwarnings("ignore:.*lr_scheduler.step.*before.*optimizer.step.*:UserWarning")
 def test_smart_step_scheduler_with_non_gradscaler(
     simple_model, mock_loaders, optimizer, criterion, mock_cfg
 ):

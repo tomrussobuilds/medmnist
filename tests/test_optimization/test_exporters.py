@@ -8,7 +8,8 @@ correct behavior of configuration serialization and export to formats such as YA
 
 # Standard Imports
 import json
-from unittest.mock import MagicMock
+from datetime import datetime
+from unittest.mock import MagicMock, patch
 
 # Third-Party Imports
 import optuna
@@ -26,7 +27,7 @@ from orchard.optimization.orchestrator.exporters import (
 )
 
 
-#                                Fixtures                                     #
+# FIXTURES
 @pytest.fixture
 def study():
     """Fixture for creating a mock Optuna Study object."""
@@ -70,6 +71,7 @@ def config():
     return Config(model=model_config, training=training_config)
 
 
+# TESTS
 @pytest.mark.unit
 def test_export_study_summary(study, paths):
     """Test export of study summary to JSON."""
@@ -233,8 +235,6 @@ def test_build_trial_data_without_timestamps():
 @pytest.mark.unit
 def test_build_trial_data_with_only_start_time():
     """Test build_trial_data when only start time is available."""
-    from datetime import datetime
-
     trial = MagicMock(spec=optuna.trial.FrozenTrial)
     trial.number = 5
     trial.value = 0.95
@@ -281,8 +281,6 @@ def test_build_top_trials_dataframe_without_duration():
 @pytest.mark.unit
 def test_build_top_trials_dataframe_with_mixed_durations():
     """Test build_top_trials_dataframe with some trials having duration, some not."""
-    from datetime import datetime, timedelta
-
     # Trial with duration
     trial1 = MagicMock(spec=optuna.trial.FrozenTrial)
     trial1.number = 1
@@ -307,8 +305,74 @@ def test_build_top_trials_dataframe_with_mixed_durations():
     assert "Duration (s)" in df.columns
 
     # First trial should have duration
-    assert df.loc[0, "Duration (s)"] == 330  # 5 minutes 30 seconds
+    assert df.loc[0, "Duration (s)"] == 330
 
     # Second trial should not have duration (NaN or missing)
     # Since not all trials have duration, pandas will handle it appropriately
     assert pd.isna(df.loc[1, "Duration (s)"]) or "Duration (s)" not in df.iloc[1]
+
+
+@pytest.mark.unit
+def test_export_best_config_no_completed_trials_integration(minimal_config, paths):
+    """Test export_best_config returns None when no completed trials exist."""
+    # Create study with only failed/pruned trials
+    study = MagicMock()
+
+    trial1 = MagicMock()
+    trial1.state = optuna.trial.TrialState.FAIL
+
+    trial2 = MagicMock()
+    trial2.state = optuna.trial.TrialState.PRUNED
+
+    study.trials = [trial1, trial2]
+
+    with patch("orchard.optimization.orchestrator.exporters.logger") as mock_logger:
+        result = export_best_config(study, minimal_config, paths)
+
+        # Should return None
+        assert result is None
+
+        # Should log warning about no completed trials
+        mock_logger.warning.assert_called_once()
+
+
+@pytest.mark.unit
+def test_export_best_config_success_path(minimal_config, paths, tmp_path):
+    """Test export_best_config creates YAML when trials exist."""
+    # Create study with completed trial
+    study = MagicMock()
+    study.best_params = {
+        "learning_rate": 0.001,
+        "batch_size": 32,
+        "weight_decay": 0.0001,
+    }
+
+    trial = MagicMock()
+    trial.state = optuna.trial.TrialState.COMPLETE
+    trial.value = 0.95
+    study.trials = [trial]
+
+    paths.reports = tmp_path / "reports"
+    paths.reports.mkdir(parents=True, exist_ok=True)
+
+    with patch("orchard.optimization.orchestrator.exporters.build_best_config_dict") as mock_build:
+        with patch("orchard.optimization.orchestrator.exporters.save_config_as_yaml") as mock_save:
+            with patch("orchard.optimization.orchestrator.exporters.log_best_config_export"):
+                mock_build.return_value = {
+                    "training": {"learning_rate": 0.001, "batch_size": 32},
+                    "dataset": {"name": "test"},
+                    "model": {"name": "resnet"},
+                }
+
+                result = export_best_config(study, minimal_config, paths)
+
+                # Should return path
+                assert result == paths.reports / "best_config.yaml"
+
+                # Should call all helper functions
+                mock_build.assert_called_once_with(study.best_params, minimal_config)
+                mock_save.assert_called_once()
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
