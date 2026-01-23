@@ -116,6 +116,7 @@ def test_train_one_epoch_with_grad_clip(simple_model, simple_loader, criterion, 
 
 
 @pytest.mark.unit
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_train_one_epoch_with_scaler(simple_model, simple_loader, criterion, optimizer):
     """Test train_one_epoch with AMP scaler (lines 86-91)."""
     device = torch.device("cpu")
@@ -134,6 +135,7 @@ def test_train_one_epoch_with_scaler(simple_model, simple_loader, criterion, opt
 
 
 @pytest.mark.unit
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_train_one_epoch_with_scaler_and_grad_clip(
     simple_model, simple_loader, criterion, optimizer
 ):
