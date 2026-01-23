@@ -355,15 +355,20 @@ def test_execute_logs_completion(mock_val, mock_train, executor, mock_trial):
     """Test that trial completion is logged correctly."""
     mock_train.return_value = 0.35
     mock_val.return_value = {"loss": 0.25, "accuracy": 0.9, "auc": 0.92}
-
     executor.epochs = 1
+
+    # Simulate optimizer.step being called
+    def train_side_effect(*args, **kwargs):
+        executor.optimizer.step()
+        return 0.35
+
+    mock_train.side_effect = train_side_effect
 
     with patch.object(executor, "_log_trial_complete") as mock_log:
         best_metric = executor.execute(mock_trial)
 
-        # Verify completion logging was called
-        mock_log.assert_called_once_with(mock_trial, 0.92, 0.35)
-        assert best_metric == 0.92
+    mock_log.assert_called_once_with(mock_trial, 0.92, 0.35)
+    assert best_metric == 0.92
 
 
 if __name__ == "__main__":

@@ -14,11 +14,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-import numpy as np
-
 # =========================================================================== #
 #                                Third-Party Imports                          #
 # =========================================================================== #
+import numpy as np
 import requests
 
 # =========================================================================== #
