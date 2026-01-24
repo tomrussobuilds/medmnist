@@ -463,7 +463,7 @@ def test_release_single_instance_close_ioerror_real(tmp_path):
 
     try:
         original_close()
-    except:
+    except OSError:
         pass
 
     assert not lock_file.exists()

@@ -1,5 +1,5 @@
 """
-Simplified Test Suite for Optuna Orchestrator Module.
+Test Suite for Optuna Orchestrator Module.
 
 Focused on testing the orchestrator logic with proper mocking
 to avoid triggering real downloads, file I/O, or network calls.
@@ -150,7 +150,6 @@ class TestBuilders:
     def test_build_pruner_disabled(self, mock_cfg):
         """Test disabled pruning returns NopPruner."""
         pruner = build_pruner(False, "median", mock_cfg)
-        # Check that it's a pruner, not strict type check
         assert isinstance(pruner, optuna.pruners.BasePruner)
 
     @patch("orchard.optimization.orchestrator.builders.get_early_stopping_callback")
@@ -247,11 +246,9 @@ class TestOptunaOrchestrator:
         self, mock_top_trials, mock_summary, study_with_trials, mock_cfg, mock_paths
     ):
         """Test post-optimization with completed trials."""
-        # Mock export_top_trials to avoid calling build_top_trials_dataframe
         orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)
         orch._post_optimization_processing(study_with_trials)
 
-        # Both exports should be called
         mock_summary.assert_called_once()
         mock_top_trials.assert_called_once()
 
@@ -302,6 +299,83 @@ class TestOptunaOrchestrator:
         mock_orch_class.assert_called_once_with(cfg=mock_cfg, device="cpu", paths=mock_paths)
         mock_orch.optimize.assert_called_once()
         assert result == mock_study
+
+    @patch("orchard.optimization.orchestrator.orchestrator.generate_visualizations")
+    @patch("orchard.optimization.orchestrator.orchestrator.export_best_config")
+    @patch("orchard.optimization.orchestrator.orchestrator.export_study_summary")
+    def test_post_optimization_with_save_plots_enabled(
+        self,
+        mock_export_summary,
+        mock_export_best,
+        mock_generate_viz,
+        study_with_trials,
+        mock_cfg,
+        mock_paths,
+    ):
+        """Test post-optimization with save_plots enabled."""
+        # Enable save_plots
+        mock_cfg.optuna.save_plots = True
+        mock_cfg.optuna.save_best_config = False
+
+        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)
+        orch._post_optimization_processing(study_with_trials)
+
+        mock_generate_viz.assert_called_once_with(study_with_trials, mock_paths.figures)
+        mock_export_summary.assert_called_once()
+        mock_export_best.assert_not_called()
+
+    @patch("orchard.optimization.orchestrator.orchestrator.generate_visualizations")
+    @patch("orchard.optimization.orchestrator.orchestrator.export_best_config")
+    @patch("orchard.optimization.orchestrator.orchestrator.export_study_summary")
+    def test_post_optimization_with_save_best_config_enabled(
+        self,
+        mock_export_summary,
+        mock_export_best,
+        mock_generate_viz,
+        study_with_trials,
+        mock_cfg,
+        mock_paths,
+    ):
+        """Test post-optimization with save_best_config enabled."""
+        # Enable save_best_config
+        mock_cfg.optuna.save_plots = False
+        mock_cfg.optuna.save_best_config = True
+
+        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)
+        orch._post_optimization_processing(study_with_trials)
+
+        mock_export_best.assert_called_once_with(study_with_trials, mock_cfg, mock_paths)
+        mock_export_summary.assert_called_once()
+        mock_generate_viz.assert_not_called()
+
+    @patch("orchard.optimization.orchestrator.orchestrator.OptunaObjective")
+    @patch("orchard.optimization.orchestrator.orchestrator.get_search_space")
+    @patch("optuna.create_study")
+    def test_optimize_keyboard_interrupt(
+        self, mock_create_study, mock_get_search_space, mock_objective_class, mock_cfg, mock_paths
+    ):
+        """Test optimize handles KeyboardInterrupt."""
+        # Setup mocks
+        mock_study = MagicMock()
+        mock_study.trials = []
+        mock_study.study_name = "test"
+        mock_study.direction = MagicMock()
+        mock_study.direction.name = "MAXIMIZE"
+        mock_create_study.return_value = mock_study
+        mock_get_search_space.return_value = {}
+
+        mock_objective = MagicMock()
+        mock_objective_class.return_value = mock_objective
+
+        mock_study.optimize.side_effect = KeyboardInterrupt("User stopped")
+
+        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)
+
+        with patch.object(orch, "_post_optimization_processing") as mock_post:
+            result = orch.optimize()
+
+            mock_post.assert_called_once_with(mock_study)
+            assert result == mock_study
 
 
 if __name__ == "__main__":
