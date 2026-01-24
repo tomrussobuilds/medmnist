@@ -300,6 +300,47 @@ def test_create_temp_loader_rgb():
         assert batch_imgs.shape[3] == 32
 
 
+# TESTS: get_dataloader
+@pytest.mark.unit
+def test_get_dataloaders_convenience_function(mock_cfg, mock_metadata):
+    """Test get_dataloaders convenience function."""
+    from orchard.data_handler.loader import get_dataloaders
+
+    # Mock the factory and its build method
+    with patch("orchard.data_handler.loader.DataLoaderFactory") as mock_factory_class:
+        mock_factory = MagicMock()
+        mock_train = MagicMock()
+        mock_val = MagicMock()
+        mock_test = MagicMock()
+        mock_factory.build.return_value = (mock_train, mock_val, mock_test)
+        mock_factory_class.return_value = mock_factory
+
+        train, val, test = get_dataloaders(mock_metadata, mock_cfg, is_optuna=False)
+        mock_factory_class.assert_called_once_with(mock_cfg, mock_metadata)
+        mock_factory.build.assert_called_once_with(is_optuna=False)
+
+        assert train == mock_train
+        assert val == mock_val
+        assert test == mock_test
+
+
+@pytest.mark.unit
+def test_get_dataloaders_with_optuna_mode(mock_cfg, mock_metadata):
+    """Test get_dataloaders with is_optuna=True."""
+    from orchard.data_handler.loader import get_dataloaders
+
+    with patch("orchard.data_handler.loader.DataLoaderFactory") as mock_factory_class:
+        mock_factory = MagicMock()
+        mock_loaders = (MagicMock(), MagicMock(), MagicMock())
+        mock_factory.build.return_value = mock_loaders
+        mock_factory_class.return_value = mock_factory
+
+        result = get_dataloaders(mock_metadata, mock_cfg, is_optuna=True)
+
+        mock_factory.build.assert_called_once_with(is_optuna=True)
+        assert result == mock_loaders
+
+
 # MAIN TEST RUNNER
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
