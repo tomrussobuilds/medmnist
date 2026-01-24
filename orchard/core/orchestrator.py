@@ -47,7 +47,7 @@ from .logger import Logger, Reporter
 from .paths import LOGGER_NAME, RunPaths, setup_static_directories
 
 if TYPE_CHECKING:
-    from .config.engine import Config
+    from .config.manifest import Config
 
 
 # PROTOCOLS

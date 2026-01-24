@@ -440,7 +440,7 @@ def test_finalize_figure_without_save():
     mock_plt.close.assert_called_once()
 
 
-#                    HELPER FUNCTIONS - DENORMALIZE & PREPARE                 #
+# HELPER FUNCTIONS - DENORMALIZE & PREPARE
 @pytest.mark.unit
 def test_denormalize_image():
     """Test _denormalize_image reverses normalization."""

@@ -20,7 +20,7 @@ from orchard.core import Config
 from orchard.evaluation import _get_tta_transforms, adaptive_tta_predict
 
 
-#                                Test Fixtures                               #
+# FIXTURES
 @pytest.fixture
 def device():
     """
@@ -69,7 +69,7 @@ def mock_model(mock_cfg):
     return model
 
 
-#                              Test Cases                                     #
+# TEST CASES
 @pytest.mark.unit
 def test_get_tta_transforms_base(dummy_input, device, mock_cfg):
     """

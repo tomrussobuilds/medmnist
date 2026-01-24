@@ -655,5 +655,65 @@ def test_cleanup_with_mps(monkeypatch):
     objective._cleanup()
 
 
+@pytest.mark.unit
+def test_trial_config_builder_preserves_resolution_when_none():
+    """Test TrialConfigBuilder sets resolution when missing from model_dump."""
+    from orchard.optimization.objective.config_builder import TrialConfigBuilder
+
+    # Create a mock config where model_dump returns resolution=None
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.epochs = 15
+    mock_cfg.dataset._ensure_metadata = {"num_classes": 10}
+    mock_cfg.dataset.resolution = 224  # Actual resolution
+
+    # Mock model_dump to return dict with resolution=None
+    mock_cfg.model_dump.return_value = {
+        "dataset": {"resolution": None},
+        "training": {"epochs": 60},
+        "model": {},
+        "augmentation": {},
+    }
+
+    builder = TrialConfigBuilder(mock_cfg)
+
+    # Mock Config instantiation to avoid validation
+    with patch("orchard.optimization.objective.config_builder.Config") as MockConfig:
+        trial_params = {"learning_rate": 0.001}
+        builder.build(trial_params)
+
+        # Verify Config was called with resolution set
+        call_args = MockConfig.call_args[1]
+        assert call_args["dataset"]["resolution"] == 224
+
+
+@pytest.mark.unit
+def test_trial_config_builder_keeps_existing_resolution():
+    """Test TrialConfigBuilder doesn't override existing resolution."""
+    from orchard.optimization.objective.config_builder import TrialConfigBuilder
+
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.epochs = 15
+    mock_cfg.dataset._ensure_metadata = {"num_classes": 10}
+    mock_cfg.dataset.resolution = 224
+
+    # model_dump returns resolution already set
+    mock_cfg.model_dump.return_value = {
+        "dataset": {"resolution": 28},
+        "training": {"epochs": 60},
+        "model": {},
+        "augmentation": {},
+    }
+
+    builder = TrialConfigBuilder(mock_cfg)
+
+    with patch("orchard.optimization.objective.config_builder.Config") as MockConfig:
+        trial_params = {"learning_rate": 0.001}
+        builder.build(trial_params)
+
+        # Verify resolution was NOT overridden
+        call_args = MockConfig.call_args[1]
+        assert call_args["dataset"]["resolution"] == 28
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

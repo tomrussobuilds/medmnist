@@ -18,15 +18,15 @@ from torch.utils.data import DataLoader
 # Internal Imports
 from orchard.core import LOGGER_NAME, Config, RunPaths
 
-from .engine import evaluate_model
+from .evaluator import evaluate_model
 from .reporting import create_structured_report
 from .visualization import plot_confusion_matrix, plot_training_curves, show_predictions
 
-# EVALUATION PIPELINE
 # Global logger instance
 logger = logging.getLogger(LOGGER_NAME)
 
 
+# EVALUATION PIPELINE
 def run_final_evaluation(
     model: nn.Module,
     test_loader: DataLoader,

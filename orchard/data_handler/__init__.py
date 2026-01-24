@@ -7,13 +7,13 @@ using the Dataset Registry to providing fully configured PyTorch DataLoaders.
 # Internal Imports
 from .data_explorer import show_sample_images, show_samples_for_dataset
 from .dataset import MedMNISTDataset
-from .factory import (
+from .fetcher import MedMNISTData, ensure_dataset_npz, load_medmnist
+from .loader import (
     DataLoaderFactory,
     LazyNPZDataset,
     create_temp_loader,
     get_dataloaders,
 )
-from .fetcher import MedMNISTData, ensure_dataset_npz, load_medmnist
 from .synthetic import create_synthetic_dataset, create_synthetic_grayscale_dataset
 from .transforms import get_augmentations_description, get_pipeline_transforms
 

@@ -103,7 +103,6 @@ class OptunaObjective:
         cfg: Config,
         search_space: Dict[str, Any],
         device: torch.device,
-        # Optional dependency injection for testing
         dataset_loader: Optional[DatasetLoaderProtocol] = None,
         dataloader_factory: Optional[DataloaderFactoryProtocol] = None,
         model_factory: Optional[ModelFactoryProtocol] = None,

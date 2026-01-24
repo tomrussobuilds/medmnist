@@ -46,10 +46,8 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     Raises:
         Exception: Any failure during pipeline execution
     """
-    # ================================================================ #
-    #                   SMOKE TEST CONFIGURATION                       #
-    # ================================================================ #
 
+    # SMOKE TEST CONFIGURATION
     # Disable AMP for CPU compatibility
     args.use_amp = False
 
@@ -70,10 +68,7 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     # Create Config with smoke-test overrides
     cfg = Config.from_args(args)
 
-    # ================================================================ #
-    #                   PIPELINE VALIDATION                            #
-    # ================================================================ #
-
+    # PIPELINE VALIDATION
     with RootOrchestrator(cfg) as orchestrator:
         paths = orchestrator.paths
         run_logger = orchestrator.run_logger
@@ -88,9 +83,7 @@ def run_smoke_test(args: argparse.Namespace) -> None:
         run_logger.info(LogStyle.HEAVY)
 
         try:
-            # ============================================================ #
-            #                     DATA PREPARATION                         #
-            # ============================================================ #
+            # DATA PREPARATION
             run_logger.info("[Stage 1/5] Checking environment for CI/synthetic dataset...")
             if os.getenv("CI"):
                 from orchard.data_handler.synthetic import create_synthetic_dataset
@@ -103,9 +96,7 @@ def run_smoke_test(args: argparse.Namespace) -> None:
             run_logger.info("[Stage 2/5] Initializing DataLoaders...")
             train_loader, val_loader, test_loader = get_dataloaders(data, cfg)
 
-            # ============================================================ #
-            #                     MODEL TRAINING                           #
-            # ============================================================ #
+            # MODEL TRAINING
             run_logger.info("[Stage 3/5] Testing Model & Optimizer Factories...")
             model = get_model(device=device, cfg=cfg)
             criterion = get_criterion(cfg)
@@ -126,9 +117,7 @@ def run_smoke_test(args: argparse.Namespace) -> None:
 
             _, train_losses, val_metrics_history = trainer.train()
 
-            # ============================================================ #
-            #                     MODEL EVALUATION                         #
-            # ============================================================ #
+            # MODEL EVALUATION
             run_logger.info("[Stage 4/5] Recovering weights and running inference...")
 
             if not paths.best_model_path.exists():
@@ -136,9 +125,7 @@ def run_smoke_test(args: argparse.Namespace) -> None:
 
             trainer.load_best_weights()
 
-            # ============================================================ #
-            #                     REPORT GENERATION                        #
-            # ============================================================ #
+            # REPORT GENERATION
             run_logger.info("[Stage 5/5] Verifying reporting utilities...")
 
             _, test_acc = run_final_evaluation(
@@ -153,9 +140,7 @@ def run_smoke_test(args: argparse.Namespace) -> None:
                 log_path=paths.logs / "smoke_test.log",
             )
 
-            # ============================================================ #
-            #                     TEST SUMMARY                             #
-            # ============================================================ #
+            # TEST SUMMARY
             run_logger.info("")
             run_logger.info(LogStyle.DOUBLE)
             run_logger.info(f"{'SMOKE TEST PASSED':^80}")

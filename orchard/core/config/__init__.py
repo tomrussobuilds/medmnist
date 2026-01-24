@@ -30,7 +30,7 @@ __all__ = [
 
 # LAZY IMPORTS MAPPING
 _LAZY_IMPORTS: dict[str, str] = {
-    "Config": "orchard.core.config.engine",
+    "Config": "orchard.core.config.manifest",
     "HardwareConfig": "orchard.core.config.hardware_config",
     "TelemetryConfig": "orchard.core.config.telemetry_config",
     "TrainingConfig": "orchard.core.config.training_config",

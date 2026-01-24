@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader, TensorDataset
 
 # Internal Imports
 from orchard.core import Config
-from orchard.evaluation.engine import evaluate_model
+from orchard.evaluation.evaluator import evaluate_model
 
 
 # MOCK CLASSES
@@ -47,7 +47,7 @@ def mock_config():
 
 # TEST CASES
 @pytest.mark.unit
-@patch("orchard.evaluation.engine.compute_classification_metrics")
+@patch("orchard.evaluation.evaluator.compute_classification_metrics")
 def test_evaluate_model_standard(mock_compute, mock_dataloader):
     """Test standard inference without TTA (Test-Time Augmentation)."""
     device = torch.device("cpu")
@@ -72,8 +72,8 @@ def test_evaluate_model_standard(mock_compute, mock_dataloader):
 
 
 @pytest.mark.unit
-@patch("orchard.evaluation.engine.compute_classification_metrics")
-@patch("orchard.evaluation.engine.adaptive_tta_predict")
+@patch("orchard.evaluation.evaluator.compute_classification_metrics")
+@patch("orchard.evaluation.evaluator.adaptive_tta_predict")
 def test_evaluate_model_with_tta(mock_tta, mock_compute, mock_dataloader, mock_config):
     """Test the execution path when TTA is enabled."""
     device = torch.device("cpu")
@@ -90,8 +90,8 @@ def test_evaluate_model_with_tta(mock_tta, mock_compute, mock_dataloader, mock_c
 
 
 @pytest.mark.unit
-@patch("orchard.evaluation.engine.compute_classification_metrics")
-@patch("orchard.evaluation.engine.adaptive_tta_predict")
+@patch("orchard.evaluation.evaluator.compute_classification_metrics")
+@patch("orchard.evaluation.evaluator.adaptive_tta_predict")
 def test_tta_skipped_without_config(mock_tta, mock_compute, mock_dataloader):
     """Verify that TTA is skipped if cfg is None, even if use_tta is True."""
     device = torch.device("cpu")

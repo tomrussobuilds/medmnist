@@ -9,7 +9,7 @@ Augmentation (TTA), while automating the generation of artifacts
 """
 
 # Internal Imports
-from .engine import evaluate_model
+from .evaluator import evaluate_model
 from .metrics import compute_classification_metrics
 from .pipeline import run_final_evaluation
 from .reporting import TrainingReport, create_structured_report

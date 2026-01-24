@@ -57,7 +57,7 @@ def test_resnet_18_adapted_requires_resolution_28_direct(device):
         Config(
             dataset=DatasetConfig(
                 name="bloodmnist",
-                resolution=224,  # ❌ invalid for this architecture
+                resolution=224,
             ),
             model=ModelConfig(
                 name="resnet_18_adapted",
@@ -80,7 +80,7 @@ def test_mixup_epochs_cannot_exceed_total_epochs_direct():
         Config(
             training=TrainingConfig(
                 epochs=5,
-                mixup_epochs=10,  # ❌ invalid
+                mixup_epochs=10,
             ),
             dataset=DatasetConfig(),
             model=ModelConfig(),

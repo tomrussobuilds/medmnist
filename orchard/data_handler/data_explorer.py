@@ -20,7 +20,7 @@ from torchvision.utils import make_grid
 # Internal Imports
 from orchard.core import LOGGER_NAME, Config, RunPaths
 
-from .factory import DataLoader
+from .loader import DataLoader
 
 logger = logging.getLogger(LOGGER_NAME)
 

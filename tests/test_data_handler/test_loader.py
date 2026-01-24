@@ -13,10 +13,9 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+# Third-Party Imports
 import numpy as np
 import pytest
-
-# Third-Party Imports
 import torch
 
 # Internal Imports
@@ -76,7 +75,7 @@ def test_build_loaders_with_weighted_sampler(mock_cfg, mock_metadata):
     """Test DataLoaderFactory.build() with sampler and transforms."""
     with patch.dict(DATASET_REGISTRY, {"mock_dataset": MagicMock(in_channels=1)}):
         with patch(
-            "orchard.data_handler.factory.get_pipeline_transforms",
+            "orchard.data_handler.loader.get_pipeline_transforms",
             lambda cfg, meta: (lambda x: x, lambda x: x),
         ):
 
@@ -87,7 +86,7 @@ def test_build_loaders_with_weighted_sampler(mock_cfg, mock_metadata):
                 def __len__(self):
                     return 4
 
-            with patch("orchard.data_handler.factory.MedMNISTDataset", FakeDataset):
+            with patch("orchard.data_handler.loader.MedMNISTDataset", FakeDataset):
                 factory = DataLoaderFactory(mock_cfg, mock_metadata)
                 train, val, test = factory.build()
 
@@ -111,7 +110,7 @@ def test_build_loaders_without_weighted_sampler(mock_cfg_no_sampler, mock_metada
     """Test DataLoaderFactory.build() WITHOUT weighted sampler."""
     with patch.dict(DATASET_REGISTRY, {"mock_dataset": MagicMock(in_channels=1)}):
         with patch(
-            "orchard.data_handler.factory.get_pipeline_transforms",
+            "orchard.data_handler.loader.get_pipeline_transforms",
             lambda cfg, meta: (lambda x: x, lambda x: x),
         ):
 
@@ -122,7 +121,7 @@ def test_build_loaders_without_weighted_sampler(mock_cfg_no_sampler, mock_metada
                 def __len__(self):
                     return 4
 
-            with patch("orchard.data_handler.factory.MedMNISTDataset", FakeDataset):
+            with patch("orchard.data_handler.loader.MedMNISTDataset", FakeDataset):
                 factory = DataLoaderFactory(mock_cfg_no_sampler, mock_metadata)
                 train, val, test = factory.build()
 
