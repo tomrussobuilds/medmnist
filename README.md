@@ -44,7 +44,7 @@
   <a href="https://flake8.pycqa.org/">
     <img src="https://img.shields.io/badge/linting-flake8-brightgreen?logo=python&logoColor=white" alt="Flake8">
   </a>
-  <img src="https://img.shields.io/badge/tests-890%2B-success" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-950%2B-success" alt="Tests">
   <img src="https://img.shields.io/badge/Architecture-Decoupled-blueviolet" alt="Architecture">
   <img src="https://img.shields.io/badge/status-Active-success" alt="Status">
   <a href="https://github.com/tomrussobuilds/visionforge/issues">
@@ -284,9 +284,15 @@ Comprehensive guides for advanced usage and system internals:
 - GPU-accelerated execution
 - Strict reproducibility mode
 
+### 📤 Model Export
+**[Export Guide](docs/guide/EXPORT.md)**
+- ONNX export for production deployment
+- Quantization for mobile/server
+- Validation and benchmarking
+
 ### 🧪 Testing & Quality
 **[Testing Guide](docs/guide/TESTING.md)**
-- Test suite organization (890+ tests)
+- Test suite organization (950+ tests)
 - Quality check automation (`check_quality.sh`)
 - Smoke tests and health checks
 - CI/CD pipeline details
@@ -360,7 +366,7 @@ outputs/20260123_organcmnist_efficientnetb0_a3f7c2/
 - YAML-driven execution model
 - Optuna hyperparameter optimization
 - Multi-resolution support (28×28, 224×224)
-- Comprehensive test suite (890+ tests, 100% coverage)
+- Comprehensive test suite (950+ tests, 100% coverage)
 - CI/CD pipeline with GitHub Actions
 
 ### ✅ Phase 3: Modern Architectures (Completed)
@@ -369,23 +375,28 @@ outputs/20260123_organcmnist_efficientnetb0_a3f7c2/
 - **Weight Variant Search**: Automatic exploration of ImageNet-1k/21k pretraining strategies
 
 ### ✅ Phase 4: Quality Assurance & Multi-Domain Support (Completed)
-- **Test Coverage**: 100% across 890+ tests (unit, integration, smoke)
+- **Test Coverage**: 100% across 950+ tests (unit, integration, smoke)
 - **Artifact Export**: HTML visualizations (parameter importance, optimization history, slices, parallel coordinates)
 - **Comprehensive Reporting**: Excel summaries, JSON metadata, YAML snapshots
 - **Multi-Domain Architecture**: Medical imaging (MedMNIST v2) + Astronomical imaging (Galaxy10 DECals)
 - **Domain-Specific Converters**: HDF5 to NPZ pipeline for non-standard formats
 
+### ✅ Phase 5: Production Deployment (Completed)
+- **ONNX Export**: Model serialization for production deployment (opset 18, clean export with no warnings)
+- **Quantization Support**: INT8 quantization for mobile (qnnpack) and server (fbgemm) deployment
+- **Validation Pipeline**: Numerical consistency verification between PyTorch and ONNX models
+- **Export Configuration**: Type-safe Pydantic schema for export parameters
+
 ### 🎯 Current Status
-- **Test Coverage**: 100% across 890+ tests (minimal pragma for defensive guards)
+- **Test Coverage**: 100% across 950+ tests (minimal pragma for defensive guards)
 - **Architectures**: 4 total (2 for 28×28, 2 for 224×224)
   - 28×28: ResNet-18-Adapted, MiniCNN
   - 224×224: EfficientNet-B0, ViT-Tiny
 - **Resolutions**: 2 (28×28, 224×224)
 - **Domains**: Medical imaging (MedMNIST v2), Astronomical imaging (Galaxy10 DECals)
-- **Export Formats**: PyTorch (.pth), HTML visualizations, Excel reports
+- **Export Formats**: PyTorch (.pth), ONNX (.onnx), HTML visualizations, Excel reports
 
 ### 🔮 Future Enhancements (Roadmap)
-- **ONNX Export**: Model serialization for deployment
 - **Additional Architectures**: ConvNeXt, EfficientNet-V2, DeiT
 - **Expanded Dataset Domains**: Climate, remote sensing, microscopy
 - **Multi-modal Support**: Detection, segmentation hooks

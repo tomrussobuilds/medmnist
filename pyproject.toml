@@ -45,6 +45,9 @@ dependencies = [
     "requests>=2.31.0",
     "psutil>=5.9.0",
     "timm>=0.9.0",
+    "onnx>=1.15.0",
+    "onnxruntime>=1.16.0",
+    "onnxscript>=0.1.0",
 ]
 
 [project.optional-dependencies]
