@@ -46,9 +46,9 @@ def test_validate_export_basic(tmp_path):
 
     # Create and export model
     model = SimpleTestModel(in_channels=3, num_classes=10)
+    model.eval()
     onnx_path = tmp_path / "model.onnx"
 
-    # Export to ONNX first
     dummy_input = torch.randn(1, 3, 28, 28)
     torch.onnx.export(
         model,
@@ -80,6 +80,7 @@ def test_validate_with_custom_samples(tmp_path):
     """Test validation with custom number of samples."""
 
     model = SimpleTestModel()
+    model.eval()
     onnx_path = tmp_path / "model.onnx"
 
     dummy_input = torch.randn(1, 3, 28, 28)
@@ -112,6 +113,7 @@ def test_validate_different_input_shapes(tmp_path):
     """Test validation with various input resolutions."""
 
     model = SimpleTestModel()
+    model.eval()
 
     for resolution in [28, 224]:
         onnx_path = tmp_path / f"model_{resolution}.onnx"
@@ -144,6 +146,7 @@ def test_validate_different_channels(tmp_path):
 
     for in_channels in [1, 3]:
         model = SimpleTestModel(in_channels=in_channels)
+        model.eval()
         onnx_path = tmp_path / f"model_{in_channels}ch.onnx"
 
         dummy_input = torch.randn(1, in_channels, 28, 28)
@@ -175,6 +178,7 @@ def test_validate_with_strict_tolerance(tmp_path):
     """Test validation with very strict tolerance."""
 
     model = SimpleTestModel()
+    model.eval()
     onnx_path = tmp_path / "model.onnx"
 
     dummy_input = torch.randn(1, 3, 28, 28)
@@ -208,6 +212,7 @@ def test_validate_with_relaxed_tolerance(tmp_path):
     """Test validation with relaxed tolerance."""
 
     model = SimpleTestModel()
+    model.eval()
     onnx_path = tmp_path / "model.onnx"
 
     dummy_input = torch.randn(1, 3, 28, 28)
@@ -269,6 +274,7 @@ def test_validate_single_sample(tmp_path):
     """Test validation with just one sample."""
 
     model = SimpleTestModel()
+    model.eval()
     onnx_path = tmp_path / "model.onnx"
 
     dummy_input = torch.randn(1, 3, 28, 28)
@@ -333,11 +339,12 @@ def test_validate_fails_with_large_deviation(tmp_path):
 
     # Create two different models
     model1 = SimpleTestModel(in_channels=3, num_classes=10)
+    model1.eval()
     model2 = SimpleTestModel(in_channels=3, num_classes=10)
+    model2.eval()
 
     onnx_path = tmp_path / "model.onnx"
 
-    # Export model1
     dummy_input = torch.randn(1, 3, 28, 28)
     torch.onnx.export(
         model1,
@@ -365,9 +372,9 @@ def test_validate_with_onnxruntime_import_error(tmp_path, monkeypatch):
     """Test validation returns False when onnxruntime import fails."""
 
     model = SimpleTestModel()
+    model.eval()
     onnx_path = tmp_path / "model.onnx"
 
-    # Create dummy ONNX file
     dummy_input = torch.randn(1, 3, 28, 28)
     torch.onnx.export(
         model,
@@ -408,9 +415,9 @@ def test_validate_with_runtime_error(tmp_path, monkeypatch):
     """Test validation raises exception on onnxruntime errors."""
 
     model = SimpleTestModel()
+    model.eval()
     onnx_path = tmp_path / "model.onnx"
 
-    # Create dummy ONNX file
     dummy_input = torch.randn(1, 3, 28, 28)
     torch.onnx.export(
         model,

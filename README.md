@@ -240,6 +240,27 @@ ls outputs/YYYYMMDD_dataset_model_hash/
 
 ---
 
+### Step 5: Export Model
+
+Export trained models to ONNX format for production deployment:
+```bash
+# Export to ONNX (opset 18, dynamic batch size)
+python export.py --checkpoint outputs/run_xyz/models/best_efficientnetb0.pth \
+                 --dataset galaxy10 \
+                 --resolution 224 \
+                 --model_name efficientnet_b0 \
+                 --format onnx
+```
+
+**What happens:**
+- Converts PyTorch model to ONNX format
+- Validates numerical consistency between PyTorch and ONNX
+- Generates optimized model for inference
+
+For advanced options (quantization, validation settings), see the [Export Guide](docs/guide/EXPORT.md).
+
+---
+
 ### Hardware Recommendations
 
 **28×28 Resolution:**
@@ -420,6 +441,8 @@ Contributions welcome! Please:
 3. Add tests for new functionality
 4. Ensure all tests pass: `pytest tests/ -v`
 5. Submit a pull request
+
+For detailed guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 📧 Contact
 
