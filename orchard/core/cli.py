@@ -23,8 +23,6 @@ def parse_args() -> argparse.Namespace:
     Returns:
         Parsed arguments namespace
     """
-    from .metadata import DATASET_REGISTRY
-
     parser = argparse.ArgumentParser(
         description="MedMNIST training pipeline with multi-resolution support.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -106,7 +104,12 @@ def parse_args() -> argparse.Namespace:
         help="Disable best model checkpoint saving",
     )
     path_group.add_argument(
-        "--resume", type=str, default=None, help="Path to .pth checkpoint for resuming training"
+        "--resume",
+        "--checkpoint",
+        type=str,
+        default=None,
+        dest="resume",
+        help="Path to .pth checkpoint for resuming training or export",
     )
 
     # ===== Training Hyperparameters =====
@@ -210,8 +213,7 @@ def parse_args() -> argparse.Namespace:
         "--dataset",
         type=str,
         default="bloodmnist",
-        choices=list(DATASET_REGISTRY.keys()),
-        help="Target MedMNIST dataset",
+        help="Target dataset (MedMNIST or custom datasets like galaxy10)",
     )
     dataset_group.add_argument(
         "--max_samples",
@@ -292,6 +294,103 @@ def parse_args() -> argparse.Namespace:
         type=str,
         default=eval_def.plot_style,
         help="Matplotlib style (e.g., 'ggplot', 'seaborn-v0_8-muted')",
+    )
+
+    # ===== Model Export =====
+    export_group = parser.add_argument_group("Model Export (ONNX/TorchScript)")
+
+    export_group.add_argument(
+        "--format",
+        type=str,
+        choices=["onnx", "torchscript", "both"],
+        default=None,
+        help="Export format (triggers export mode when specified)",
+    )
+
+    export_group.add_argument(
+        "--output_path",
+        type=Path,
+        default=None,
+        help="Export output path (auto-generated if None)",
+    )
+
+    export_group.add_argument(
+        "--opset_version",
+        type=int,
+        default=18,
+        help="ONNX opset version (18=latest, clean export with no warnings)",
+    )
+
+    export_group.add_argument(
+        "--dynamic_axes",
+        action="store_true",
+        default=True,
+        help="Enable dynamic batch size for ONNX export",
+    )
+
+    export_group.add_argument(
+        "--no_dynamic_axes",
+        action="store_false",
+        dest="dynamic_axes",
+        help="Disable dynamic batch size",
+    )
+
+    export_group.add_argument(
+        "--do_constant_folding",
+        action="store_true",
+        default=True,
+        help="Optimize constant operations at export time",
+    )
+
+    export_group.add_argument(
+        "--torchscript_method",
+        type=str,
+        choices=["trace", "script"],
+        default="trace",
+        help="TorchScript conversion method",
+    )
+
+    export_group.add_argument(
+        "--quantize",
+        action="store_true",
+        default=False,
+        help="Apply INT8 quantization",
+    )
+
+    export_group.add_argument(
+        "--quantization_backend",
+        type=str,
+        choices=["qnnpack", "fbgemm"],
+        default="qnnpack",
+        help="Quantization backend (qnnpack=mobile, fbgemm=x86)",
+    )
+
+    export_group.add_argument(
+        "--validate_export",
+        action="store_true",
+        default=True,
+        help="Validate exported model against PyTorch",
+    )
+
+    export_group.add_argument(
+        "--no_validate_export",
+        action="store_false",
+        dest="validate_export",
+        help="Skip export validation",
+    )
+
+    export_group.add_argument(
+        "--validation_samples",
+        type=int,
+        default=10,
+        help="Number of samples for export validation",
+    )
+
+    export_group.add_argument(
+        "--max_deviation",
+        type=float,
+        default=1e-5,
+        help="Maximum allowed output deviation between PyTorch and exported model",
     )
 
     optuna_group = parser.add_argument_group("Optuna Hyperparameter Optimization")

@@ -31,6 +31,7 @@ from ..paths import PROJECT_ROOT
 from .augmentation_config import AugmentationConfig
 from .dataset_config import DatasetConfig
 from .evaluation_config import EvaluationConfig
+from .export_config import ExportConfig
 from .hardware_config import HardwareConfig
 from .models_config import ModelConfig
 from .optuna_config import OptunaConfig
@@ -56,6 +57,7 @@ class Config(BaseModel):
         evaluation: Metrics, visualization, reporting settings
         model: Architecture selection, pretrained weights
         optuna: Hyperparameter optimization configuration (optional)
+        export: Model export configuration for ONNX/TorchScript (optional)
 
     Example:
         >>> cfg = Config.from_yaml(Path("recipes/config_mini_cnn.yaml"), metadata)
@@ -75,6 +77,7 @@ class Config(BaseModel):
     evaluation: EvaluationConfig = Field(default_factory=EvaluationConfig)
     model: ModelConfig = Field(default_factory=ModelConfig)
     optuna: Optional[OptunaConfig] = Field(default=None)
+    export: Optional[ExportConfig] = Field(default=None)
 
     @model_validator(mode="after")
     def validate_logic(self) -> "Config":
@@ -313,6 +316,7 @@ class Config(BaseModel):
             model=ModelConfig.from_args(args),
             evaluation=EvaluationConfig.from_args(args),
             optuna=OptunaConfig.from_args(args) if hasattr(args, "study_name") else None,
+            export=ExportConfig.from_args(args) if hasattr(args, "format") else None,
         )
 
     @classmethod

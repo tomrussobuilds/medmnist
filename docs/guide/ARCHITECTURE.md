@@ -111,17 +111,19 @@ The framework implements **Separation of Concerns (SoC)** with five core layers:
     │                                                        │
     └────────────────────────────┬───────────────────────────┘
                                  │
-                                 │ alternative path
-                                 │
-                        ┌────────▼──────────────┐
-                        │  Optimization Engine  │
-                        │      (Optuna)         │
-                        │                       │
-                        │  • Study management   │
-                        │  • Trial execution    │
-                        │  • Pruning logic      │
-                        │  • Visualization      │
-                        └───────────────────────┘
+                    ┌────────────┴────────────┐
+                    │                         │
+                    │ alternative paths       │
+                    │                         │
+         ┌──────────▼──────────┐    ┌─────────▼──────────┐
+         │ Optimization Engine │    │   Export Engine    │
+         │      (Optuna)       │    │  (ONNX/TorchScript)│
+         │                     │    │                    │
+         │ • Study management  │    │ • Checkpoint load  │
+         │ • Trial execution   │    │ • ONNX conversion  │
+         │ • Pruning logic     │    │ • Validation       │
+         │ • Visualization     │    │ • Benchmarking     │
+         └─────────────────────┘    └────────────────────┘
 ```
 
 **Key Design Principles:**
@@ -131,6 +133,7 @@ The framework implements **Separation of Concerns (SoC)** with five core layers:
 3. InfrastructureManager is stateless utility for OS-level operations
 4. Execution pipeline is linear: Data → Model → Training → Eval
 5. Optimization wraps the entire pipeline for each trial
+6. Export consumes saved checkpoints for production deployment
 
 ---
 
