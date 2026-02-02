@@ -34,32 +34,123 @@ python -m tests.health_check --dataset organcmnist --resolution 224
 
 ## 🔧 Code Quality Checks
 
-VisionForge includes an automated quality check script that runs all code quality tools in sequence:
+VisionForge includes automated quality check scripts that run all code quality tools in sequence.
+
+### Quick Check (Recommended)
+
+Fast quality checks for everyday development (~30-60 seconds):
 
 ```bash
-# Run all quality checks at once
+# Run all standard quality checks
 bash scripts/check_quality.sh
 ```
 
 **What it checks:**
-- **Black**: Code formatting compliance
+- **Black**: Code formatting compliance (PEP 8 style, 100 chars)
 - **isort**: Import statement ordering
 - **Flake8**: PEP 8 linting and code smells
+- **Bandit**: Security vulnerability scanning
+- **Radon**: Cyclomatic complexity & maintainability index
 - **Pytest**: Full test suite with coverage report
 
-**Individual checks:**
-```bash
-# Code formatting
-black --check orchard/ tests/ main.py optimize.py
+### Extended Check (Thorough)
 
-# Import sorting
-isort --check-only orchard/ tests/ main.py optimize.py
+Comprehensive checks with type checking (~60-120 seconds):
+
+```bash
+# Run extended quality checks with MyPy
+bash scripts/check_quality_full.sh
+```
+
+**Additional checks:**
+- **MyPy**: Static type checking
+- **Radon**: Extended metrics (raw metrics, detailed analysis)
+- **Pytest**: HTML coverage report
+
+### Tool Descriptions
+
+#### 🎨 Formatting Tools
+
+- **Black**: Opinionated code formatter (line length: 100)
+  ```bash
+  black orchard/ tests/ main.py optimize.py  # Auto-fix
+  ```
+
+- **isort**: Sorts imports alphabetically and by type
+  ```bash
+  isort orchard/ tests/ main.py optimize.py  # Auto-fix
+  ```
+
+#### 🔍 Linting Tools
+
+- **Flake8**: PEP 8 style guide enforcement
+  - Checks: unused variables, imports, style violations
+  - Max line length: 100
+  - Ignored: E203, W503
+  ```bash
+  flake8 orchard/ tests/ --max-line-length=100 --extend-ignore=E203,W503
+  ```
+
+#### 🔒 Security Tools
+
+- **Bandit**: Detects common security issues
+  - Checks: hardcoded passwords, SQL injection, insecure temp files
+  - Severity: Medium and High only (`-ll`)
+  ```bash
+  bandit -r orchard/ -ll -q
+  ```
+
+#### 📊 Complexity Analysis
+
+- **Radon**: Code metrics analyzer
+  - **Cyclomatic Complexity (CC)**: Measures code complexity (max: B = 6-10)
+  - **Maintainability Index (MI)**: Measures maintainability (min: B = 20-100)
+  - Grades: A (best), B, C, D, E, F (worst)
+  ```bash
+  radon cc orchard/ -n B --total-average  # Complexity
+  radon mi orchard/ -n B                   # Maintainability
+  ```
+
+#### 🔍 Type Checking
+
+- **MyPy**: Static type checker for Python
+  - Verifies type hints and catches type errors at compile time
+  ```bash
+  mypy orchard/ --ignore-missing-imports --no-strict-optional
+  ```
+
+### Individual Tool Usage
+
+```bash
+# Code formatting check
+black --check --diff orchard/ tests/ main.py optimize.py
+
+# Import sorting check
+isort --check-only --diff orchard/ tests/ main.py optimize.py
 
 # Linting
 flake8 orchard/ tests/ main.py optimize.py --max-line-length=100 --extend-ignore=E203,W503
 
+# Security scanning
+bandit -r orchard/ -ll -q
+
+# Complexity analysis
+radon cc orchard/ -n B --total-average
+radon mi orchard/ -n B
+
+# Type checking
+mypy orchard/ --ignore-missing-imports
+
 # Tests with coverage
 pytest --cov=orchard --cov-report=term-missing -v tests/
+```
+
+### Installation
+
+Install dev dependencies (includes all quality tools):
+
+```bash
+pip install -e ".[dev]"
 ```
 
 ---

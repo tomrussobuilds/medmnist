@@ -53,8 +53,8 @@ def export_to_onnx(
     # Create output directory if needed
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Load trained weights
-    checkpoint = torch.load(checkpoint_path, map_location="cpu")
+    # Load trained weights (nosec: loading our own checkpoints, not untrusted input)
+    checkpoint = torch.load(checkpoint_path, map_location="cpu")  # nosec B614
     if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
         model.load_state_dict(checkpoint["model_state_dict"])
     else:
@@ -99,7 +99,7 @@ def export_to_onnx(
 
             torch.onnx.export(
                 model,
-                dummy_input,
+                (dummy_input,),  # Wrap in tuple for mypy type checking
                 str(output_path),
                 export_params=True,
                 opset_version=opset_version,

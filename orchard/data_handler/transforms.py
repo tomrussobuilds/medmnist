@@ -71,8 +71,8 @@ def get_pipeline_transforms(cfg: Config, ds_meta: DatasetMetadata) -> Tuple[v2.C
         mean = [ds_meta.mean[0]] * 3
         std = [ds_meta.std[0]] * 3
     else:
-        mean = ds_meta.mean
-        std = ds_meta.std
+        mean = list(ds_meta.mean)
+        std = list(ds_meta.std)
 
     def get_base_ops():
         """

@@ -13,10 +13,10 @@ Functions:
 """
 
 import logging
-from typing import List
+from typing import List, cast
 
 import optuna
-from optuna.pruners import NopPruner
+from optuna.pruners import HyperbandPruner, MedianPruner, NopPruner, PercentilePruner
 
 from orchard.core import LOGGER_NAME, Config
 
@@ -54,7 +54,9 @@ def build_sampler(sampler_type: str, cfg: Config) -> optuna.samplers.BaseSampler
     return sampler_cls()
 
 
-def build_pruner(enable_pruning: bool, pruner_type: str, cfg: Config) -> optuna.pruners.BasePruner:
+def build_pruner(
+    enable_pruning: bool, pruner_type: str, cfg: Config
+) -> MedianPruner | PercentilePruner | HyperbandPruner | NopPruner:
     """
     Create Optuna pruner from configuration.
 
@@ -82,7 +84,8 @@ def build_pruner(enable_pruning: bool, pruner_type: str, cfg: Config) -> optuna.
             f"Unknown pruner: {cfg.optuna.pruner_type}. "
             f"Valid options: {list(PRUNER_REGISTRY.keys())}"
         )
-    return pruner_factory()
+    # Type narrowing: PRUNER_REGISTRY values are concrete pruner factories
+    return cast(MedianPruner | PercentilePruner | HyperbandPruner | NopPruner, pruner_factory())
 
 
 def build_callbacks(cfg: Config) -> List:

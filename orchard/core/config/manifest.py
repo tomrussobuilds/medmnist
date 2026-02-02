@@ -26,6 +26,7 @@ from typing import Any, Dict, Optional
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ..io import load_config_from_yaml
+from ..metadata import DatasetMetadata
 from ..metadata.wrapper import DatasetRegistryWrapper
 from ..paths import PROJECT_ROOT
 from .augmentation_config import AugmentationConfig
@@ -180,7 +181,7 @@ class Config(BaseModel):
         return self.model_dump(mode="json")
 
     @classmethod
-    def _resolve_dataset_metadata(cls, args: argparse.Namespace) -> dict:
+    def _resolve_dataset_metadata(cls, args: argparse.Namespace) -> DatasetMetadata:
         """
         Fetches dataset specs from registry.
 
@@ -188,7 +189,7 @@ class Config(BaseModel):
             args: Parsed CLI arguments
 
         Returns:
-            Dataset metadata dictionary
+            Dataset metadata object
 
         Raises:
             ValueError: If dataset not found or name missing
@@ -209,7 +210,7 @@ class Config(BaseModel):
         return wrapper.get_dataset(ds_name)
 
     @classmethod
-    def _hydrate_yaml(cls, yaml_path: Path, metadata: dict) -> "Config":
+    def _hydrate_yaml(cls, yaml_path: Path, metadata: DatasetMetadata) -> "Config":
         """
         Loads YAML config and injects dataset metadata.
 
@@ -238,7 +239,7 @@ class Config(BaseModel):
         return cls.model_validate(cfg)
 
     @classmethod
-    def from_yaml(cls, yaml_path: Path, metadata: dict) -> "Config":
+    def from_yaml(cls, yaml_path: Path, metadata: DatasetMetadata) -> "Config":
         """
         Factory from YAML file with metadata injection.
 
@@ -252,7 +253,9 @@ class Config(BaseModel):
         return cls._hydrate_yaml(yaml_path, metadata)
 
     @classmethod
-    def _build_from_yaml_or_args(cls, args: argparse.Namespace, ds_meta: dict) -> "Config":
+    def _build_from_yaml_or_args(
+        cls, args: argparse.Namespace, ds_meta: DatasetMetadata
+    ) -> "Config":
         """
         Constructs Config from YAML or CLI arguments.
 

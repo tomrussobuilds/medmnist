@@ -27,7 +27,7 @@ from pydantic import AfterValidator, Field, PlainSerializer
 
 
 # VALIDATORS
-def _sanitize_path(v: Path) -> Path:
+def _sanitize_path(v: str | Path) -> Path:
     """
     Resolve path to absolute form without disk side-effects.
 
@@ -36,12 +36,12 @@ def _sanitize_path(v: Path) -> Path:
     is performed to avoid I/O during schema initialization.
 
     Args:
-        v: Path object to sanitize
+        v: Path object or string to sanitize
 
     Returns:
         Absolute Path with home directory expanded
     """
-    return v.expanduser().resolve()
+    return Path(v).expanduser().resolve()
 
 
 # GENERIC PRIMITIVES

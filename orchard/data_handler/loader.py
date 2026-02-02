@@ -103,7 +103,9 @@ class DataLoaderFactory:
 
         self.logger.info("Class balancing: WeightedRandomSampler generated.")
         return WeightedRandomSampler(
-            weights=sample_weights, num_samples=len(sample_weights), replacement=True
+            weights=sample_weights.tolist(),
+            num_samples=len(sample_weights),
+            replacement=True,
         )
 
     def _get_infrastructure_kwargs(self, is_optuna: bool = False) -> dict:

@@ -101,7 +101,9 @@ def convert_galaxy10_to_npz(
 
             for img in images:
                 pil_img = Image.fromarray(img.astype(np.uint8))
-                pil_img = pil_img.resize((target_size, target_size), Image.BILINEAR)
+                # Use Image.Resampling.BILINEAR for Pillow >= 10.0.0
+                resample = getattr(Image, "Resampling", Image).BILINEAR
+                pil_img = pil_img.resize((target_size, target_size), resample)
                 resized_images.append(np.array(pil_img))
 
             images = np.array(resized_images, dtype=np.uint8)

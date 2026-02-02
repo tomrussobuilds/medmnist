@@ -63,7 +63,14 @@ def get_optimizer(model: nn.Module, cfg: Config) -> optim.Optimizer:
     )
 
 
-def get_scheduler(optimizer: optim.Optimizer, cfg: Config) -> lr_scheduler._LRScheduler:
+def get_scheduler(
+    optimizer: optim.Optimizer, cfg: Config
+) -> (
+    lr_scheduler.CosineAnnealingLR
+    | lr_scheduler.ReduceLROnPlateau
+    | lr_scheduler.StepLR
+    | lr_scheduler.LambdaLR
+):
     """
     Advanced Scheduler Factory.
 

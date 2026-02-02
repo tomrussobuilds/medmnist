@@ -18,6 +18,7 @@ Pretrained Weight Options:
 """
 
 import logging
+from typing import cast
 
 import timm
 import torch
@@ -82,15 +83,22 @@ def build_vit_tiny(
     if in_channels != 3:
         logger.info(f"Adapting patch embedding from 3 to {in_channels} channels")
 
-        old_proj = model.patch_embed.proj  # Original Conv2d: [3 → 192]
+        # Type-narrow patch_embed.proj to Conv2d for mypy
+        # Note: timm VisionTransformer.patch_embed has dynamic type, ignore for type checking
+        old_proj = cast(nn.Conv2d, model.patch_embed.proj)  # type: ignore[union-attr]
+
+        # Extract attributes (cast to specific types for mypy)
+        kernel_size = cast("tuple[int, int]", old_proj.kernel_size)
+        stride = cast("tuple[int, int]", old_proj.stride)
+        padding = cast("tuple[int, int] | int", old_proj.padding)
 
         # Create new projection layer
         new_proj = nn.Conv2d(
             in_channels=in_channels,
             out_channels=old_proj.out_channels,  # 192 for ViT-Tiny
-            kernel_size=old_proj.kernel_size,  # (16, 16)
-            stride=old_proj.stride,  # (16, 16)
-            padding=old_proj.padding,
+            kernel_size=kernel_size,  # (16, 16)
+            stride=stride,  # (16, 16)
+            padding=padding,
             bias=old_proj.bias is not None,
         )
 
@@ -109,7 +117,7 @@ def build_vit_tiny(
                     new_proj.bias.copy_(old_proj.bias)
 
         # Replace patch embedding projection
-        model.patch_embed.proj = new_proj
+        model.patch_embed.proj = new_proj  # type: ignore[union-attr]
 
     # --- Step 5: Device Placement ---
     model = model.to(device)

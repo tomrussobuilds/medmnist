@@ -13,7 +13,7 @@ failures gracefully with informative logging.
 
 import logging
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 import optuna
 
@@ -69,7 +69,7 @@ def generate_visualizations(study: optuna.Study, output_dir: Path) -> None:
         }
 
         for plot_name, plot_fn in plots.items():
-            save_plot(study, plot_name, plot_fn, output_dir)
+            save_plot(study, plot_name, plot_fn, output_dir)  # type: ignore[arg-type]
 
     except ImportError:
         logger.warning(
@@ -78,7 +78,9 @@ def generate_visualizations(study: optuna.Study, output_dir: Path) -> None:
         )
 
 
-def save_plot(study: optuna.Study, plot_name: str, plot_fn: Callable, output_dir: Path) -> None:
+def save_plot(
+    study: optuna.Study, plot_name: str, plot_fn: Callable[..., Any], output_dir: Path
+) -> None:
     """
     Save a single Optuna visualization plot.
 

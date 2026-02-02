@@ -41,8 +41,8 @@ class TelemetryConfig(BaseModel):
     )
 
     # Filesystem
-    data_dir: ValidatedPath = Field(default="./dataset")
-    output_dir: ValidatedPath = Field(default="./outputs")
+    data_dir: ValidatedPath = Field(default="./dataset")  # type: ignore[assignment]
+    output_dir: ValidatedPath = Field(default="./outputs")  # type: ignore[assignment]
 
     # Telemetry
     save_model: bool = True

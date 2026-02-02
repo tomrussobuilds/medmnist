@@ -15,6 +15,7 @@ Single Source of Truth (SSOT) for:
 import argparse
 import tempfile
 from pathlib import Path
+from typing import cast
 
 import torch
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -65,7 +66,7 @@ class HardwareConfig(BaseModel):
             Resolved device string
         """
         if v == "auto":
-            return detect_best_device()
+            return cast(DeviceType, detect_best_device())
 
         requested = v.lower()
 
@@ -74,7 +75,7 @@ class HardwareConfig(BaseModel):
         if requested == "mps" and not torch.backends.mps.is_available():
             return "cpu"
 
-        return requested
+        return cast(DeviceType, requested)
 
     @property
     def lock_file_path(self) -> Path:

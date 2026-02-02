@@ -102,6 +102,7 @@ class StudyEarlyStoppingCallback:
 
         # Calculate trials saved
         total_trials = study.user_attrs.get("n_trials")
+        trials_saved: int | str
         if isinstance(total_trials, int):
             trials_saved = total_trials - (trial.number + 1)
         else:

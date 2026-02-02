@@ -12,7 +12,7 @@ import torch.nn as nn
 # Skip entire module if onnxscript not available (required by torch.onnx.export)
 pytest.importorskip("onnxscript")
 
-from orchard.export.validation import validate_export
+from orchard.export.validation import validate_export  # noqa: E402
 
 
 # SIMPLE TEST MODEL

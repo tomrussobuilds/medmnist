@@ -26,7 +26,7 @@ Typical Usage:
 """
 
 import logging
-from typing import TYPE_CHECKING, Callable, Optional, Protocol
+from typing import TYPE_CHECKING, Callable, Literal, Optional, Protocol
 
 import torch
 
@@ -220,7 +220,7 @@ class RootOrchestrator:
             self.cleanup()
             raise e
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+    def __exit__(self, exc_type, exc_val, exc_tb) -> Literal[False]:
         """
         Context Manager exit - ensures resource release and lock cleanup.
 

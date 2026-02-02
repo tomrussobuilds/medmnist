@@ -307,7 +307,7 @@ def log_trial_start(
 
 
 def log_study_summary(
-    study: "optuna.Study", metric_name: str, logger_instance: logging.getLogger = None
+    study: "optuna.Study", metric_name: str, logger_instance: logging.Logger | None = None
 ) -> None:
     """
     Log optimization study completion summary.
@@ -358,7 +358,7 @@ def log_study_summary(
 
 
 def log_trial_params_compact(
-    trial_number: int, params: Dict[str, Any], logger_instance: logging.getLogger = None
+    trial_number: int, params: Dict[str, Any], logger_instance: logging.Logger | None = None
 ) -> None:
     """
     Compact parameter logging for best trial summary.
@@ -395,7 +395,7 @@ def log_trial_params_compact(
                     log.info(f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {value}")
 
 
-def log_best_config_export(config_path: Any, logger_instance: logging.getLogger = None) -> None:
+def log_best_config_export(config_path: Any, logger_instance: logging.Logger | None = None) -> None:
     """
     Log best configuration export information.
 

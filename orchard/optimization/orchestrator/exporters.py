@@ -12,6 +12,7 @@ timestamps) and provide informative logging with professional Excel formatting.
 
 import json
 import logging
+from pathlib import Path
 from typing import Dict, List, Optional
 
 import optuna
@@ -29,7 +30,7 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 # CONFIG EXPORT
-def export_best_config(study: optuna.Study, cfg: Config, paths: RunPaths) -> None:
+def export_best_config(study: optuna.Study, cfg: Config, paths: RunPaths) -> Path | None:
     """
     Export best trial configuration as YAML file.
 
