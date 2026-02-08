@@ -20,6 +20,19 @@ class ExportConfig(BaseModel):
     Defines export format (ONNX/TorchScript), optimization level,
     quantization settings, and validation parameters.
 
+    Attributes:
+        format: Export format ('onnx', 'torchscript', 'both').
+        output_path: Custom output path (auto-generated if None).
+        opset_version: ONNX opset version (18 recommended).
+        dynamic_axes: Enable dynamic batch size for flexible inference.
+        do_constant_folding: Optimize constant operations during export.
+        torchscript_method: TorchScript conversion method ('trace', 'script').
+        quantize: Apply INT8 quantization for deployment optimization.
+        quantization_backend: Backend for quantization ('qnnpack', 'fbgemm').
+        validate_export: Validate exported model matches PyTorch output.
+        validation_samples: Number of samples for export validation.
+        max_deviation: Maximum allowed output deviation for validation.
+
     Example:
         >>> cfg = ExportConfig(
         ...     format="onnx",

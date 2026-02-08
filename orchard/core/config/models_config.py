@@ -18,11 +18,18 @@ from .types import DropoutRate
 # MODELS CONFIGURATION
 class ModelConfig(BaseModel):
     """
-    Configuration for Model Architecture and Weight Initialization.
+    Configuration for model architecture and weight initialization.
 
-    This sub-config manages the structural identity and regularization policies.
-    Geometric constraints (input depth and output logits) are intentionally
-    omitted here to be resolved dynamically via DatasetConfig at runtime.
+    Manages structural identity and regularization policies. Geometric
+    constraints (input channels and output classes) are resolved dynamically
+    via DatasetConfig at runtime to ensure consistency.
+
+    Attributes:
+        name: Model architecture identifier (e.g., 'efficientnet_b0', 'vit_tiny').
+        pretrained: Whether to initialize with pretrained ImageNet weights.
+        dropout: Dropout probability for the classification head (0.0-0.9).
+        weight_variant: Specific pretrained weight variant for architectures
+            with multiple options (e.g., ViT variants with different pretraining).
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True, arbitrary_types_allowed=True)
@@ -55,10 +62,16 @@ class ModelConfig(BaseModel):
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> "ModelConfig":
         """
-        Factory method to create a ModelConfig from CLI arguments.
+        Create ModelConfig from CLI arguments.
 
-        This method no longer requires Metadata injection as geometric
-        resolution has been moved to the Dataset orchestration layer.
+        Geometric resolution (channels, classes) is handled by DatasetConfig,
+        so no metadata injection is required here.
+
+        Args:
+            args: Parsed argparse namespace with model-related arguments.
+
+        Returns:
+            Configured ModelConfig instance.
         """
         return cls(
             name=getattr(args, "model_name", "resnet18"),

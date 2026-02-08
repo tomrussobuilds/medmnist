@@ -1,10 +1,24 @@
 """
 Dynamic Run Orchestration and Experiment Directory Management.
 
-This module provides the RunPaths class, which implements an 'Atomic Run Isolation'
-strategy. It automates the creation of immutable, hashed directory structures,
-ensuring that hyperparameters, model weights, and logs are uniquely identified
-and shielded from accidental resource overlap or overwrites.
+Provides the RunPaths class implementing an 'Atomic Run Isolation' strategy
+for ML experiment artifact management. Automates creation of immutable,
+hashed directory structures ensuring hyperparameters, model weights, and
+logs are uniquely identified and protected from accidental overwrites.
+
+The hashing strategy combines date, dataset/model slugs, and a blake2b hash
+of training configuration plus timestamp to guarantee unique run directories
+without collision fallbacks.
+
+Example:
+    >>> from orchard.core.paths import RunPaths
+    >>> paths = RunPaths.create(
+    ...     dataset_slug="organcmnist",
+    ...     model_name="EfficientNet-B0",
+    ...     training_cfg={"batch_size": 32, "lr": 0.001}
+    ... )
+    >>> paths.root
+    PosixPath('outputs/20260208_organcmnist_efficientnetb0_a3f7c2')
 """
 
 import hashlib
@@ -22,19 +36,35 @@ from .constants import OUTPUTS_ROOT
 # RUN MANAGEMENT
 class RunPaths(BaseModel):
     """
-    Manages experiment-specific directories using an atomic hashing strategy.
+    Immutable container for experiment-specific directory paths.
 
-    Instead of long timestamps, it uses a combination of DATE + SLUGS + HASH
-    to create clean, unique, and immutable directory structures.
+    Implements atomic run isolation using a deterministic hashing strategy
+    that combines DATE + DATASET_SLUG + MODEL_SLUG + CONFIG_HASH to create
+    unique, collision-free directory structures. The Pydantic frozen model
+    ensures paths cannot be modified after creation.
 
-    Example structure:
-        outputs/20260116_organcmnist_efficientnetb0_a3f7c2/
-        ├── figures/    <- Plots, confusion matrices, ROC curves
-        ├── models/     <- Saved checkpoints (.pth)
-        ├── reports/    <- Config mirrors, CSV summaries
-        ├── logs/       <- Standard output and training logs
-        ├── database/   <- SQLite optimization studies
-        └── exports/    <- Production model exports (ONNX, TorchScript)
+    Attributes:
+        run_id: Unique identifier in format YYYYMMDD_dataset_model_hash.
+        dataset_slug: Normalized lowercase dataset name.
+        model_slug: Sanitized alphanumeric model identifier.
+        root: Base directory for all run artifacts.
+        figures: Directory for plots, confusion matrices, ROC curves.
+        models: Directory for saved checkpoints (.pth files).
+        reports: Directory for config mirrors, CSV/XLSX summaries.
+        logs: Directory for training logs and session output.
+        database: Directory for SQLite optimization studies.
+        exports: Directory for production exports (ONNX, TorchScript).
+
+    Example:
+        Directory structure created::
+
+            outputs/20260208_organcmnist_efficientnetb0_a3f7c2/
+            ├── figures/
+            ├── models/
+            ├── reports/
+            ├── logs/
+            ├── database/
+            └── exports/
     """
 
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
@@ -72,13 +102,39 @@ class RunPaths(BaseModel):
         base_dir: Optional[Path] = None,
     ) -> "RunPaths":
         """
-        Factory method to initialize a unique run environment.
+        Factory method to create and initialize a unique run environment.
+
+        Creates a new RunPaths instance with a deterministic unique ID based
+        on dataset, model, and training configuration. Physically creates all
+        subdirectories on the filesystem.
 
         Args:
-            dataset_slug: Identifier for the dataset (e.g., 'organcmnist').
+            dataset_slug: Dataset identifier (e.g., 'organcmnist'). Will be
+                normalized to lowercase.
             model_name: Human-readable model name (e.g., 'EfficientNet-B0').
-            training_cfg: Dictionary of hyperparameters used for unique hashing.
-            base_dir: Optional custom base directory for outputs.
+                Special characters are stripped, converted to lowercase.
+            training_cfg: Dictionary of hyperparameters used for hash generation.
+                Supports nested dicts, but only hashable primitives (int, float,
+                str, bool, list) contribute to the hash.
+            base_dir: Custom base directory for outputs. Defaults to OUTPUTS_ROOT
+                (typically './outputs').
+
+        Returns:
+            Fully initialized RunPaths instance with all directories created.
+
+        Raises:
+            ValueError: If dataset_slug or model_name is not a string.
+
+        Example:
+            >>> paths = RunPaths.create(
+            ...     dataset_slug="OrganCMNIST",
+            ...     model_name="EfficientNet-B0",
+            ...     training_cfg={"batch_size": 32, "lr": 0.001}
+            ... )
+            >>> paths.dataset_slug
+            'organcmnist'
+            >>> paths.model_slug
+            'efficientnetb0'
         """
         if not isinstance(dataset_slug, str):
             raise ValueError(f"Expected string for dataset_slug but got {type(dataset_slug)}")
@@ -116,13 +172,26 @@ class RunPaths(BaseModel):
     @staticmethod
     def _generate_unique_id(ds_slug: str, m_slug: str, cfg: Dict[str, Any]) -> str:
         """
-        Calculates a deterministic 6-character hash from training config + run timestamp.
+        Generate a deterministic unique run identifier.
 
-        The hash includes:
-        - Training hyperparameters (learning rate, epochs, etc.)
-        - Run timestamp (auto-generated if not provided, ensures unique runs)
+        Combines date, slugs, and a 6-character blake2b hash of the training
+        configuration plus timestamp. The timestamp (auto-generated if not
+        provided) guarantees uniqueness without collision fallbacks.
 
-        This guarantees unique directories without collision fallbacks.
+        Args:
+            ds_slug: Normalized dataset slug (lowercase).
+            m_slug: Sanitized model slug (alphanumeric lowercase).
+            cfg: Training configuration dictionary. Only hashable primitives
+                (int, float, str, bool, list) are included in hash computation.
+                May contain 'run_timestamp' key; if absent, current time is used.
+
+        Returns:
+            Unique identifier string in format: YYYYMMDD_dataset_model_hash
+            where hash is 6 hex characters from blake2b(config + timestamp).
+
+        Example:
+            >>> RunPaths._generate_unique_id("organcmnist", "efficientnetb0", {"lr": 0.001})
+            '20260208_organcmnist_efficientnetb0_a3f7c2'
         """
         # Filter for hashable primitives to avoid serialization errors
         hashable = {k: v for k, v in cfg.items() if isinstance(v, (int, float, str, bool, list))}
@@ -138,39 +207,70 @@ class RunPaths(BaseModel):
         return f"{date_str}_{ds_slug}_{m_slug}_{run_hash}"
 
     def _setup_run_directories(self) -> None:
-        """Physically creates the directory structure on the filesystem."""
+        """
+        Create the physical directory structure on the filesystem.
+
+        Iterates through SUB_DIRS class constant and creates each subdirectory
+        under the root path. Uses mkdir with parents=True and exist_ok=True
+        for idempotent operation.
+        """
         for folder_name in self.SUB_DIRS:
             (self.root / folder_name).mkdir(parents=True, exist_ok=True)
 
     # Dynamic Properties
     @property
     def best_model_path(self) -> Path:
-        """Standardized path for the top-performing model checkpoint."""
+        """
+        Path for the best-performing model checkpoint.
+
+        Returns:
+            Path in format: models/best_{model_slug}.pth
+        """
         return self.models / f"best_{self.model_slug}.pth"
 
     @property
     def final_report_path(self) -> Path:
-        """Destination path for the comprehensive experiment summary."""
+        """
+        Path for the comprehensive experiment summary report.
+
+        Returns:
+            Path to reports/training_summary.xlsx
+        """
         return self.reports / "training_summary.xlsx"
 
     def get_fig_path(self, filename: str) -> Path:
-        """Generates an absolute path for a visualization artifact."""
+        """
+        Generate path for a visualization artifact.
+
+        Args:
+            filename: Name of the figure file (e.g., 'confusion_matrix.png').
+
+        Returns:
+            Absolute path within the figures directory.
+        """
         return self.figures / filename
 
     def get_config_path(self) -> Path:
-        """Returns the path where the run configuration is archived."""
+        """
+        Get path for the archived run configuration.
+
+        Returns:
+            Path to reports/config.yaml
+        """
         return self.reports / "config.yaml"
 
     def get_db_path(self) -> Path:
         """
-        Returns path for Optuna SQLite database.
+        Get path for Optuna SQLite study database.
 
-        Database directory is created during RunPaths initialization.
+        The database directory is created during RunPaths initialization,
+        ensuring the parent directory exists before Optuna writes to it.
 
         Returns:
-            Path to study database file
+            Path to database/study.db
         """
         return self.database / "study.db"
 
     def __repr__(self) -> str:
+        """Return string representation with run_id and root path."""
         return f"RunPaths(run_id='{self.run_id}', root={self.root})"

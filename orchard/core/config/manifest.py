@@ -173,19 +173,40 @@ class Config(BaseModel):
 
     @property
     def run_slug(self) -> str:
-        """Unique experiment folder identifier."""
+        """
+        Generate unique experiment folder identifier.
+
+        Combines dataset name and model name for human-readable
+        run identification in output directories.
+
+        Returns:
+            String in format '{dataset_name}_{model_name}'.
+        """
         return f"{self.dataset.dataset_name}_{self.model.name}"
 
     @property
     def num_workers(self) -> int:
-        """Effective DataLoader workers from hardware policy."""
+        """
+        Get effective DataLoader workers from hardware policy.
+
+        Delegates to hardware config which respects reproducibility
+        constraints (returns 0 if reproducible mode enabled).
+
+        Returns:
+            Number of DataLoader worker processes.
+        """
         return self.hardware.effective_num_workers
 
     def dump_portable(self) -> Dict[str, Any]:
         """
-        Serializes config with environment-agnostic paths.
+        Serialize config with environment-agnostic paths.
 
-        Converts absolute paths to relative anchors from PROJECT_ROOT.
+        Converts absolute filesystem paths to project-relative paths
+        (e.g., '/home/user/project/dataset' -> './dataset') to prevent
+        host-specific path leakage in exported configurations.
+
+        Returns:
+            Dictionary with all paths converted to portable relative strings.
         """
         full_data = self.model_dump()
         full_data["hardware"] = self.hardware.model_dump()
@@ -204,7 +225,15 @@ class Config(BaseModel):
         return full_data
 
     def dump_serialized(self) -> Dict[str, Any]:
-        """Converts config to JSON-compatible dict for YAML serialization."""
+        """
+        Convert config to JSON-compatible dict for YAML serialization.
+
+        Uses Pydantic's json mode to ensure all values are serializable
+        (Path objects become strings, enums become values, etc.).
+
+        Returns:
+            Dictionary with all values JSON-serializable for YAML export.
+        """
         return self.model_dump(mode="json")
 
     @classmethod

@@ -31,8 +31,17 @@ class DatasetConfig(BaseModel):
 
     Bridges static registry metadata with runtime preferences. Resolves
     channel promotion and sampling policies with multi-resolution support.
-
     Auto-syncs img_size with resolution when not explicitly set.
+
+    Attributes:
+        name: Dataset identifier from registry (e.g., 'bloodmnist', 'organcmnist').
+        metadata: DatasetMetadata object (excluded from serialization).
+        data_root: Root directory containing dataset files.
+        use_weighted_sampler: Enable class-balanced sampling for imbalanced datasets.
+        max_samples: Maximum samples to load (None=all).
+        img_size: Target square resolution for model input (auto-synced).
+        force_rgb: Convert grayscale to RGB for pretrained ImageNet weights.
+        resolution: Target resolution variant (28 or 224).
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid", arbitrary_types_allowed=True)
@@ -96,9 +105,13 @@ class DatasetConfig(BaseModel):
     @property
     def _ensure_metadata(self) -> DatasetMetadata:
         """
-        Return metadata, loading default if None.
+        Return metadata, lazily loading from registry if None.
 
-        Uses object.__setattr__ to bypass frozen restriction.
+        Uses object.__setattr__ to bypass frozen restriction for
+        one-time initialization.
+
+        Returns:
+            DatasetMetadata object for this dataset.
         """
         if self.metadata is None:
             wrapper = DatasetRegistryWrapper(resolution=self.resolution)
@@ -110,39 +123,81 @@ class DatasetConfig(BaseModel):
 
     @property
     def dataset_name(self) -> str:
-        """Dataset identifier (e.g., 'bloodmnist')."""
+        """
+        Get dataset identifier from metadata.
+
+        Returns:
+            Dataset name string (e.g., 'bloodmnist').
+        """
         return self._ensure_metadata.name
 
     @property
     def num_classes(self) -> int:
-        """Number of target classes."""
+        """
+        Get number of target classes.
+
+        Returns:
+            Integer count of classification classes.
+        """
         return self._ensure_metadata.num_classes
 
     @property
     def in_channels(self) -> int:
-        """Native input channels (1 or 3)."""
+        """
+        Get native input channels from metadata.
+
+        Returns:
+            1 for grayscale datasets, 3 for RGB.
+        """
         return self._ensure_metadata.in_channels
 
     @property
     def effective_in_channels(self) -> int:
-        """Actual channels model receives (3 if force_rgb enabled)."""
+        """
+        Get actual channels the model receives after promotion.
+
+        Returns:
+            3 if force_rgb enabled, otherwise native in_channels.
+        """
         return 3 if self.force_rgb else self.in_channels
 
     @property
     def mean(self) -> tuple[float, ...]:
-        """Channel-wise mean; expanded to 3 if grayscale + force_rgb."""
+        """
+        Get channel-wise normalization mean.
+
+        Expands single-channel mean to 3 channels if force_rgb is enabled
+        on a grayscale dataset.
+
+        Returns:
+            Tuple of mean values per channel.
+        """
         m = self._ensure_metadata.mean
         return (m[0],) * 3 if self.force_rgb and self.in_channels == 1 else m
 
     @property
     def std(self) -> tuple[float, ...]:
-        """Channel-wise std; expanded to 3 if grayscale + force_rgb."""
+        """
+        Get channel-wise normalization standard deviation.
+
+        Expands single-channel std to 3 channels if force_rgb is enabled
+        on a grayscale dataset.
+
+        Returns:
+            Tuple of std values per channel.
+        """
         s = self._ensure_metadata.std
         return (s[0],) * 3 if self.force_rgb and self.in_channels == 1 else s
 
     @property
     def processing_mode(self) -> str:
-        """Describes channel processing mode."""
+        """
+        Get description of channel processing mode.
+
+        Returns:
+            'NATIVE-RGB' for RGB datasets, 'RGB-PROMOTED' for grayscale
+            with force_rgb, or 'NATIVE-GRAY' for grayscale without promotion.
+        """
         if self.in_channels == 3:
             return "NATIVE-RGB"
         return "RGB-PROMOTED" if self.effective_in_channels == 3 else "NATIVE-GRAY"
@@ -152,15 +207,32 @@ class DatasetConfig(BaseModel):
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> "DatasetConfig":
         """
-        Factory from CLI arguments with proper resolution handling.
+        Create DatasetConfig from CLI arguments with resolution-aware metadata.
 
-        Priority: YAML injection > CLI explicit > Inference > Default
+        Resolves dataset metadata from the registry based on the specified
+        resolution (28 or 224), then constructs a fully configured instance
+        with proper channel handling and sampling settings.
+
+        Priority order for parameter resolution:
+            1. YAML injection (if --config provided)
+            2. CLI explicit arguments
+            3. Inference from dataset registry
+            4. Field defaults
 
         Args:
-            args: Parsed CLI arguments
+            args: Parsed argparse namespace containing:
+                - dataset/name: Dataset identifier
+                - resolution: Target resolution (28 or 224)
+                - force_rgb: RGB promotion flag
+                - max_samples: Sample limit
+                - data_dir: Dataset root path
+                - use_weighted_sampler: Class balancing flag
 
         Returns:
-            Configured DatasetConfig with metadata
+            Fully configured DatasetConfig with metadata loaded from registry.
+
+        Raises:
+            KeyError: If dataset not found in registry at specified resolution.
         """
         # 1. Determine dataset name
         dataset_name = getattr(args, "dataset", None) or getattr(args, "name", None) or "bloodmnist"

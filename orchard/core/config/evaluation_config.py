@@ -32,6 +32,18 @@ class EvaluationConfig(BaseModel):
 
     Controls inference settings, visualization aesthetics, and export formats
     for confusion matrices and prediction grids.
+
+    Attributes:
+        batch_size: Batch size for inference/evaluation (1-2048).
+        n_samples: Number of samples to display in prediction grid.
+        fig_dpi: DPI resolution for saved figure files.
+        cmap_confusion: Matplotlib colormap for confusion matrix.
+        plot_style: Matplotlib style preset for all visualizations.
+        grid_cols: Number of columns in prediction grid layout.
+        fig_size_predictions: Figure dimensions (width, height) in inches.
+        report_format: Export format for metrics report (xlsx, csv, json).
+        save_confusion_matrix: Whether to generate confusion matrix plot.
+        save_predictions_grid: Whether to generate prediction samples grid.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -61,7 +73,15 @@ class EvaluationConfig(BaseModel):
     @field_validator("report_format")
     @classmethod
     def validate_format(cls, v: str) -> str:
-        """Validates report format, defaults to xlsx if unsupported."""
+        """
+        Validate report format, defaulting to xlsx if unsupported.
+
+        Args:
+            v: Requested report format string.
+
+        Returns:
+            Normalized format string (xlsx, csv, or json).
+        """
         supported = {"xlsx", "csv", "json"}
         normalized = v.lower()
         return normalized if normalized in supported else "xlsx"

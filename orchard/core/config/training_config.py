@@ -41,6 +41,32 @@ class TrainingConfig(BaseModel):
 
     Validates training hyperparameters and provides structure for
     reproducibility, optimization, regularization, and scheduling.
+
+    Attributes:
+        seed: Random seed for reproducibility.
+        reproducible: Enable strict deterministic mode.
+        batch_size: Training samples per batch (1-128).
+        epochs: Maximum training epochs.
+        patience: Early stopping patience in epochs.
+        use_tqdm: Enable progress bar display.
+        learning_rate: Initial learning rate (1e-8 to 1.0).
+        min_lr: Minimum learning rate for scheduler.
+        momentum: SGD momentum coefficient.
+        weight_decay: L2 regularization strength.
+        grad_clip: Maximum gradient norm for clipping.
+        label_smoothing: Label smoothing factor (0.0-0.3).
+        mixup_alpha: Mixup interpolation coefficient.
+        mixup_epochs: Number of epochs to apply mixup.
+        use_tta: Enable test-time augmentation.
+        scheduler_type: LR scheduler type ('cosine', 'plateau', 'step', 'none').
+        cosine_fraction: Fraction of epochs for cosine annealing.
+        scheduler_patience: ReduceLROnPlateau patience epochs.
+        scheduler_factor: LR reduction factor for plateau scheduler.
+        step_size: StepLR decay period in epochs.
+        use_amp: Enable Automatic Mixed Precision training.
+        criterion_type: Loss function ('cross_entropy', 'focal', 'bce_logit').
+        weighted_loss: Enable class-frequency loss weighting.
+        focal_gamma: Focal loss focusing parameter.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -87,6 +113,15 @@ class TrainingConfig(BaseModel):
 
     @model_validator(mode="after")
     def validate_batch_size(self) -> "TrainingConfig":
+        """
+        Validate batch size is within safe AMP limits.
+
+        Raises:
+            ValueError: If batch_size exceeds 128.
+
+        Returns:
+            Validated TrainingConfig instance.
+        """
         if self.batch_size > 128:
             raise ValueError(
                 f"Batch size too large ({self.batch_size}). Reduce to <=128 for AMP stability."
@@ -95,6 +130,15 @@ class TrainingConfig(BaseModel):
 
     @model_validator(mode="after")
     def validate_amp(self) -> "TrainingConfig":
+        """
+        Validate AMP compatibility with batch size.
+
+        Raises:
+            ValueError: If AMP enabled with batch_size < 4.
+
+        Returns:
+            Validated TrainingConfig instance.
+        """
         if self.use_amp and self.batch_size < 4:
             raise ValueError("AMP enabled with very small batch size (<4) can cause NaN gradients.")
         return self

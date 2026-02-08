@@ -1,9 +1,17 @@
 """
 Project-wide Path Constants and Static Directory Management.
 
-This module serves as the single source of truth for the physical filesystem
-layout. It handles dynamic project root discovery and defines the static
-infrastructure (dataset and output folders) required for the pipeline to boot.
+Single source of truth for the physical filesystem layout. Handles dynamic
+project root discovery and defines static infrastructure (dataset and output
+directories) required for pipeline initialization.
+
+Module Attributes:
+    LOGGER_NAME: Global logger identity used by all modules for log synchronization.
+    HEALTHCHECK_LOGGER_NAME: Logger identity for dataset validation utilities.
+    PROJECT_ROOT: Dynamically resolved absolute path to the project root.
+    DATASET_DIR: Absolute path to the raw datasets directory.
+    OUTPUTS_ROOT: Default root directory for all experiment results.
+    STATIC_DIRS: List of directories that must exist at startup.
 """
 
 import os
@@ -21,11 +29,18 @@ HEALTHCHECK_LOGGER_NAME: Final[str] = "healthcheck"
 # PATH CALCULATIONS
 def get_project_root() -> Path:
     """
-    Dynamically locates the project root by searching for anchor files.
+    Dynamically locate the project root by searching for anchor files.
 
-    Starts from the current file's directory and traverses upwards until
-    it finds a marker (e.g., '.git', 'requirements.txt'). Fallback to
-    fixed parents if no markers are found.
+    Traverses upward from current file's directory until finding a marker
+    file (.git or requirements.txt). Supports Docker environments via
+    IN_DOCKER environment variable override.
+
+    Returns:
+        Resolved absolute Path to the project root directory.
+
+    Note:
+        - IN_DOCKER=1 or IN_DOCKER=TRUE returns /app
+        - Falls back to fixed parent traversal if no markers found
     """
     # Environment override for Docker setups
     if str(os.getenv("IN_DOCKER")).upper() in ("1", "TRUE"):
@@ -70,10 +85,11 @@ STATIC_DIRS: Final[List[Path]] = [DATASET_DIR, OUTPUTS_ROOT]
 # INITIAL SETUP
 def setup_static_directories() -> None:
     """
-    Ensures the core project structure is present at startup.
+    Ensure core project directories exist at startup.
 
-    Creates the necessary dataset and output folders if they do not exist,
-    preventing runtime errors during data fetching or log creation.
+    Creates DATASET_DIR and OUTPUTS_ROOT if they do not exist, preventing
+    runtime errors during data fetching or artifact creation. Uses
+    mkdir(parents=True, exist_ok=True) for idempotent operation.
     """
     for directory in STATIC_DIRS:
         directory.mkdir(parents=True, exist_ok=True)

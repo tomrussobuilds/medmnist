@@ -1,10 +1,27 @@
 """
 Filesystem Authority and Path Orchestration Package.
 
-This package centralizes all path-related logic for the MedMNIST pipeline.
-It provides a dual-layer approach:
-1. Static: Project root and global directory constants via 'constants'.
-2. Dynamic: Experiment-specific directory management via 'RunPaths'.
+Centralizes all path-related logic for VisionForge using a dual-layer approach:
+
+1. **Static Layer** (constants module):
+   - PROJECT_ROOT: Dynamically resolved project root
+   - DATASET_DIR, OUTPUTS_ROOT: Global directory constants
+   - LOGGER_NAME: Unified logging identity
+
+2. **Dynamic Layer** (RunPaths class):
+   - Experiment-specific directory management
+   - Atomic run isolation via deterministic hashing
+   - Automatic subdirectory creation (figures, models, reports, logs, etc.)
+
+Example:
+    >>> from orchard.core.paths import PROJECT_ROOT, RunPaths
+    >>> print(PROJECT_ROOT)
+    PosixPath('/home/user/VisionForge')
+    >>> paths = RunPaths.create(
+    ...     dataset_slug="organcmnist",
+    ...     model_name="EfficientNet-B0",
+    ...     training_cfg={"lr": 0.001}
+    ... )
 """
 
 from .constants import (

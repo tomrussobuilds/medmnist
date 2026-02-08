@@ -25,25 +25,30 @@ from ..environment import DuplicateProcessCleaner, ensure_single_instance, relea
 
 # PROTOCOLS
 class InfraManagerProtocol(Protocol):
-    """Protocol for infrastructure management, allowing mocking in tests."""
+    """
+    Protocol defining infrastructure management interface.
+
+    Enables dependency injection and mocking in tests while ensuring
+    consistent lifecycle management across implementations.
+    """
 
     def prepare_environment(self, cfg: "HardwareAwareConfig", logger: logging.Logger) -> None:
         """
-        Prepares the environment based on the provided configuration and logger.
+        Prepare execution environment before experiment run.
 
         Args:
-            cfg: The configuration to be used for preparing the environment.
-            logger: The logger instance for logging preparation details.
+            cfg: Configuration with hardware manifest access.
+            logger: Logger instance for status reporting.
         """
         ...  # pragma: no cover
 
     def release_resources(self, cfg: "HardwareAwareConfig", logger: logging.Logger) -> None:
         """
-        Releases the resources allocated during environment preparation.
+        Release resources allocated during environment preparation.
 
         Args:
-            cfg: The configuration that was used during resource allocation.
-            logger: The logger instance for logging release details.
+            cfg: Configuration used during resource allocation.
+            logger: Logger instance for status reporting.
         """
         ...  # pragma: no cover
 
@@ -52,8 +57,11 @@ class HardwareAwareConfig(Protocol):
     """
     Structural contract for configurations exposing hardware manifest.
 
-    Decouples infrastructure management from concrete implementations,
+    Decouples infrastructure management from concrete Config implementations,
     enabling type-safe access to hardware execution policies.
+
+    Attributes:
+        hardware: HardwareConfig instance with device and lock settings.
     """
 
     hardware: Any
@@ -64,7 +72,13 @@ class InfrastructureManager(BaseModel):
     Environment safeguarding and resource management executor.
 
     Ensures clean execution environment before runs and proper resource
-    release after, preventing collisions and leaks.
+    release after, preventing concurrent experiment collisions and
+    GPU memory leaks.
+
+    Lifecycle:
+        1. prepare_environment(): Kill zombies, acquire lock
+        2. [Experiment runs]
+        3. release_resources(): Release lock, flush caches
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True, frozen=True)
@@ -73,15 +87,21 @@ class InfrastructureManager(BaseModel):
         self, cfg: HardwareAwareConfig, logger: Optional[logging.Logger] = None
     ) -> None:
         """
-        Prepares execution environment.
+        Prepare execution environment for experiment run.
+
+        Performs pre-run cleanup and resource acquisition to ensure
+        isolated, collision-free experiment execution.
 
         Steps:
-            1. Terminate duplicate/zombie processes if allowed
-            2. Acquire filesystem lock to prevent concurrent runs
+            1. Terminate duplicate/zombie processes (if allow_process_kill=True
+               and not in shared compute environment like SLURM/PBS/LSF)
+            2. Acquire filesystem lock to prevent concurrent runs using
+               the same project name
 
         Args:
-            cfg: Configuration with hardware manifest
-            logger: Status reporting logger
+            cfg: Configuration object with hardware.allow_process_kill and
+                hardware.lock_file_path attributes.
+            logger: Logger for status messages. Defaults to 'Infrastructure'.
         """
         log = logger or logging.getLogger("Infrastructure")
 
@@ -106,15 +126,23 @@ class InfrastructureManager(BaseModel):
         self, cfg: HardwareAwareConfig, logger: Optional[logging.Logger] = None
     ) -> None:
         """
-        Releases system and hardware resources gracefully.
+        Release system and hardware resources gracefully after experiment.
+
+        Performs cleanup to ensure resources are properly freed and available
+        for subsequent runs. Handles errors gracefully to avoid blocking
+        experiment completion.
 
         Steps:
-            1. Release filesystem lock
-            2. Flush hardware memory caches
+            1. Release filesystem lock at cfg.hardware.lock_file_path
+            2. Flush GPU/MPS memory caches to prevent VRAM fragmentation
 
         Args:
-            cfg: Configuration with hardware manifest
-            logger: Status reporting logger
+            cfg: Configuration object with hardware.lock_file_path attribute.
+            logger: Logger for status messages. Defaults to 'Infrastructure'.
+
+        Note:
+            Lock release failures are logged as warnings but do not raise,
+            ensuring experiment completion even with cleanup issues.
         """
         log = logger or logging.getLogger("Infrastructure")
 
@@ -129,7 +157,12 @@ class InfrastructureManager(BaseModel):
         self._flush_compute_cache(log=log)
 
     def _flush_compute_cache(self, log: Optional[logging.Logger] = None) -> None:
-        """Clears GPU/MPS memory to prevent fragmentation across runs."""
+        """
+        Clear GPU/MPS memory caches to prevent fragmentation across runs.
+
+        Args:
+            log: Logger for debug output (defaults to 'Infrastructure' logger).
+        """
         log = log or logging.getLogger("Infrastructure")
 
         if torch.cuda.is_available():

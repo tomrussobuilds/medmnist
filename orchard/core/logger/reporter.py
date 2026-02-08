@@ -1,8 +1,13 @@
 """
 Environment Reporter.
 
-Provides formatted logging for experiment initialization and environment configuration.
-Transforms complex configuration states and hardware objects into human-readable logs.
+Provides formatted logging for experiment initialization and environment
+configuration. Transforms complex configuration states and hardware objects
+into structured, human-readable log output.
+
+The Reporter is invoked by RootOrchestrator during initialization to produce
+a comprehensive baseline status report covering hardware, dataset, strategy,
+hyperparameters, and filesystem configuration.
 """
 
 import logging

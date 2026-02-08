@@ -67,8 +67,17 @@ def __getattr__(name: str) -> Any:
     """
     Lazily import configuration components on first access.
 
-    Prevents importing heavy dependencies (e.g. torch) unless the
-    corresponding configuration class is actually used.
+    Implements PEP 562 module-level __getattr__ to defer heavy dependency
+    imports (torch, pydantic) until the corresponding class is used.
+
+    Args:
+        name: Name of the configuration class to import.
+
+    Returns:
+        The requested configuration class.
+
+    Raises:
+        AttributeError: If name is not in the public API (__all__).
     """
     if name not in _LAZY_IMPORTS:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

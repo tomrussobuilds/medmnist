@@ -19,7 +19,32 @@ class OptunaConfig(BaseModel):
     """
     Optuna hyperparameter optimization study configuration.
 
-    Defines search strategy, pruning policy, budget, and storage backend.
+    Defines search strategy, pruning policy, budget, and storage backend
+    for automated hyperparameter tuning.
+
+    Attributes:
+        study_name: Identifier for the Optuna study.
+        n_trials: Total number of optimization trials to run.
+        epochs: Training epochs per trial (typically shorter than final training).
+        timeout: Maximum optimization time in seconds (None=unlimited).
+        metric_name: Optimization target metric ('auc', 'accuracy', 'loss').
+        direction: Whether to 'maximize' or 'minimize' the metric.
+        sampler_type: Sampling algorithm ('tpe', 'cmaes', 'random', 'grid').
+        search_space_preset: Predefined search space ('quick', 'full', etc.).
+        enable_model_search: Include architecture in search space.
+        enable_early_stopping: Stop study when target performance reached.
+        early_stopping_threshold: Metric threshold for early stopping.
+        early_stopping_patience: Consecutive trials meeting threshold before stop.
+        enable_pruning: Enable early termination of unpromising trials.
+        pruner_type: Pruning algorithm ('median', 'percentile', 'hyperband').
+        pruning_warmup_epochs: Minimum epochs before pruning can trigger.
+        storage_type: Backend for study persistence ('sqlite', 'memory', 'postgresql').
+        storage_path: Path to database file or connection string.
+        n_jobs: Parallel trial execution (1=sequential, -1=all cores).
+        load_if_exists: Resume existing study or create new.
+        show_progress_bar: Display tqdm progress during optimization.
+        save_plots: Generate optimization visualization plots.
+        save_best_config: Export best trial hyperparameters as YAML.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -114,14 +139,30 @@ class OptunaConfig(BaseModel):
 
     @model_validator(mode="after")
     def validate_storage(self) -> "OptunaConfig":
-        """Validates storage backend configuration."""
+        """
+        Validate storage backend configuration.
+
+        Raises:
+            ValueError: If PostgreSQL selected without connection string.
+
+        Returns:
+            Validated OptunaConfig instance.
+        """
         if self.storage_type == "postgresql" and self.storage_path is None:
             raise ValueError("PostgreSQL storage requires storage_path with connection string")
         return self
 
     @model_validator(mode="after")
     def check_metric_name(self) -> "OptunaConfig":
-        """Validates metric_name is supported."""
+        """
+        Validate metric_name is a supported optimization target.
+
+        Raises:
+            ValueError: If metric_name not in ['auc', 'accuracy', 'loss'].
+
+        Returns:
+            Validated OptunaConfig instance.
+        """
         allowed_metrics = ["auc", "accuracy", "loss"]
         if self.metric_name not in allowed_metrics:
             raise ValueError(f"metric_name '{self.metric_name}' invalid. Choose: {allowed_metrics}")
@@ -129,7 +170,15 @@ class OptunaConfig(BaseModel):
 
     @model_validator(mode="after")
     def check_pruning(self) -> "OptunaConfig":
-        """Validates pruning configuration."""
+        """
+        Validate pruning warmup is less than total epochs.
+
+        Raises:
+            ValueError: If pruning_warmup_epochs >= epochs.
+
+        Returns:
+            Validated OptunaConfig instance.
+        """
         if self.enable_pruning and self.pruning_warmup_epochs >= self.epochs:
             raise ValueError(
                 f"pruning_warmup_epochs ({self.pruning_warmup_epochs}) "
@@ -139,14 +188,27 @@ class OptunaConfig(BaseModel):
 
     @model_validator(mode="after")
     def check_tqdm_flag(self) -> "OptunaConfig":
-        """Warns about tqdm with parallel jobs."""
+        """
+        Warn about potential tqdm corruption with parallel execution.
+
+        Returns:
+            Validated OptunaConfig instance (with warning if applicable).
+        """
         if self.show_progress_bar and self.n_jobs != 1:
             warnings.warn("show_progress_bar=True with n_jobs>1 may corrupt tqdm output.")
         return self
 
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> "OptunaConfig":
-        """Factory from CLI arguments."""
+        """
+        Create OptunaConfig from CLI arguments.
+
+        Args:
+            args: Parsed argparse namespace with optuna-related arguments.
+
+        Returns:
+            Configured OptunaConfig instance.
+        """
         args_dict = vars(args)
         valid_fields = cls.model_fields.keys()
         params = {k: v for k, v in args_dict.items() if k in valid_fields and v is not None}

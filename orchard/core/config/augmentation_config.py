@@ -27,7 +27,17 @@ class AugmentationConfig(BaseModel):
     """
     Stochastic transformations for training and test-time augmentation (TTA).
 
-    Centralizes hyperparameters for geometric and photometric perturbations.
+    Centralizes hyperparameters for geometric and photometric perturbations
+    applied during training and inference phases.
+
+    Attributes:
+        hflip: Probability of horizontal flip during training (0.0-1.0).
+        rotation_angle: Maximum rotation angle in degrees (0-360).
+        jitter_val: Color jitter intensity for brightness, contrast, saturation.
+        min_scale: Minimum scale factor for random resized crop (0.0-1.0).
+        tta_translate: Pixel translation range for TTA ensemble.
+        tta_scale: Scale factor for TTA zoom augmentation.
+        tta_blur_sigma: Gaussian blur sigma for TTA smoothing.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
