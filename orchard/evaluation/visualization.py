@@ -84,7 +84,7 @@ def show_predictions(
 
     if cfg:
         plt.suptitle(
-            f"Sample Predictions — {cfg.model.name} | "
+            f"Sample Predictions — {cfg.architecture.name} | "
             f"Resolution: {cfg.dataset.resolution}"
             f"{domain_info}{tta_info}",
             fontsize=14,
@@ -117,7 +117,7 @@ def plot_training_curves(
     ax2.tick_params(axis="y", labelcolor="#3498db")
 
     fig.suptitle(
-        f"Training Metrics — {cfg.model.name} | Resolution — {cfg.dataset.resolution}",
+        f"Training Metrics — {cfg.architecture.name} | Resolution — {cfg.dataset.resolution}",
         fontsize=14,
         y=1.02,
     )
@@ -147,7 +147,7 @@ def plot_confusion_matrix(
 
     disp.plot(ax=ax, cmap=cfg.evaluation.cmap_confusion, xticks_rotation=45, values_format=".3f")
     plt.title(
-        f"Confusion Matrix — {cfg.model.name} | Resolution — {cfg.dataset.resolution}",
+        f"Confusion Matrix — {cfg.architecture.name} | Resolution — {cfg.dataset.resolution}",
         fontsize=12,
         pad=20,
     )

@@ -15,7 +15,7 @@ dataset:
   use_weighted_sampler: true
   max_samples: null
 
-model:
+architecture:
   name: "mini_cnn"
   pretrained: false             # No pretrained weights available
   weight_variant: null          # Not applicable for MiniCNN
@@ -23,8 +23,7 @@ model:
 
 training:
   seed: 42
-  reproducible: false
-  
+
   # Optimization (aggressive for small model)
   batch_size: 128               # Large batches for 28x28
   learning_rate: 0.01           # Higher LR for small architecture

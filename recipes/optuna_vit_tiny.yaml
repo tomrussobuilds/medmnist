@@ -37,7 +37,7 @@ dataset:
   use_weighted_sampler: true
   max_samples: null
 
-model:
+architecture:
   name: "vit_tiny"
   pretrained: true
   weight_variant: "vit_tiny_patch16_224.augreg_in21k_ft_in1k"
@@ -45,7 +45,6 @@ model:
 
 training:
   seed: 42
-  reproducible: false
   
   # Base values (WILL BE OPTIMIZED BY OPTUNA)
   batch_size: 16                # Conservative for optimization
@@ -89,6 +88,7 @@ augmentation:
 
 hardware:
   device: "auto"
+  reproducible: false
 
 telemetry:
   output_dir: ./outputs

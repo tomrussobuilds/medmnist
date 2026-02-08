@@ -40,7 +40,7 @@ def test_run_final_evaluation_returns_tuple(
     mock_report.return_value = mock_report_obj
 
     # Create mocks
-    mock_model = MagicMock()
+    mock_architecture = MagicMock()
     mock_loader = MagicMock()
     mock_paths = MagicMock()
     mock_paths.get_fig_path = MagicMock(return_value=Path("/tmp/fig.png"))
@@ -53,11 +53,11 @@ def test_run_final_evaluation_returns_tuple(
     mock_cfg.training.use_tta = False
     mock_cfg.dataset.metadata.is_anatomical = True
     mock_cfg.dataset.metadata.is_texture_based = False
-    mock_cfg.model.name = "test_model"
+    mock_cfg.architecture.name = "test_architecture"
     mock_cfg.dataset.resolution = 28
 
     result = run_final_evaluation(
-        model=mock_model,
+        model=mock_architecture,
         test_loader=mock_loader,
         train_losses=[0.5, 0.3, 0.1],
         val_metrics_history=[{"accuracy": 0.8}, {"accuracy": 0.9}],
@@ -90,7 +90,7 @@ def test_run_final_evaluation_calls_evaluate_model(
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9}, 0.88)
     mock_report.return_value = MagicMock()
 
-    mock_model = MagicMock()
+    mock_architecture = MagicMock()
     mock_loader = MagicMock()
     mock_paths = MagicMock()
     mock_paths.get_fig_path = MagicMock(return_value=Path("/tmp/fig.png"))
@@ -103,11 +103,11 @@ def test_run_final_evaluation_calls_evaluate_model(
     mock_cfg.training.use_tta = True
     mock_cfg.dataset.metadata.is_anatomical = False
     mock_cfg.dataset.metadata.is_texture_based = True
-    mock_cfg.model.name = "test"
+    mock_cfg.architecture.name = "test"
     mock_cfg.dataset.resolution = 28
 
     run_final_evaluation(
-        model=mock_model,
+        model=mock_architecture,
         test_loader=mock_loader,
         train_losses=[0.1],
         val_metrics_history=[{"accuracy": 0.9}],
@@ -140,7 +140,7 @@ def test_run_final_evaluation_calls_visualizations(
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9}, 0.88)
     mock_report.return_value = MagicMock()
 
-    mock_model = MagicMock()
+    mock_architecture = MagicMock()
     mock_loader = MagicMock()
     mock_paths = MagicMock()
     mock_paths.get_fig_path = MagicMock(return_value=Path("/tmp/fig.png"))
@@ -153,11 +153,11 @@ def test_run_final_evaluation_calls_visualizations(
     mock_cfg.training.use_tta = False
     mock_cfg.dataset.metadata.is_anatomical = True
     mock_cfg.dataset.metadata.is_texture_based = False
-    mock_cfg.model.name = "test"
+    mock_cfg.architecture.name = "test"
     mock_cfg.dataset.resolution = 28
 
     run_final_evaluation(
-        model=mock_model,
+        model=mock_architecture,
         test_loader=mock_loader,
         train_losses=[0.1],
         val_metrics_history=[{"accuracy": 0.9}],
@@ -189,7 +189,7 @@ def test_run_final_evaluation_creates_report(
     mock_report_obj = MagicMock()
     mock_report.return_value = mock_report_obj
 
-    mock_model = MagicMock()
+    mock_architecture = MagicMock()
     mock_loader = MagicMock()
     mock_paths = MagicMock()
     mock_paths.get_fig_path = MagicMock(return_value=Path("/tmp/fig.png"))
@@ -202,11 +202,11 @@ def test_run_final_evaluation_creates_report(
     mock_cfg.training.use_tta = False
     mock_cfg.dataset.metadata.is_anatomical = True
     mock_cfg.dataset.metadata.is_texture_based = False
-    mock_cfg.model.name = "test"
+    mock_cfg.architecture.name = "test_architecture"
     mock_cfg.dataset.resolution = 28
 
     run_final_evaluation(
-        model=mock_model,
+        model=mock_architecture,
         test_loader=mock_loader,
         train_losses=[0.1],
         val_metrics_history=[{"accuracy": 0.9}],

@@ -17,8 +17,8 @@ from orchard.models import build_resnet18_adapted
 def mock_cfg():
     """Provides a standardized configuration mock for model building."""
     cfg = MagicMock()
-    cfg.model.pretrained = False
-    cfg.model.dropout = 0.5
+    cfg.architecture.pretrained = False
+    cfg.architecture.dropout = 0.5
     return cfg
 
 
@@ -90,7 +90,7 @@ class TestResNet18Adapted:
 
     def test_resnet18_adapted_pretrained_weight_morphing(self, mock_cfg, device):
         """Verify pretrained weights are loaded and morphed."""
-        mock_cfg.model.pretrained = True
+        mock_cfg.architecture.pretrained = True
 
         from orchard.models import resnet_18_adapted as resnet_module
 

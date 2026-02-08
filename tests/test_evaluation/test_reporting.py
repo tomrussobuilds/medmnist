@@ -19,7 +19,7 @@ from orchard.evaluation import TrainingReport, create_structured_report
 def mock_config():
     """Provides a mocked Config object with necessary nested attributes."""
     cfg = MagicMock()
-    cfg.model.name = "ResNet18"
+    cfg.architecture.name = "mini_cnn"
     cfg.dataset.dataset_name = "PathMNIST"
     cfg.dataset.metadata.is_texture_based = True
     cfg.dataset.metadata.is_anatomical = False
@@ -36,7 +36,7 @@ def mock_config():
 def sample_report_data():
     """Provides a valid dictionary of data for TrainingReport instantiation."""
     return {
-        "model": "ResNet18",
+        "architecture": "mini_cnn",
         "dataset": "PathMNIST",
         "best_val_accuracy": 0.95,
         "best_val_auc": 0.98,
@@ -62,7 +62,7 @@ def sample_report_data():
 def test_training_report_instantiation(sample_report_data):
     """Test if TrainingReport correctly validates and stores input data."""
     report = TrainingReport(**sample_report_data)
-    assert report.model == "ResNet18"
+    assert report.architecture == "mini_cnn"
     assert report.best_val_accuracy == 0.95
     assert isinstance(report.timestamp, str)
 

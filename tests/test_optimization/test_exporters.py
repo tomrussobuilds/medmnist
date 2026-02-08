@@ -332,7 +332,7 @@ def test_export_best_config_success_path(minimal_config, paths, tmp_path):
                 mock_build.return_value = {
                     "training": {"learning_rate": 0.001, "batch_size": 32},
                     "dataset": {"name": "test"},
-                    "model": {"name": "resnet"},
+                    "architecture": {"name": "resnet"},
                 }
 
                 result = export_best_config(study, minimal_config, paths)

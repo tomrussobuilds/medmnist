@@ -72,7 +72,7 @@ def show_sample_images(
     )
 
     # Figure title
-    model_title = cfg.model.name if cfg else "Model"
+    model_title = cfg.architecture.name if cfg else "Model"
     title_str = f"{model_title} — {actual_samples} Samples"
     if title_prefix:
         title_str = f"{title_prefix} — {title_str}"
@@ -108,7 +108,7 @@ def show_samples_for_dataset(
         classes (List[str]): List of class names (unused here, for metadata).
         dataset_name (str): Name of the dataset, used in the filename and title.
         run_paths (RunPaths): RunPaths instance to resolve figure saving path.
-        cfg (Config, optional): Config object with model.name, dataset.mean/std.
+        cfg (Config, optional): Config object with architecture.name, dataset.mean/std.
         num_samples (int, optional): Number of images to include in the grid.
         resolution (int | None, optional): Resolution to include in filename to avoid overwriting.
     """

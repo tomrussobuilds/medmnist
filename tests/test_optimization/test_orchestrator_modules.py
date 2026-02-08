@@ -48,7 +48,7 @@ def mock_cfg():
     cfg.model_dump = MagicMock(
         return_value={
             "training": {"epochs": 50},
-            "model": {},
+            "architecture": {},
             "augmentation": {},
         }
     )
@@ -90,10 +90,10 @@ def test_map_param_to_config_path_training():
 
 
 @pytest.mark.unit
-def test_map_param_to_config_path_model():
-    """Test mapping model parameter."""
+def test_map_param_to_config_path_architecture():
+    """Test mapping architecture parameter."""
     section, key = map_param_to_config_path("dropout")
-    assert section == "model"
+    assert section == "architecture"
     assert key == "dropout"
 
 
@@ -178,7 +178,7 @@ def test_build_best_config_dict(mock_cfg):
     config_dict = build_best_config_dict(params, mock_cfg)
 
     assert config_dict["training"]["learning_rate"] == 0.001
-    assert config_dict["model"]["dropout"] == 0.5
+    assert config_dict["architecture"]["dropout"] == 0.5
     assert config_dict["training"]["epochs"] == 50
 
 
@@ -309,7 +309,7 @@ def test_map_param_to_config_path_augmentation():
 def test_map_param_to_config_path_special_model_name():
     """Test mapping special parameter: model_name."""
     section, key = map_param_to_config_path("model_name")
-    assert section == "model"
+    assert section == "architecture"
     assert key == "name"
 
 
@@ -317,7 +317,7 @@ def test_map_param_to_config_path_special_model_name():
 def test_map_param_to_config_path_special_weight_variant():
     """Test mapping special parameter: weight_variant."""
     section, key = map_param_to_config_path("weight_variant")
-    assert section == "model"
+    assert section == "architecture"
     assert key == "weight_variant"
 
 

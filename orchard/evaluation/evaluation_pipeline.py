@@ -64,7 +64,7 @@ def run_final_evaluation(
         all_preds=all_preds,
         classes=class_names,
         out_path=paths.get_fig_path(
-            f"confusion_matrix_{cfg.model.name}_{cfg.dataset.resolution}.png"
+            f"confusion_matrix_{cfg.architecture.name}_{cfg.dataset.resolution}.png"
         ),
         cfg=cfg,
     )
@@ -75,7 +75,7 @@ def run_final_evaluation(
         train_losses=train_losses,
         val_accuracies=val_acc_list,
         out_path=paths.get_fig_path(
-            f"training_curves_{cfg.model.name}_{cfg.dataset.resolution}.png"
+            f"training_curves_{cfg.architecture.name}_{cfg.dataset.resolution}.png"
         ),
         cfg=cfg,
     )
@@ -87,7 +87,7 @@ def run_final_evaluation(
         device=device,
         classes=class_names,
         save_path=paths.get_fig_path(
-            f"sample_predictions_{cfg.model.name}_{cfg.dataset.resolution}.png"
+            f"sample_predictions_{cfg.architecture.name}_{cfg.dataset.resolution}.png"
         ),
         cfg=cfg,
     )

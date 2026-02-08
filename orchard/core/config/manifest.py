@@ -7,7 +7,7 @@ type-safe manifest synchronizing hardware state with experiment logic.
 
 Key Features:
     * Hierarchical aggregation: Unifies specialized sub-configs (Hardware,
-      Dataset, Model, Training, Evaluation, Augmentation, Optuna) into a single,
+      Dataset, Architecture, Training, Evaluation, Augmentation, Optuna) into a single,
       immutable object.
     * Cross-domain validation: Complex logic checks (AMP vs Device, LR bounds,
       Mixup scheduling) spanning multiple sub-modules
@@ -29,12 +29,12 @@ from ..io import load_config_from_yaml
 from ..metadata import DatasetMetadata
 from ..metadata.wrapper import DatasetRegistryWrapper
 from ..paths import PROJECT_ROOT
+from .architecture_config import ArchitectureConfig
 from .augmentation_config import AugmentationConfig
 from .dataset_config import DatasetConfig
 from .evaluation_config import EvaluationConfig
 from .export_config import ExportConfig
 from .hardware_config import HardwareConfig
-from .models_config import ModelConfig
 from .optuna_config import OptunaConfig
 from .telemetry_config import TelemetryConfig
 from .training_config import TrainingConfig
@@ -56,7 +56,7 @@ class Config(BaseModel):
         augmentation: Data augmentation and TTA parameters
         dataset: Dataset selection, resolution, normalization
         evaluation: Metrics, visualization, reporting settings
-        model: Architecture selection, pretrained weights
+        architecture: Architecture selection, pretrained weights
         optuna: Hyperparameter optimization configuration (optional)
         export: Model export configuration for ONNX/TorchScript (optional)
 
@@ -64,7 +64,7 @@ class Config(BaseModel):
         >>> from orchard.core import Config, parse_args
         >>> args = parse_args()  # --config recipes/config_mini_cnn.yaml
         >>> cfg = Config.from_args(args)
-        >>> cfg.model.name
+        >>> cfg.architecture.name
         'mini_cnn'
     """
 
@@ -76,7 +76,7 @@ class Config(BaseModel):
     augmentation: AugmentationConfig = Field(default_factory=AugmentationConfig)
     dataset: DatasetConfig = Field(default_factory=DatasetConfig)
     evaluation: EvaluationConfig = Field(default_factory=EvaluationConfig)
-    model: ModelConfig = Field(default_factory=ModelConfig)
+    architecture: ArchitectureConfig = Field(default_factory=ArchitectureConfig)
     optuna: Optional[OptunaConfig] = Field(default=None)
     export: Optional[ExportConfig] = Field(default=None)
 
@@ -124,9 +124,9 @@ class Config(BaseModel):
             object.__setattr__(self.training, "use_amp", False)
 
         # 5. Model-dataset consistency
-        if self.model.pretrained and self.dataset.effective_in_channels != 3:
+        if self.architecture.pretrained and self.dataset.effective_in_channels != 3:
             raise ValueError(
-                f"Pretrained {self.model.name} requires RGB (3 channels), "
+                f"Pretrained {self.architecture.name} requires RGB (3 channels), "
                 f"but dataset will provide {self.dataset.effective_in_channels} channels. "
                 f"Set 'force_rgb: true' in dataset config or disable pretraining"
             )
@@ -152,7 +152,7 @@ class Config(BaseModel):
         Raises:
             ValueError: If architecture and resolution are incompatible
         """
-        model_name = self.model.name.lower()
+        model_name = self.architecture.name.lower()
         resolution = self.dataset.resolution
 
         # Architecture -> required resolution mapping
@@ -161,13 +161,13 @@ class Config(BaseModel):
 
         if model_name in resolution_28_models and resolution != 28:
             raise ValueError(
-                f"'{self.model.name}' requires resolution=28, got {resolution}. "
+                f"'{self.architecture.name}' requires resolution=28, got {resolution}. "
                 f"Use a 224x224 architecture (efficientnet_b0, vit_tiny) for high resolution."
             )
 
         if model_name in resolution_224_models and resolution != 224:
             raise ValueError(
-                f"'{self.model.name}' requires resolution=224, got {resolution}. "
+                f"'{self.architecture.name}' requires resolution=224, got {resolution}. "
                 f"Use a 28x28 architecture (resnet_18_adapted, mini_cnn) for low resolution."
             )
 
@@ -182,7 +182,7 @@ class Config(BaseModel):
         Returns:
             String in format '{dataset_name}_{model_name}'.
         """
-        return f"{self.dataset.dataset_name}_{self.model.name}"
+        return f"{self.dataset.dataset_name}_{self.architecture.name}"
 
     @property
     def num_workers(self) -> int:
@@ -372,7 +372,7 @@ class Config(BaseModel):
             training=TrainingConfig.from_args(args),
             augmentation=AugmentationConfig.from_args(args),
             dataset=DatasetConfig.from_args(args),
-            model=ModelConfig.from_args(args),
+            architecture=ArchitectureConfig.from_args(args),
             evaluation=EvaluationConfig.from_args(args),
             optuna=OptunaConfig.from_args(args) if hasattr(args, "study_name") else None,
             export=ExportConfig.from_args(args) if hasattr(args, "format") else None,

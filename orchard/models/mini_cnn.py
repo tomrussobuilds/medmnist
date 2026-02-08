@@ -100,7 +100,9 @@ def build_mini_cnn(
         f"{cfg.dataset.img_size}×{cfg.dataset.img_size} input"
     )
 
-    model = MiniCNN(in_channels=in_channels, num_classes=num_classes, dropout=cfg.model.dropout)
+    model = MiniCNN(
+        in_channels=in_channels, num_classes=num_classes, dropout=cfg.architecture.dropout
+    )
 
     model = model.to(device)
 

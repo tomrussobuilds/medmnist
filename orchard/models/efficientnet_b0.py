@@ -44,7 +44,7 @@ def build_efficientnet_b0(
     """
 
     # --- Step 1: Initialize with Optional Pretraining ---
-    weights = models.EfficientNet_B0_Weights.IMAGENET1K_V1 if cfg.model.pretrained else None
+    weights = models.EfficientNet_B0_Weights.IMAGENET1K_V1 if cfg.architecture.pretrained else None
     model = models.efficientnet_b0(weights=weights)
 
     # Snapshot original first conv layer (before replacement)
@@ -62,7 +62,7 @@ def build_efficientnet_b0(
     )
 
     # --- Step 3: Weight Morphing (Transfer Pretrained Knowledge) ---
-    if cfg.model.pretrained:
+    if cfg.architecture.pretrained:
         with torch.no_grad():
             w = old_conv.weight  # Shape: [32, 3, 3, 3]
 

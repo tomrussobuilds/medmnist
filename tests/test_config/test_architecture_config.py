@@ -1,7 +1,7 @@
 """
-Test Suite for ModelConfig.
+Test Suite for ArchitectureConfig.
 
-Tests model architecture selection, pretrained weight variants,
+Tests architecture selection, pretrained weight variants,
 and dropout regularization configuration.
 """
 
@@ -10,14 +10,14 @@ from argparse import Namespace
 import pytest
 from pydantic import ValidationError
 
-from orchard.core.config import ModelConfig
+from orchard.core.config import ArchitectureConfig
 
 
-# MODEL CONFIG: DEFAULTS
+# ARCHITECTURE CONFIG: DEFAULTS
 @pytest.mark.unit
-def test_model_config_defaults():
-    """Test ModelConfig with default values."""
-    config = ModelConfig()
+def test_architecture_config_defaults():
+    """Test ArchitectureConfig with default values."""
+    config = ArchitectureConfig()
 
     assert config.name == "resnet_18_adapted"
     assert config.pretrained is True
@@ -26,9 +26,9 @@ def test_model_config_defaults():
 
 
 @pytest.mark.unit
-def test_model_config_custom_values():
-    """Test ModelConfig with custom parameters."""
-    config = ModelConfig(
+def test_architecture_config_custom_values():
+    """Test ArchitectureConfig with custom parameters."""
+    config = ArchitectureConfig(
         name="efficientnet_b0", pretrained=False, dropout=0.3, weight_variant="imagenet"
     )
 
@@ -38,50 +38,50 @@ def test_model_config_custom_values():
     assert config.weight_variant == "imagenet"
 
 
-# MODEL CONFIG: VALIDATION
+# ARCHITECTURE CONFIG: VALIDATION
 @pytest.mark.unit
 def test_dropout_bounds():
     """Test dropout must be in [0.0, 0.9]."""
 
-    config = ModelConfig(dropout=0.0)
+    config = ArchitectureConfig(dropout=0.0)
     assert config.dropout == 0.0
 
-    config = ModelConfig(dropout=0.5)
+    config = ArchitectureConfig(dropout=0.5)
     assert config.dropout == 0.5
 
-    config = ModelConfig(dropout=0.9)
+    config = ArchitectureConfig(dropout=0.9)
     assert config.dropout == 0.9
 
     with pytest.raises(ValidationError):
-        ModelConfig(dropout=-0.1)
+        ArchitectureConfig(dropout=-0.1)
 
     with pytest.raises(ValidationError):
-        ModelConfig(dropout=1.0)
+        ArchitectureConfig(dropout=1.0)
 
 
 @pytest.mark.unit
 def test_name_accepts_string():
     """Test name field accepts arbitrary string."""
     for name in ["resnet18", "vit_tiny", "custom_model", "my-model-v2"]:
-        config = ModelConfig(name=name)
+        config = ArchitectureConfig(name=name)
         assert config.name == name
 
 
 @pytest.mark.unit
 def test_pretrained_boolean():
     """Test pretrained field is boolean."""
-    config = ModelConfig(pretrained=True)
+    config = ArchitectureConfig(pretrained=True)
     assert config.pretrained is True
 
-    config = ModelConfig(pretrained=False)
+    config = ArchitectureConfig(pretrained=False)
     assert config.pretrained is False
 
 
-# MODEL CONFIG: WEIGHT VARIANTS
+# ARCHITECTURE CONFIG: WEIGHT VARIANTS
 @pytest.mark.unit
 def test_weight_variant_optional():
     """Test weight_variant can be None."""
-    config = ModelConfig(weight_variant=None)
+    config = ArchitectureConfig(weight_variant=None)
     assert config.weight_variant is None
 
 
@@ -96,37 +96,37 @@ def test_weight_variant_string():
     ]
 
     for variant in variants:
-        config = ModelConfig(weight_variant=variant)
+        config = ArchitectureConfig(weight_variant=variant)
         assert config.weight_variant == variant
 
 
 @pytest.mark.unit
 def test_weight_variant_with_pretrained_false():
     """Test weight_variant can be set even if pretrained=False."""
-    config = ModelConfig(pretrained=False, weight_variant="imagenet")
+    config = ArchitectureConfig(pretrained=False, weight_variant="imagenet")
 
     assert config.pretrained is False
     assert config.weight_variant == "imagenet"
 
 
-# MODEL CONFIG: ARCHITECTURE NAMES
+# ARCHITECTURE CONFIG: ARCHITECTURE NAMES
 @pytest.mark.unit
 def test_common_architecture_names():
-    """Test ModelConfig accepts common architecture names."""
+    """Test ArchitectureConfig accepts common architecture names."""
     architectures = ["resnet_18_adapted", "efficientnet_b0", "vit_tiny", "mini_cnn"]
 
     for arch in architectures:
-        config = ModelConfig(name=arch)
+        config = ArchitectureConfig(name=arch)
         assert config.name == arch
 
 
-# MODEL CONFIG: FROM ARGS
+# ARCHITECTURE CONFIG: FROM ARGS
 @pytest.mark.unit
 def test_from_args():
-    """Test ModelConfig.from_args() factory."""
+    """Test ArchitectureConfig.from_args() factory."""
     args = Namespace(model_name="vit_tiny", pretrained=False, dropout=0.25)
 
-    config = ModelConfig.from_args(args)
+    config = ArchitectureConfig.from_args(args)
 
     assert config.name == "vit_tiny"
     assert config.pretrained is False
@@ -138,7 +138,7 @@ def test_from_args_with_defaults():
     """Test from_args() uses defaults for missing arguments."""
     args = Namespace()
 
-    config = ModelConfig.from_args(args)
+    config = ArchitectureConfig.from_args(args)
 
     assert config.name == "resnet18"
     assert config.pretrained is True
@@ -150,27 +150,27 @@ def test_from_args_partial():
     """Test from_args() with partial arguments."""
     args = Namespace(model_name="efficientnet_b0")
 
-    config = ModelConfig.from_args(args)
+    config = ArchitectureConfig.from_args(args)
 
     assert config.name == "efficientnet_b0"
     assert config.pretrained is True
     assert config.dropout == 0.2
 
 
-# MODEL CONFIG: DESCRIPTION FIELD
+# ARCHITECTURE CONFIG: DESCRIPTION FIELD
 @pytest.mark.unit
 def test_field_descriptions_present():
     """Test all fields have descriptions."""
-    for field_name, field_info in ModelConfig.model_fields.items():
+    for field_name, field_info in ArchitectureConfig.model_fields.items():
         assert field_info.description is not None
         assert len(field_info.description) > 0
 
 
-# MODEL CONFIG: IMMUTABILITY
+# ARCHITECTURE CONFIG: IMMUTABILITY
 @pytest.mark.unit
 def test_config_is_frozen():
-    """Test ModelConfig is immutable after creation."""
-    config = ModelConfig()
+    """Test ArchitectureConfig is immutable after creation."""
+    config = ArchitectureConfig()
 
     with pytest.raises(ValidationError):
         config.name = "new_model"
@@ -178,16 +178,16 @@ def test_config_is_frozen():
 
 @pytest.mark.unit
 def test_config_forbids_extra_fields():
-    """Test ModelConfig rejects unknown fields."""
+    """Test ArchitectureConfig rejects unknown fields."""
     with pytest.raises(ValidationError):
-        ModelConfig(learning_rate=0.001)
+        ArchitectureConfig(learning_rate=0.001)
 
 
-# MODEL CONFIG: EDGE CASES
+# ARCHITECTURE CONFIG: EDGE CASES
 @pytest.mark.unit
 def test_empty_name_rejected():
     """Test empty string for name is rejected."""
-    config = ModelConfig(name="")
+    config = ArchitectureConfig(name="")
     assert config.name == ""
 
 
@@ -195,7 +195,7 @@ def test_empty_name_rejected():
 def test_very_long_weight_variant():
     """Test very long weight_variant string is accepted."""
     long_variant = "a" * 500
-    config = ModelConfig(weight_variant=long_variant)
+    config = ArchitectureConfig(weight_variant=long_variant)
     assert config.weight_variant == long_variant
 
 

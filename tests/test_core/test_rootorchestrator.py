@@ -354,7 +354,7 @@ def test_phase_3_filesystem_provisioning_calls_static_setup_and_runpaths():
 
     mock_cfg = MagicMock()
     mock_cfg.dataset.dataset_name = "ds"
-    mock_cfg.model.name = "model"
+    mock_cfg.architecture.name = "architecture"
     mock_cfg.telemetry.output_dir = "/tmp/out"
     mock_cfg.dump_serialized = MagicMock(return_value={"some": "data"})
     mock_static_setup = MagicMock()
@@ -365,7 +365,7 @@ def test_phase_3_filesystem_provisioning_calls_static_setup_and_runpaths():
     mock_static_setup.assert_called_once()
     orch_module.RunPaths.create.assert_called_once_with(
         dataset_slug="ds",
-        model_name="model",
+        architecture_name="architecture",
         training_cfg={"some": "data"},
         base_dir="/tmp/out",
     )
@@ -662,7 +662,7 @@ def test_full_lifecycle_with_all_phases(tmp_path):
     mock_cfg.hardware.effective_num_workers = 2
     mock_cfg.hardware.device = "cpu"
     mock_cfg.dataset.dataset_name = "test_dataset"
-    mock_cfg.model.name = "test_model"
+    mock_cfg.architecture.name = "test_architecture"
     mock_cfg.telemetry.output_dir = str(tmp_path)
     mock_cfg.telemetry.log_level = "INFO"
     mock_cfg.dump_serialized = MagicMock(return_value={"test": "data"})

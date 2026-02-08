@@ -17,8 +17,8 @@ from orchard.models import build_mini_cnn
 def mock_cfg():
     """Provides a standardized configuration mock for model building."""
     cfg = MagicMock()
-    cfg.model.pretrained = True
-    cfg.model.dropout = 0.5
+    cfg.architecture.pretrained = True
+    cfg.architecture.dropout = 0.5
     cfg.dataset = MagicMock()
     cfg.dataset.img_size = 28
     return cfg

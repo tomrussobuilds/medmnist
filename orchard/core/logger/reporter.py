@@ -194,18 +194,18 @@ class Reporter(BaseModel):
 
         logger_instance.info("[STRATEGY]")
         logger_instance.info(
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Architecture':<18}: {cfg.model.name}"
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Architecture':<18}: {cfg.architecture.name}"
         )
         logger_instance.info(
             f"{LogStyle.INDENT}{LogStyle.ARROW} "
-            f"{'Weights':<18}: {'Pretrained' if cfg.model.pretrained else 'Random'}"
+            f"{'Weights':<18}: {'Pretrained' if cfg.architecture.pretrained else 'Random'}"
         )
 
         # Add weight variant if present (for ViT)
-        if cfg.model.weight_variant:
+        if cfg.architecture.weight_variant:
             logger_instance.info(
                 f"{LogStyle.INDENT}{LogStyle.ARROW} "
-                f"{'Weight Variant':<18}: {cfg.model.weight_variant}"
+                f"{'Weight Variant':<18}: {cfg.architecture.weight_variant}"
             )
 
         logger_instance.info(

@@ -238,10 +238,12 @@ def log_training_summary(
     log.info(f"{'PIPELINE EXECUTION SUMMARY':^80}")
     log.info(LogStyle.DOUBLE)
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Dataset      : {cfg.dataset.dataset_name}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Architecture : {cfg.model.name}")
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Architecture : {cfg.architecture.name}")
 
-    if cfg.model.weight_variant:
-        log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Weight Var.  : {cfg.model.weight_variant}")
+    if cfg.architecture.weight_variant:
+        log.info(
+            f"{LogStyle.INDENT}{LogStyle.ARROW} Weight Var.  : {cfg.architecture.weight_variant}"
+        )
 
     log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Test Accuracy: {test_acc:>8.2%}")
     log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Macro F1     : {macro_f1:>8.4f}")

@@ -59,7 +59,7 @@ def mock_cfg():
     cfg.model_dump = MagicMock(
         return_value={
             "training": {"epochs": 50},
-            "model": {},
+            "architecture": {},
             "augmentation": {},
         }
     )

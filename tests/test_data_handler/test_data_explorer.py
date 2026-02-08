@@ -53,7 +53,7 @@ def test_show_sample_images_with_config(mock_plt, tmp_path):
     mock_cfg = MagicMock()
     mock_cfg.dataset.mean = [0.5, 0.5, 0.5]
     mock_cfg.dataset.std = [0.5, 0.5, 0.5]
-    mock_cfg.model.name = "test_model"
+    mock_cfg.architecture.name = "test_model"
 
     save_path = tmp_path / "test_grid.png"
 

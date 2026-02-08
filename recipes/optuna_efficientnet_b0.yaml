@@ -37,14 +37,13 @@ dataset:
   use_weighted_sampler: false
   max_samples: null
 
-model:
+architecture:
   name: "efficientnet_b0"
   pretrained: true
   dropout: 0.3                  # Will be optimized
 
 training:
   seed: 42
-  reproducible: false
   
   # Base values (WILL BE OPTIMIZED BY OPTUNA)
   batch_size: 16                # Conservative for optimization
@@ -88,6 +87,7 @@ augmentation:
 
 hardware:
   device: "auto"
+  reproducible: false
 
 telemetry:
   output_dir: ./outputs

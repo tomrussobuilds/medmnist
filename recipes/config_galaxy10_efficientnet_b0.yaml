@@ -15,14 +15,13 @@ dataset:
   use_weighted_sampler: false
   max_samples: null
 
-model:
+architecture:
   name: "efficientnet_b0"
   pretrained: true
   dropout: 0.3
 
 training:
   seed: 42
-  reproducible: false
 
   # Optimization (OPTIMIZED FOR RTX 5070)
   batch_size: 16

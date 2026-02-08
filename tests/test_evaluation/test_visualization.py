@@ -36,7 +36,7 @@ def test_plot_training_curves_basic(mock_savez, mock_plt, tmp_path):
     out_path = tmp_path / "curves.png"
 
     mock_cfg = MagicMock()
-    mock_cfg.model.name = "resnet18"
+    mock_cfg.architecture.name = "resnet18"
     mock_cfg.dataset.resolution = 28
     mock_cfg.evaluation.fig_dpi = 200
 
@@ -62,7 +62,7 @@ def test_plot_training_curves_empty_lists(mock_savez, mock_plt, tmp_path):
     out_path = tmp_path / "curves.png"
 
     mock_cfg = MagicMock()
-    mock_cfg.model.name = "model"
+    mock_cfg.architecture.name = "model"
     mock_cfg.dataset.resolution = 224
     mock_cfg.evaluation.fig_dpi = 150
 
@@ -85,7 +85,7 @@ def test_plot_confusion_matrix_basic(mock_cm, mock_plt, tmp_path):
     out_path = tmp_path / "confusion.png"
 
     mock_cfg = MagicMock()
-    mock_cfg.model.name = "efficientnet"
+    mock_cfg.architecture.name = "efficientnet"
     mock_cfg.dataset.resolution = 224
     mock_cfg.evaluation.fig_dpi = 200
     mock_cfg.evaluation.cmap_confusion = "Blues"
@@ -114,7 +114,7 @@ def test_plot_confusion_matrix_with_nan(mock_cm, mock_plt, tmp_path):
     out_path = tmp_path / "confusion.png"
 
     mock_cfg = MagicMock()
-    mock_cfg.model.name = "model"
+    mock_cfg.architecture.name = "model"
     mock_cfg.dataset.resolution = 28
     mock_cfg.evaluation.fig_dpi = 150
     mock_cfg.evaluation.cmap_confusion = "viridis"
@@ -150,7 +150,7 @@ def test_show_predictions_basic(mock_get_batch, mock_plt, tmp_path):
     mock_cfg.evaluation.grid_cols = 4
     mock_cfg.evaluation.fig_dpi = 200
     mock_cfg.evaluation.fig_size_predictions = (12, 9)
-    mock_cfg.model.name = "resnet18"
+    mock_cfg.architecture.name = "resnet18"
     mock_cfg.dataset.resolution = 28
     mock_cfg.dataset.mean = [0.5, 0.5, 0.5]
     mock_cfg.dataset.std = [0.5, 0.5, 0.5]
@@ -193,7 +193,7 @@ def test_show_predictions_without_config(mock_get_batch, mock_plt):
     mock_cfg.evaluation.grid_cols = 4
     mock_cfg.evaluation.fig_size_predictions = (12, 9)
     mock_cfg.evaluation.fig_dpi = 150
-    mock_cfg.model.name = "model"
+    mock_cfg.architecture.name = "model"
     mock_cfg.dataset.resolution = 28
     mock_cfg.dataset.mean = [0.5, 0.5, 0.5]
     mock_cfg.dataset.std = [0.5, 0.5, 0.5]
@@ -231,7 +231,7 @@ def test_show_predictions_without_save_path(mock_get_batch, mock_plt, tmp_path):
     mock_cfg.evaluation.grid_cols = 4
     mock_cfg.evaluation.fig_dpi = 200
     mock_cfg.evaluation.fig_size_predictions = (12, 9)
-    mock_cfg.model.name = "resnet18"
+    mock_cfg.architecture.name = "resnet18"
     mock_cfg.dataset.resolution = 28
     mock_cfg.dataset.mean = [0.5, 0.5, 0.5]
     mock_cfg.dataset.std = [0.5, 0.5, 0.5]
@@ -269,7 +269,7 @@ def test_show_predictions_standard_mode(mock_get_batch, mock_plt, tmp_path):
     mock_cfg.evaluation.grid_cols = 3
     mock_cfg.evaluation.fig_dpi = 150
     mock_cfg.evaluation.fig_size_predictions = (9, 6)
-    mock_cfg.model.name = "model"
+    mock_cfg.architecture.name = "model"
     mock_cfg.dataset.resolution = 28
     mock_cfg.dataset.mean = [0.5]
     mock_cfg.dataset.std = [0.5]
@@ -307,7 +307,7 @@ def test_show_predictions_with_custom_n(mock_get_batch, mock_plt, tmp_path):
     mock_cfg.evaluation.grid_cols = 3
     mock_cfg.evaluation.fig_dpi = 150
     mock_cfg.evaluation.fig_size_predictions = (9, 6)
-    mock_cfg.model.name = "vit"
+    mock_cfg.architecture.name = "vit"
     mock_cfg.dataset.resolution = 224
     mock_cfg.dataset.metadata.is_texture_based = True
     mock_cfg.dataset.metadata.is_anatomical = False

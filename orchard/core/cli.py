@@ -29,7 +29,7 @@ def parse_args() -> argparse.Namespace:
     )
 
     # Instantiate configs with defaults
-    # ModelConfig and DatasetConfig omitted (require mandatory data-dependent fields)
+    # ArchitectureConfig and DatasetConfig omitted (require mandatory data-dependent fields)
     hardware_def = HardwareConfig()
     telemetry_def = TelemetryConfig()
     train_def = TrainingConfig()

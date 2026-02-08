@@ -4,7 +4,7 @@ Optuna Configuration Constants and Registries.
 Centralized definitions for:
     - Sampler type registry (TPE, CmaES, Random, Grid)
     - Pruner type registry (Median, Percentile, Hyperband)
-    - Parameter-to-config mapping (training/model/augmentation sections)
+    - Parameter-to-config mapping (training/architecture/augmentation sections)
 
 These registries enable the factory pattern in builders.py and
 provide a single point of maintenance for supported algorithms.
@@ -61,10 +61,10 @@ TRAINING_PARAMS: Set[str] = {
 }
 """Hyperparameters that belong in the training section of Config."""
 
-MODEL_PARAMS: Set[str] = {
+ARCHITECTURE_PARAMS: Set[str] = {
     "dropout",
 }
-"""Hyperparameters that belong in the model section of Config."""
+"""Hyperparameters that belong in the architecture section of Config."""
 
 AUGMENTATION_PARAMS: Set[str] = {
     "rotation_angle",
@@ -74,8 +74,8 @@ AUGMENTATION_PARAMS: Set[str] = {
 """Hyperparameters that belong in the augmentation section of Config."""
 
 SPECIAL_PARAMS: Dict[str, Tuple[str, str]] = {
-    "model_name": ("model", "name"),
-    "weight_variant": ("model", "weight_variant"),
+    "model_name": ("architecture", "name"),
+    "weight_variant": ("architecture", "weight_variant"),
 }
 
 # ==================== HELPER FUNCTIONS ====================
@@ -98,8 +98,8 @@ def map_param_to_config_path(param_name: str) -> Tuple[str, str]:
     """
     if param_name in TRAINING_PARAMS:
         return ("training", param_name)
-    elif param_name in MODEL_PARAMS:
-        return ("model", param_name)
+    elif param_name in ARCHITECTURE_PARAMS:
+        return ("architecture", param_name)
     elif param_name in AUGMENTATION_PARAMS:
         return ("augmentation", param_name)
     elif param_name in SPECIAL_PARAMS:

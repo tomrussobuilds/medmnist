@@ -57,9 +57,9 @@ def build_vit_tiny(
         ValueError: If weight variant is invalid or incompatible with pretrained flag
     """
     # --- Step 1: Resolve Weight Variant ---
-    weight_variant = cfg.model.weight_variant or "vit_tiny_patch16_224.augreg_in21k_ft_in1k"
+    weight_variant = cfg.architecture.weight_variant or "vit_tiny_patch16_224.augreg_in21k_ft_in1k"
 
-    if cfg.model.pretrained:
+    if cfg.architecture.pretrained:
         logger.info(f"Loading ViT-Tiny with pretrained weights: {weight_variant}")
         pretrained_flag = True
     else:
@@ -103,7 +103,7 @@ def build_vit_tiny(
         )
 
         # --- Step 4: Weight Morphing (Transfer Pretrained Knowledge) ---
-        if cfg.model.pretrained:
+        if cfg.architecture.pretrained:
             with torch.no_grad():
                 w = old_proj.weight  # Shape: [192, 3, 16, 16]
 

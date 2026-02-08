@@ -20,8 +20,8 @@ def test_get_model_returns_nn_module():
     """Test get_model returns a torch.nn.Module instance."""
     device = torch.device("cpu")
     mock_cfg = MagicMock()
-    mock_cfg.model.name = "mini_cnn"
-    mock_cfg.model.dropout = 0.0
+    mock_cfg.architecture.name = "mini_cnn"
+    mock_cfg.architecture.dropout = 0.0
     mock_cfg.dataset.effective_in_channels = 3
     mock_cfg.dataset.num_classes = 10
     mock_cfg.dataset.img_size = 28
@@ -36,8 +36,8 @@ def test_get_model_deploys_to_device():
     """Test get_model deploys model to specified device."""
     device = torch.device("cpu")
     mock_cfg = MagicMock()
-    mock_cfg.model.name = "mini_cnn"
-    mock_cfg.model.dropout = 0.0
+    mock_cfg.architecture.name = "mini_cnn"
+    mock_cfg.architecture.dropout = 0.0
     mock_cfg.dataset.effective_in_channels = 3
     mock_cfg.dataset.num_classes = 8
     mock_cfg.dataset.img_size = 28
@@ -52,7 +52,7 @@ def test_get_model_invalid_architecture():
     """Test get_model raises ValueError for unknown architecture."""
     device = torch.device("cpu")
     mock_cfg = MagicMock()
-    mock_cfg.model.name = "invalid_model_xyz"
+    mock_cfg.architecture.name = "invalid_model_xyz"
     mock_cfg.dataset.effective_in_channels = 3
     mock_cfg.dataset.num_classes = 10
     mock_cfg.dataset.img_size = 28
@@ -66,8 +66,8 @@ def test_get_model_case_insensitive():
     """Test get_model handles case-insensitive model names."""
     device = torch.device("cpu")
     mock_cfg = MagicMock()
-    mock_cfg.model.name = "MINI_CNN"
-    mock_cfg.model.dropout = 0.0
+    mock_cfg.architecture.name = "MINI_CNN"
+    mock_cfg.architecture.dropout = 0.0
     mock_cfg.dataset.effective_in_channels = 3
     mock_cfg.dataset.num_classes = 10
     mock_cfg.dataset.img_size = 28
@@ -87,13 +87,13 @@ def test_get_model_all_registered_models(model_name):
     """Test get_model can instantiate all registered models."""
     device = torch.device("cpu")
     mock_cfg = MagicMock()
-    mock_cfg.model.name = model_name
-    mock_cfg.model.dropout = 0.0
+    mock_cfg.architecture.name = model_name
+    mock_cfg.architecture.dropout = 0.0
     mock_cfg.dataset.effective_in_channels = 3
     mock_cfg.dataset.num_classes = 10
     mock_cfg.dataset.img_size = 224 if model_name == "vit_tiny" else 28
-    mock_cfg.model.pretrained = False
-    mock_cfg.model.weight_variant = None
+    mock_cfg.architecture.pretrained = False
+    mock_cfg.architecture.weight_variant = None
 
     model = get_model(device=device, cfg=mock_cfg)
 

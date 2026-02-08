@@ -28,7 +28,7 @@ def test_config_builder_preserves_metadata():
     mock_cfg.model_dump.return_value = {
         "dataset": {"resolution": 28},
         "training": {},
-        "model": {},
+        "architecture": {},
         "augmentation": {},
     }
     mock_cfg.dataset.resolution = 28
@@ -49,7 +49,7 @@ def test_config_builder_applies_param_overrides():
     config_dict = {
         "dataset": {"resolution": 28, "metadata": None},
         "training": {"learning_rate": 0.001, "epochs": 60},
-        "model": {"dropout": 0.0},
+        "architecture": {"dropout": 0.0},
         "augmentation": {"rotation_angle": 0},
     }
     mock_cfg.model_dump.return_value = config_dict.copy()
@@ -71,19 +71,19 @@ def test_config_builder_applies_param_overrides():
     builder._apply_param_overrides(test_dict, trial_params)
 
     assert test_dict["training"]["learning_rate"] == 0.0001
-    assert test_dict["model"]["dropout"] == 0.3
+    assert test_dict["architecture"]["dropout"] == 0.3
     assert test_dict["augmentation"]["rotation_angle"] == 15
     assert test_dict["training"]["epochs"] == 20
 
 
 @pytest.mark.unit
 def test_config_builder_handles_model_name():
-    """Test TrialConfigBuilder maps model_name to model.name."""
+    """Test TrialConfigBuilder maps model_name to architecture.name."""
     mock_cfg = MagicMock()
     config_dict = {
         "dataset": {"resolution": 224, "metadata": None},
         "training": {"epochs": 60},
-        "model": {"name": "efficientnet_b0", "dropout": 0.3},
+        "architecture": {"name": "efficientnet_b0", "dropout": 0.3},
         "augmentation": {},
     }
     mock_cfg.model_dump.return_value = config_dict.copy()
@@ -100,7 +100,7 @@ def test_config_builder_handles_model_name():
     test_dict["training"]["epochs"] = builder.optuna_epochs
     builder._apply_param_overrides(test_dict, trial_params)
 
-    assert test_dict["model"]["name"] == "vit_tiny"
+    assert test_dict["architecture"]["name"] == "vit_tiny"
 
 
 @pytest.mark.unit
@@ -110,7 +110,7 @@ def test_config_builder_handles_weight_variant():
     config_dict = {
         "dataset": {"resolution": 224, "metadata": None},
         "training": {"epochs": 60},
-        "model": {"name": "vit_tiny", "weight_variant": None},
+        "architecture": {"name": "vit_tiny", "weight_variant": None},
         "augmentation": {},
     }
     mock_cfg.model_dump.return_value = config_dict.copy()
@@ -127,7 +127,9 @@ def test_config_builder_handles_weight_variant():
     test_dict["training"]["epochs"] = builder.optuna_epochs
     builder._apply_param_overrides(test_dict, trial_params)
 
-    assert test_dict["model"]["weight_variant"] == "vit_tiny_patch16_224.augreg_in21k_ft_in1k"
+    assert (
+        test_dict["architecture"]["weight_variant"] == "vit_tiny_patch16_224.augreg_in21k_ft_in1k"
+    )
 
 
 @pytest.mark.unit
@@ -137,7 +139,7 @@ def test_config_builder_skips_none_weight_variant():
     config_dict = {
         "dataset": {"resolution": 224, "metadata": None},
         "training": {"epochs": 60},
-        "model": {"name": "efficientnet_b0", "weight_variant": "original_value"},
+        "architecture": {"name": "efficientnet_b0", "weight_variant": "original_value"},
         "augmentation": {},
     }
     mock_cfg.model_dump.return_value = config_dict.copy()
@@ -156,7 +158,7 @@ def test_config_builder_skips_none_weight_variant():
     builder._apply_param_overrides(test_dict, trial_params)
 
     # Should preserve original value and not overwrite with None
-    assert test_dict["model"]["weight_variant"] == "original_value"
+    assert test_dict["architecture"]["weight_variant"] == "original_value"
 
 
 # METRIC EXTRACTOR TESTS
@@ -716,7 +718,7 @@ def test_trial_config_builder_preserves_resolution_when_none():
     mock_cfg.model_dump.return_value = {
         "dataset": {"resolution": None},
         "training": {"epochs": 60},
-        "model": {},
+        "architecture": {},
         "augmentation": {},
     }
 
@@ -743,7 +745,7 @@ def test_trial_config_builder_keeps_existing_resolution():
     mock_cfg.model_dump.return_value = {
         "dataset": {"resolution": 28},
         "training": {"epochs": 60},
-        "model": {},
+        "architecture": {},
         "augmentation": {},
     }
 

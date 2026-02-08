@@ -77,8 +77,8 @@ def test_log_training_summary_basic():
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
     mock_cfg.dataset.dataset_name = "bloodmnist"
-    mock_cfg.model.name = "resnet_18_adapted"
-    mock_cfg.model.weight_variant = None
+    mock_cfg.architecture.name = "resnet_18_adapted"
+    mock_cfg.architecture.weight_variant = None
     mock_device = torch.device("cpu")
     mock_paths = MagicMock()
     mock_paths.root = "/tmp/outputs/run123"
@@ -105,8 +105,8 @@ def test_log_training_summary_with_weight_variant():
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
     mock_cfg.dataset.dataset_name = "pathmnist"
-    mock_cfg.model.name = "vit_tiny"
-    mock_cfg.model.weight_variant = "IMAGENET1K_V1"
+    mock_cfg.architecture.name = "vit_tiny"
+    mock_cfg.architecture.weight_variant = "IMAGENET1K_V1"
     mock_device = torch.device("cuda")
     mock_paths = MagicMock()
     mock_paths.root = "/tmp/outputs/run456"
@@ -131,8 +131,8 @@ def test_log_training_summary_formats_accuracy():
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
     mock_cfg.dataset.dataset_name = "test"
-    mock_cfg.model.name = "model"
-    mock_cfg.model.weight_variant = None
+    mock_cfg.architecture.name = "model"
+    mock_cfg.architecture.weight_variant = None
     mock_device = torch.device("cpu")
     mock_paths = MagicMock()
     mock_paths.root = "/tmp"
@@ -472,9 +472,9 @@ def test_reporter_log_initial_status():
     mock_cfg.training.use_amp = True
     mock_cfg.training.seed = 42
     mock_cfg.hardware.use_deterministic_algorithms = False
-    mock_cfg.model.name = "resnet_18_adapted"
-    mock_cfg.model.pretrained = True
-    mock_cfg.model.weight_variant = None
+    mock_cfg.architecture.name = "resnet_18_adapted"
+    mock_cfg.architecture.pretrained = True
+    mock_cfg.architecture.weight_variant = None
     mock_cfg.dataset.metadata = MagicMock()
     mock_cfg.dataset.metadata.display_name = "BloodMNIST"
     mock_cfg.dataset.metadata.num_classes = 8
@@ -517,9 +517,9 @@ def test_reporter_log_initial_status_cpu_device():
     mock_cfg.training.use_amp = False
     mock_cfg.training.seed = 42
     mock_cfg.hardware.use_deterministic_algorithms = True
-    mock_cfg.model.name = "model"
-    mock_cfg.model.pretrained = False
-    mock_cfg.model.weight_variant = None
+    mock_cfg.architecture.name = "model"
+    mock_cfg.architecture.pretrained = False
+    mock_cfg.architecture.weight_variant = None
     mock_cfg.dataset.metadata = MagicMock()
     mock_cfg.dataset.metadata.display_name = "Test"
     mock_cfg.dataset.metadata.num_classes = 2
@@ -562,9 +562,9 @@ def test_reporter_log_initial_status_with_weight_variant():
     mock_cfg.training.use_amp = True
     mock_cfg.training.seed = 42
     mock_cfg.hardware.use_deterministic_algorithms = False
-    mock_cfg.model.name = "vit_tiny"
-    mock_cfg.model.pretrained = True
-    mock_cfg.model.weight_variant = "IMAGENET1K_V1"
+    mock_cfg.architecture.name = "vit_tiny"
+    mock_cfg.architecture.pretrained = True
+    mock_cfg.architecture.weight_variant = "IMAGENET1K_V1"
     mock_cfg.dataset.metadata = MagicMock()
     mock_cfg.dataset.metadata.display_name = "Test"
     mock_cfg.dataset.metadata.num_classes = 3
@@ -597,8 +597,8 @@ def test_functions_use_module_logger_when_no_instance():
     """Test logging functions use module logger when no instance provided."""
     mock_cfg = MagicMock()
     mock_cfg.dataset.dataset_name = "test"
-    mock_cfg.model.name = "model"
-    mock_cfg.model.weight_variant = None
+    mock_cfg.architecture.name = "model"
+    mock_cfg.architecture.weight_variant = None
     mock_device = torch.device("cpu")
     mock_paths = MagicMock()
     mock_paths.root = "/tmp"

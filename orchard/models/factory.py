@@ -73,10 +73,10 @@ def get_model(device: torch.device, cfg: Config) -> nn.Module:
     # Resolve structural dimensions from Single Source of Truth (Config)
     in_channels = cfg.dataset.effective_in_channels
     num_classes = cfg.dataset.num_classes
-    model_name_lower = cfg.model.name.lower()
+    model_name_lower = cfg.architecture.name.lower()
 
     logger.info(
-        f"Initializing Architecture: {cfg.model.name} | "
+        f"Initializing Architecture: {cfg.architecture.name} | "
         f"Input: {cfg.dataset.img_size}x{cfg.dataset.img_size}x{in_channels} | "
         f"Output: {num_classes} classes"
     )
@@ -84,7 +84,7 @@ def get_model(device: torch.device, cfg: Config) -> nn.Module:
     # Architecture resolution via Registry lookup
     builder = _MODEL_REGISTRY.get(model_name_lower)
     if not builder:
-        error_msg = f"Architecture '{cfg.model.name}' is not registered in the Factory."
+        error_msg = f"Architecture '{cfg.architecture.name}' is not registered in the Factory."
         logger.error(f" [!] {error_msg}")
         raise ValueError(error_msg)
 

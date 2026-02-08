@@ -38,7 +38,7 @@ dataset:
   use_weighted_sampler: true
   max_samples: null
 
-model:
+architecture:
   name: "mini_cnn"              # Will be optimized vs resnet_18_adapted
   pretrained: false
   weight_variant: null
@@ -46,7 +46,6 @@ model:
 
 training:
   seed: 42
-  reproducible: false
   
   # Base values (WILL BE OPTIMIZED BY OPTUNA)
   batch_size: 128               # Will be optimized (16/32/48/64)
@@ -90,6 +89,7 @@ augmentation:
 
 hardware:
   device: "auto"
+  reproducible: false
 
 telemetry:
   output_dir: ./outputs

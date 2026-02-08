@@ -224,7 +224,7 @@ class RootOrchestrator:
         self._static_dir_setup()
         self.paths = RunPaths.create(
             dataset_slug=self.cfg.dataset.dataset_name,
-            model_name=self.cfg.model.name,
+            architecture_name=self.cfg.architecture.name,
             training_cfg=self.cfg.dump_serialized(),
             base_dir=self.cfg.telemetry.output_dir,
         )

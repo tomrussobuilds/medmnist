@@ -40,7 +40,7 @@ def base_cfg():
         weighted_loss=True,
         criterion_type="cross_entropy",
     )
-    cfg.model = SimpleNamespace(name="resnet_18_adapted")
+    cfg.architecture = SimpleNamespace(name="resnet_18_adapted")
     return cfg
 
 
@@ -67,7 +67,7 @@ def test_get_criterion_invalid_type(base_cfg):
 @pytest.mark.unit
 def test_get_optimizer_resnet(base_cfg, simple_model):
     """Test SGD optimizer for ResNet variants."""
-    base_cfg.model.name = "resnet_18_adapted"
+    base_cfg.architecture.name = "resnet_18_adapted"
     optimizer = setup.get_optimizer(simple_model, base_cfg)
     assert isinstance(optimizer, optim.SGD)
 
@@ -75,7 +75,7 @@ def test_get_optimizer_resnet(base_cfg, simple_model):
 @pytest.mark.unit
 def test_get_optimizer_other_model(base_cfg, simple_model):
     """Test AdamW optimizer for non-ResNet models."""
-    base_cfg.model.name = "vit_tiny"
+    base_cfg.architecture.name = "vit_tiny"
     optimizer = setup.get_optimizer(simple_model, base_cfg)
     assert isinstance(optimizer, optim.AdamW)
 

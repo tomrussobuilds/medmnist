@@ -183,7 +183,7 @@ def minimal_config():
 
     return Config(
         dataset={"name": "bloodmnist", "resolution": 28},
-        model={"name": "resnet_18_adapted", "pretrained": False},
+        architecture={"name": "resnet_18_adapted", "pretrained": False},
         training={
             "epochs": 25,
             "batch_size": 16,

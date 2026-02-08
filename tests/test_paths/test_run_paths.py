@@ -32,14 +32,14 @@ def test_runpaths_create_basic(tmp_path):
 
     run_paths = RunPaths.create(
         dataset_slug="organcmnist",
-        model_name="EfficientNet-B0",
+        architecture_name="EfficientNet-B0",
         training_cfg=training_cfg,
         base_dir=tmp_path,
     )
 
     assert isinstance(run_paths, RunPaths)
     assert run_paths.dataset_slug == "organcmnist"
-    assert run_paths.model_slug == "efficientnetb0"
+    assert run_paths.architecture_slug == "efficientnetb0"
     assert run_paths.root.parent == tmp_path
 
 
@@ -50,7 +50,7 @@ def test_runpaths_create_uses_default_base_dir():
 
     run_paths = RunPaths.create(
         dataset_slug="test",
-        model_name="resnet",
+        architecture_name="resnet",
         training_cfg=training_cfg,
     )
 
@@ -64,7 +64,7 @@ def test_runpaths_create_normalizes_dataset_slug():
 
     run_paths = RunPaths.create(
         dataset_slug="OrganCMNIST",
-        model_name="resnet",
+        architecture_name="resnet",
         training_cfg=training_cfg,
         base_dir=Path("/tmp"),
     )
@@ -84,14 +84,14 @@ def test_runpaths_create_normalizes_model_name():
         ("DenseNet-121", "densenet121"),
     ]
 
-    for model_name, expected_slug in test_cases:
+    for architecture_name, expected_slug in test_cases:
         run_paths = RunPaths.create(
             dataset_slug="test",
-            model_name=model_name,
+            architecture_name=architecture_name,
             training_cfg=training_cfg,
             base_dir=Path("/tmp"),
         )
-        assert run_paths.model_slug == expected_slug
+        assert run_paths.architecture_slug == expected_slug
 
 
 @pytest.mark.unit
@@ -102,7 +102,7 @@ def test_runpaths_create_invalid_dataset_type():
     with pytest.raises(ValueError, match="Expected string for dataset_slug"):
         RunPaths.create(
             dataset_slug=123,
-            model_name="resnet",
+            architecture_name="resnet",
             training_cfg=training_cfg,
         )
 
@@ -115,7 +115,7 @@ def test_runpaths_create_invalid_model_type():
     with pytest.raises(ValueError, match="Expected string for model_name"):
         RunPaths.create(
             dataset_slug="test",
-            model_name=123,
+            architecture_name=123,
             training_cfg=training_cfg,
         )
 
@@ -125,16 +125,16 @@ def test_runpaths_create_invalid_model_type():
 def test_generate_unique_id_format():
     """Test _generate_unique_id() produces correct format: YYYYMMDD_dataset_model_hash."""
     ds_slug = "organcmnist"
-    m_slug = "efficientnetb0"
+    a_slug = "efficientnetb0"
     cfg = {"batch_size": 32, "learning_rate": 0.001}
 
-    run_id = RunPaths._generate_unique_id(ds_slug, m_slug, cfg)
+    run_id = RunPaths._generate_unique_id(ds_slug, a_slug, cfg)
 
     parts = run_id.split("_")
     assert len(parts) == 4
     assert len(parts[0]) == 8
     assert parts[1] == ds_slug
-    assert parts[2] == m_slug
+    assert parts[2] == a_slug
     assert len(parts[3]) == 6
 
 
@@ -142,12 +142,12 @@ def test_generate_unique_id_format():
 def test_generate_unique_id_deterministic():
     """Test _generate_unique_id() produces same hash for identical configs + timestamp."""
     ds_slug = "test"
-    m_slug = "model"
+    a_slug = "architecture"
     fixed_ts = 1707400000.0  # Fixed timestamp for determinism
     cfg = {"batch_size": 32, "learning_rate": 0.001, "epochs": 10, "run_timestamp": fixed_ts}
 
-    id1 = RunPaths._generate_unique_id(ds_slug, m_slug, cfg)
-    id2 = RunPaths._generate_unique_id(ds_slug, m_slug, cfg)
+    id1 = RunPaths._generate_unique_id(ds_slug, a_slug, cfg)
+    id2 = RunPaths._generate_unique_id(ds_slug, a_slug, cfg)
 
     assert id1 == id2
 
@@ -156,12 +156,12 @@ def test_generate_unique_id_deterministic():
 def test_generate_unique_id_different_configs():
     """Test _generate_unique_id() produces different hashes for different configs."""
     ds_slug = "test"
-    m_slug = "model"
+    a_slug = "architecture"
     cfg1 = {"batch_size": 32, "learning_rate": 0.001}
     cfg2 = {"batch_size": 64, "learning_rate": 0.001}
 
-    id1 = RunPaths._generate_unique_id(ds_slug, m_slug, cfg1)
-    id2 = RunPaths._generate_unique_id(ds_slug, m_slug, cfg2)
+    id1 = RunPaths._generate_unique_id(ds_slug, a_slug, cfg1)
+    id2 = RunPaths._generate_unique_id(ds_slug, a_slug, cfg2)
 
     assert id1 != id2
 
@@ -170,7 +170,7 @@ def test_generate_unique_id_different_configs():
 def test_generate_unique_id_filters_non_hashable():
     """Test _generate_unique_id() filters out non-hashable types."""
     ds_slug = "test"
-    m_slug = "model"
+    a_slug = "architecture"
     cfg = {
         "batch_size": 32,
         "learning_rate": 0.001,
@@ -178,7 +178,7 @@ def test_generate_unique_id_filters_non_hashable():
         "callbacks": [{"early_stop": True}],
     }
 
-    run_id = RunPaths._generate_unique_id(ds_slug, m_slug, cfg)
+    run_id = RunPaths._generate_unique_id(ds_slug, a_slug, cfg)
     assert isinstance(run_id, str)
 
 
@@ -186,20 +186,20 @@ def test_generate_unique_id_filters_non_hashable():
 def test_generate_unique_id_empty_config():
     """Test _generate_unique_id() handles empty config dict."""
     ds_slug = "test"
-    m_slug = "model"
+    a_slug = "architecture"
     cfg = {}
 
-    run_id = RunPaths._generate_unique_id(ds_slug, m_slug, cfg)
+    run_id = RunPaths._generate_unique_id(ds_slug, a_slug, cfg)
     assert isinstance(run_id, str)
     assert ds_slug in run_id
-    assert m_slug in run_id
+    assert a_slug in run_id
 
 
 @pytest.mark.unit
 def test_generate_unique_id_uses_blake2b():
     """Test _generate_unique_id() uses blake2b with digest_size=3."""
     ds_slug = "test"
-    m_slug = "model"
+    a_slug = "architecture"
     fixed_ts = 1707400000.0
     cfg = {"key": "value", "run_timestamp": fixed_ts}
 
@@ -209,7 +209,7 @@ def test_generate_unique_id_uses_blake2b():
     params_json = json.dumps(hashable, sort_keys=True)
     expected_hash = hashlib.blake2b(params_json.encode(), digest_size=3).hexdigest()
 
-    run_id = RunPaths._generate_unique_id(ds_slug, m_slug, cfg)
+    run_id = RunPaths._generate_unique_id(ds_slug, a_slug, cfg)
 
     assert expected_hash in run_id
 
@@ -223,14 +223,14 @@ def test_runpaths_unique_via_timestamp(tmp_path):
 
     run1 = RunPaths.create(
         dataset_slug="test",
-        model_name="model",
+        architecture_name="architecture",
         training_cfg=cfg1,
         base_dir=tmp_path,
     )
 
     run2 = RunPaths.create(
         dataset_slug="test",
-        model_name="model",
+        architecture_name="architecture",
         training_cfg=cfg2,
         base_dir=tmp_path,
     )
@@ -247,7 +247,7 @@ def test_runpaths_creates_all_subdirectories(tmp_path):
 
     run_paths = RunPaths.create(
         dataset_slug="test",
-        model_name="model",
+        architecture_name="architecture",
         training_cfg=training_cfg,
         base_dir=tmp_path,
     )
@@ -268,7 +268,7 @@ def test_runpaths_path_attributes():
 
     run_paths = RunPaths.create(
         dataset_slug="test",
-        model_name="model",
+        architecture_name="architecture",
         training_cfg=training_cfg,
         base_dir=Path("/tmp"),
     )
@@ -294,7 +294,7 @@ def test_best_model_path_property():
 
     run_paths = RunPaths.create(
         dataset_slug="test",
-        model_name="ResNet-50",
+        architecture_name="ResNet-50",
         training_cfg=training_cfg,
         base_dir=Path("/tmp"),
     )
@@ -310,7 +310,7 @@ def test_final_report_path_property():
 
     run_paths = RunPaths.create(
         dataset_slug="test",
-        model_name="model",
+        architecture_name="architecture",
         training_cfg=training_cfg,
         base_dir=Path("/tmp"),
     )
@@ -326,7 +326,7 @@ def test_get_fig_path_method():
 
     run_paths = RunPaths.create(
         dataset_slug="test",
-        model_name="model",
+        architecture_name="architecture",
         training_cfg=training_cfg,
         base_dir=Path("/tmp"),
     )
@@ -345,7 +345,7 @@ def test_get_config_path_method():
 
     run_paths = RunPaths.create(
         dataset_slug="test",
-        model_name="model",
+        architecture_name="architecture",
         training_cfg=training_cfg,
         base_dir=Path("/tmp"),
     )
@@ -361,7 +361,7 @@ def test_get_db_path_method():
 
     run_paths = RunPaths.create(
         dataset_slug="test",
-        model_name="model",
+        architecture_name="architecture",
         training_cfg=training_cfg,
         base_dir=Path("/tmp"),
     )
@@ -378,7 +378,7 @@ def test_runpaths_is_frozen():
 
     run_paths = RunPaths.create(
         dataset_slug="test",
-        model_name="model",
+        architecture_name="architecture",
         training_cfg=training_cfg,
         base_dir=Path("/tmp"),
     )
@@ -398,7 +398,7 @@ def test_runpaths_repr():
 
     run_paths = RunPaths.create(
         dataset_slug="organcmnist",
-        model_name="ResNet",
+        architecture_name="ResNet_18_Adapted",
         training_cfg=training_cfg,
         base_dir=Path("/tmp"),
     )
@@ -423,14 +423,14 @@ def test_runpaths_create_with_special_characters_in_model():
         ("Test%Model", "testmodel"),
     ]
 
-    for model_name, expected_slug in special_names:
+    for architecture_name, expected_slug in special_names:
         run_paths = RunPaths.create(
             dataset_slug="test",
-            model_name=model_name,
+            architecture_name=architecture_name,
             training_cfg=training_cfg,
             base_dir=Path("/tmp"),
         )
-        assert run_paths.model_slug == expected_slug
+        assert run_paths.architecture_slug == expected_slug
 
 
 @pytest.mark.unit
@@ -440,12 +440,12 @@ def test_runpaths_create_with_empty_model_name():
 
     run_paths = RunPaths.create(
         dataset_slug="test",
-        model_name="@#$%",
+        architecture_name="@#$%",
         training_cfg=training_cfg,
         base_dir=Path("/tmp"),
     )
 
-    assert run_paths.model_slug == ""
+    assert run_paths.architecture_slug == ""
     assert "test" in run_paths.run_id
 
 
@@ -464,7 +464,7 @@ def test_runpaths_create_with_complex_training_config():
 
     run_paths = RunPaths.create(
         dataset_slug="test",
-        model_name="model",
+        architecture_name="architecture",
         training_cfg=training_cfg,
         base_dir=Path("/tmp"),
     )
@@ -485,7 +485,7 @@ def test_runpaths_full_workflow(tmp_path):
 
     run_paths = RunPaths.create(
         dataset_slug="organcmnist",
-        model_name="EfficientNet-B0",
+        architecture_name="EfficientNet_B0",
         training_cfg=training_cfg,
         base_dir=tmp_path,
     )
@@ -514,7 +514,7 @@ def test_multiple_runs_different_configs(tmp_path):
     for cfg in configs:
         run_paths = RunPaths.create(
             dataset_slug="test",
-            model_name="model",
+            architecture_name="architecture",
             training_cfg=cfg,
             base_dir=tmp_path,
         )

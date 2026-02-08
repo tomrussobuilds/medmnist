@@ -147,7 +147,9 @@ def run_smoke_test(args: argparse.Namespace) -> None:
             run_logger.info(
                 f"{LogStyle.INDENT}{LogStyle.ARROW} Dataset       : {ds_meta.display_name}"
             )
-            run_logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Architecture  : {cfg.model.name}")
+            run_logger.info(
+                f"{LogStyle.INDENT}{LogStyle.ARROW} Architecture  : {cfg.architecture.name}"
+            )
             run_logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Device        : {device}")
             run_logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Artifacts     : {paths.root}")
             run_logger.info(LogStyle.DOUBLE)

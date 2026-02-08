@@ -11,12 +11,12 @@ from .cli import parse_args
 
 # Configuration
 from .config import (
+    ArchitectureConfig,
     AugmentationConfig,
     Config,
     DatasetConfig,
     EvaluationConfig,
     HardwareConfig,
-    ModelConfig,
     OptunaConfig,
     TelemetryConfig,
     TrainingConfig,
@@ -86,7 +86,7 @@ __all__ = [
     "HardwareConfig",
     "TelemetryConfig",
     "DatasetConfig",
-    "ModelConfig",
+    "ArchitectureConfig",
     "TrainingConfig",
     "AugmentationConfig",
     "EvaluationConfig",

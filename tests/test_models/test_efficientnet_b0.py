@@ -17,8 +17,8 @@ from orchard.models import build_efficientnet_b0
 def mock_cfg():
     """Provides a standardized configuration mock for model building."""
     cfg = MagicMock()
-    cfg.model.pretrained = False
-    cfg.model.dropout = 0.2
+    cfg.architecture.pretrained = False
+    cfg.architecture.dropout = 0.2
     return cfg
 
 
@@ -77,7 +77,7 @@ class TestEfficientNetB0:
 
     def test_efficientnet_b0_pretrained_weight_morphing(self, mock_cfg, device):
         """Verify pretrained weights are loaded and morphed for grayscale."""
-        mock_cfg.model.pretrained = True
+        mock_cfg.architecture.pretrained = True
 
         from orchard.models import efficientnet_b0 as efficientnet_module
 

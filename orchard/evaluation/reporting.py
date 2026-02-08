@@ -54,7 +54,7 @@ class TrainingReport(BaseModel):
     timestamp: str = Field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
     # Model & Data Identity
-    model: str
+    architecture: str
     dataset: str
 
     # Core Metrics
@@ -204,7 +204,7 @@ def create_structured_report(
     best_val_auc = max((m["auc"] for m in val_metrics), default=0.0)
 
     return TrainingReport(
-        model=cfg.model.name,
+        architecture=cfg.architecture.name,
         dataset=cfg.dataset.dataset_name,
         best_val_accuracy=best_val_acc,
         best_val_auc=best_val_auc,

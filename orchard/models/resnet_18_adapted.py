@@ -50,7 +50,7 @@ def build_resnet18_adapted(
     """
 
     # --- Step 1: Initialize with Optional Pretraining ---
-    weights = models.ResNet18_Weights.IMAGENET1K_V1 if cfg.model.pretrained else None
+    weights = models.ResNet18_Weights.IMAGENET1K_V1 if cfg.architecture.pretrained else None
     model = models.resnet18(weights=weights)
 
     # Snapshot original conv1 (before replacement)
@@ -68,7 +68,7 @@ def build_resnet18_adapted(
     )
 
     # --- Step 3: Weight Morphing (Knowledge Distillation) ---
-    if cfg.model.pretrained:
+    if cfg.architecture.pretrained:
         with torch.no_grad():
             w = old_conv.weight  # [64, 3, 7, 7]
 

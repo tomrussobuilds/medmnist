@@ -160,7 +160,7 @@ def run_training_phase(
     # MODEL TRAINING
     run_logger.info("")
     run_logger.info(LogStyle.DOUBLE)
-    run_logger.info(f"{'TRAINING PIPELINE - ' + cfg.model.name.upper():^80}")
+    run_logger.info(f"{'TRAINING PIPELINE - ' + cfg.architecture.name.upper():^80}")
     run_logger.info(LogStyle.DOUBLE)
 
     model = get_model(device=device, cfg=cfg)

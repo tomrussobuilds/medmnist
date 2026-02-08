@@ -15,8 +15,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from .types import DropoutRate
 
 
-# MODELS CONFIGURATION
-class ModelConfig(BaseModel):
+# ARCHITECTURE CONFIGURATION
+class ArchitectureConfig(BaseModel):
     """
     Configuration for model architecture and weight initialization.
 
@@ -60,9 +60,9 @@ class ModelConfig(BaseModel):
     )
 
     @classmethod
-    def from_args(cls, args: argparse.Namespace) -> "ModelConfig":
+    def from_args(cls, args: argparse.Namespace) -> "ArchitectureConfig":
         """
-        Create ModelConfig from CLI arguments.
+        Create ArchitectureConfig from CLI arguments.
 
         Geometric resolution (channels, classes) is handled by DatasetConfig,
         so no metadata injection is required here.
@@ -71,7 +71,7 @@ class ModelConfig(BaseModel):
             args: Parsed argparse namespace with model-related arguments.
 
         Returns:
-            Configured ModelConfig instance.
+            Configured ArchitectureConfig instance.
         """
         return cls(
             name=getattr(args, "model_name", "resnet18"),

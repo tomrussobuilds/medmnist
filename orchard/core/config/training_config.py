@@ -10,7 +10,7 @@ Key Features:
     * Optimization dynamics: LR schedules and momentum for loss landscape navigation
     * Regularization suite: Label smoothing and Mixup for medical imaging generalization
     * Precision & stability: AMP and gradient clipping for hardware throughput and stability
-    * Reproducibility guard: Global seeding and strict determinism for bit-perfect replication
+    * Reproducibility: Global seeding for experiment replication (determinism in HardwareConfig)
 
 Strict boundary validation (probability ranges, LR bounds) prevents unstable
 training states before first batch processing.
@@ -44,7 +44,6 @@ class TrainingConfig(BaseModel):
 
     Attributes:
         seed: Random seed for reproducibility.
-        reproducible: Enable strict deterministic mode.
         batch_size: Training samples per batch (1-128).
         epochs: Maximum training epochs.
         patience: Early stopping patience in epochs.
@@ -73,7 +72,6 @@ class TrainingConfig(BaseModel):
 
     # ==================== Reproducibility ====================
     seed: int = Field(default=42, description="Random seed")
-    reproducible: bool = Field(default=False, description="Strict reproducibility mode")
 
     # ==================== Training Loop ====================
     batch_size: PositiveInt = Field(default=16, description="Samples per batch")

@@ -18,8 +18,8 @@ from orchard.models.vit_tiny import build_vit_tiny
 def mock_cfg():
     """Provides a standardized configuration mock for model building."""
     cfg = MagicMock()
-    cfg.model.pretrained = True
-    cfg.model.weight_variant = "vit_tiny_patch16_224.augreg_in21k_ft_in1k"
+    cfg.architecture.pretrained = True
+    cfg.architecture.weight_variant = "vit_tiny_patch16_224.augreg_in21k_ft_in1k"
     return cfg
 
 
@@ -78,7 +78,7 @@ class TestBuildViTTiny:
         """
         Tests initialization with random weights when pretrained flag is False.
         """
-        mock_cfg.model.pretrained = False
+        mock_cfg.architecture.pretrained = False
         num_classes = 10
         in_channels = 3
 
@@ -100,7 +100,7 @@ class TestBuildViTTiny:
         """
         Verifies that an invalid timm variant triggers a descriptive ValueError.
         """
-        mock_cfg.model.weight_variant = "invalid_vit_model_name"
+        mock_cfg.architecture.weight_variant = "invalid_vit_model_name"
 
         with pytest.raises(ValueError, match="Invalid ViT weight variant"):
             build_vit_tiny(device, 2, 3, mock_cfg)

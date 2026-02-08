@@ -25,7 +25,7 @@ def mock_orchestrator():
     orch.cfg.dataset.force_rgb = True
     orch.cfg.dataset.metadata.name = "organcmnist"
     orch.cfg.dataset.dataset_name = "organcmnist"
-    orch.cfg.model.name = "mini_cnn"
+    orch.cfg.architecture.name = "mini_cnn"
     orch.cfg.evaluation.n_samples = 16
 
     orch.paths = MagicMock()
@@ -192,7 +192,7 @@ def test_run_training_phase_with_custom_config(
     custom_cfg.dataset.resolution = 224
     custom_cfg.dataset.metadata.name = "bloodmnist"
     custom_cfg.dataset.dataset_name = "bloodmnist"
-    custom_cfg.model.name = "resnet"
+    custom_cfg.architecture.name = "resnet"
     custom_cfg.evaluation.n_samples = 8
 
     mock_registry.return_value.get_dataset.return_value = MagicMock(classes=["a", "b"])

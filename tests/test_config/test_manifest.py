@@ -13,7 +13,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from orchard.core import Config, DatasetConfig, HardwareConfig, ModelConfig, TrainingConfig
+from orchard.core import ArchitectureConfig, Config, DatasetConfig, HardwareConfig, TrainingConfig
 
 
 # CONFIG: BASIC CONSTRUCTION
@@ -25,7 +25,7 @@ def test_config_defaults():
     assert config.hardware is not None
     assert config.training is not None
     assert config.dataset is not None
-    assert config.model is not None
+    assert config.architecture is not None
 
 
 @pytest.mark.unit
@@ -34,7 +34,7 @@ def test_config_from_args_basic(basic_args):
     config = Config.from_args(basic_args)
 
     assert config.dataset.dataset_name == "bloodmnist"
-    assert config.model.name == "resnet_18_adapted"
+    assert config.architecture.name == "resnet_18_adapted"
     assert config.training.epochs == 60
 
 
@@ -55,7 +55,7 @@ def test_resnet_18_adapted_requires_resolution_28_direct(device):
                 name="bloodmnist",
                 resolution=224,
             ),
-            model=ModelConfig(
+            architecture=ArchitectureConfig(
                 name="resnet_18_adapted",
                 pretrained=True,
             ),
@@ -65,23 +65,23 @@ def test_resnet_18_adapted_requires_resolution_28_direct(device):
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize("model_name", ["efficientnet_b0", "vit_tiny"])
-def test_224_models_require_resolution_224(model_name):
+@pytest.mark.parametrize("architecture_name", ["efficientnet_b0", "vit_tiny"])
+def test_224_models_require_resolution_224(architecture_name):
     """
     efficientnet_b0 and vit_tiny require 224x224 resolution.
     Using them with 28x28 should raise ValueError.
     """
     with pytest.raises(
         ValidationError,
-        match=f"'{model_name}' requires resolution=224",
+        match=f"'{architecture_name}' requires resolution=224",
     ):
         Config(
             dataset=DatasetConfig(
                 name="bloodmnist",
                 resolution=28,
             ),
-            model=ModelConfig(
-                name=model_name,
+            architecture=ArchitectureConfig(
+                name=architecture_name,
                 pretrained=False,
             ),
             training=TrainingConfig(),
@@ -104,7 +104,7 @@ def test_mixup_epochs_cannot_exceed_total_epochs_direct():
                 mixup_epochs=10,
             ),
             dataset=DatasetConfig(),
-            model=ModelConfig(),
+            architecture=ArchitectureConfig(),
             hardware=HardwareConfig(device="cpu"),
         )
 
@@ -185,7 +185,7 @@ def test_min_lr_equals_lr_direct_instantiation(mock_metadata_28):
                 resolution=28,
                 metadata=mock_metadata_28,
             ),
-            model=ModelConfig(name="mini_cnn", pretrained=False),
+            architecture=ArchitectureConfig(name="mini_cnn", pretrained=False),
             training=TrainingConfig(
                 learning_rate=0.001,
                 min_lr=0.001,
@@ -213,7 +213,7 @@ def test_from_yaml_loads_correctly(temp_yaml_config, mock_metadata_28):
     config = Config.from_yaml(temp_yaml_config, metadata=mock_metadata_28)
 
     assert config.dataset.dataset_name == "bloodmnist"
-    assert config.model.name == "resnet_18_adapted"
+    assert config.architecture.name == "resnet_18_adapted"
     assert config.training.epochs == 60
     assert config.training.batch_size == 128
 
@@ -253,7 +253,7 @@ def test_build_from_yaml_or_args_resolves_dataset(tmp_path, mock_metadata_28):
     """
     yaml_content = {
         "dataset": {"name": "dermamnist", "resolution": 28},
-        "model": {"name": "mini_cnn"},
+        "architecture": {"name": "mini_cnn"},
         "training": {"epochs": 60},
         "optuna": {"study_name": "yaml_test_study", "n_trials": 20},
     }
@@ -269,7 +269,7 @@ def test_build_from_yaml_or_args_resolves_dataset(tmp_path, mock_metadata_28):
     cfg = Config._build_from_yaml_or_args(args, ds_meta=mock_metadata_28)
 
     assert cfg.dataset.dataset_name == "dermamnist"
-    assert cfg.model.name == "mini_cnn"
+    assert cfg.architecture.name == "mini_cnn"
     assert cfg.training.epochs == 60
     assert cfg.optuna.study_name == "yaml_test_study"
 
@@ -282,7 +282,7 @@ def test_yaml_different_dataset_triggers_wrapper_call(tmp_path):
     """
     yaml_content = {
         "dataset": {"name": "bloodmnist", "resolution": 28},
-        "model": {"name": "mini_cnn", "pretrained": False},
+        "architecture": {"name": "mini_cnn", "pretrained": False},
         "training": {"epochs": 100, "mixup_epochs": 0, "use_amp": False},
         "hardware": {"device": "cpu"},
     }
@@ -349,7 +349,7 @@ def test_run_slug_property():
     slug = config.run_slug
 
     assert "bloodmnist" in slug
-    assert config.model.name in slug
+    assert config.architecture.name in slug
 
 
 @pytest.mark.unit
@@ -381,7 +381,7 @@ def test_min_lr_boundary_condition_line_106(mock_metadata_28):
     with pytest.raises(ValidationError):
         Config(
             dataset=DatasetConfig(name="bloodmnist", resolution=28, metadata=mock_metadata_28),
-            model=ModelConfig(name="mini_cnn", pretrained=False),
+            architecture=ArchitectureConfig(name="mini_cnn", pretrained=False),
             training=TrainingConfig(
                 epochs=100, mixup_epochs=0, use_amp=False, learning_rate=0.001, min_lr=0.001
             ),
@@ -391,7 +391,7 @@ def test_min_lr_boundary_condition_line_106(mock_metadata_28):
     with pytest.raises(ValidationError):
         Config(
             dataset=DatasetConfig(name="bloodmnist", resolution=28, metadata=mock_metadata_28),
-            model=ModelConfig(name="mini_cnn", pretrained=False),
+            architecture=ArchitectureConfig(name="mini_cnn", pretrained=False),
             training=TrainingConfig(
                 epochs=100, mixup_epochs=0, use_amp=False, learning_rate=0.001, min_lr=0.002
             ),
@@ -420,7 +420,7 @@ def test_config_from_yaml_with_img_size_override():
             "img_size": 224,
             "force_rgb": True,
         },
-        "model": {
+        "architecture": {
             "name": "resnet_18_adapted",
             "pretrained": False,
         },
@@ -461,7 +461,7 @@ def test_config_from_yaml_without_img_size():
             "resolution": 28,
             "force_rgb": True,
         },
-        "model": {
+        "architecture": {
             "name": "resnet_18_adapted",
             "pretrained": False,
         },
@@ -502,7 +502,7 @@ def test_config_yaml_img_size_none_explicit():
             "img_size": None,
             "force_rgb": True,
         },
-        "model": {
+        "architecture": {
             "name": "resnet_18_adapted",
             "pretrained": False,
         },

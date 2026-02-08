@@ -14,7 +14,7 @@ Example:
     >>> from orchard.core.paths import RunPaths
     >>> paths = RunPaths.create(
     ...     dataset_slug="organcmnist",
-    ...     model_name="EfficientNet-B0",
+    ...     architecture_name="EfficientNet-B0",
     ...     training_cfg={"batch_size": 32, "lr": 0.001}
     ... )
     >>> paths.root
@@ -82,7 +82,7 @@ class RunPaths(BaseModel):
     # Core Identifiers
     run_id: str
     dataset_slug: str
-    model_slug: str
+    architecture_slug: str
 
     # Physical Paths
     root: Path
@@ -97,7 +97,7 @@ class RunPaths(BaseModel):
     def create(
         cls,
         dataset_slug: str,
-        model_name: str,
+        architecture_name: str,
         training_cfg: Dict[str, Any],
         base_dir: Optional[Path] = None,
     ) -> "RunPaths":
@@ -140,12 +140,12 @@ class RunPaths(BaseModel):
             raise ValueError(f"Expected string for dataset_slug but got {type(dataset_slug)}")
         ds_slug = dataset_slug.lower()
 
-        if not isinstance(model_name, str):
-            raise ValueError(f"Expected string for model_name but got {type(model_name)}")
-        m_slug = re.sub(r"[^a-zA-Z0-9]", "", model_name.lower())
+        if not isinstance(architecture_name, str):
+            raise ValueError(f"Expected string for model_name but got {type(architecture_name)}")
+        a_slug = re.sub(r"[^a-zA-Z0-9]", "", architecture_name.lower())
 
         # Determine the unique run ID
-        run_id = cls._generate_unique_id(ds_slug, m_slug, training_cfg)
+        run_id = cls._generate_unique_id(ds_slug, a_slug, training_cfg)
 
         base = Path(base_dir or OUTPUTS_ROOT)
         root_path = base / run_id
@@ -155,7 +155,7 @@ class RunPaths(BaseModel):
         instance = cls(
             run_id=run_id,
             dataset_slug=ds_slug,
-            model_slug=m_slug,
+            architecture_slug=a_slug,
             root=root_path,
             figures=root_path / "figures",
             models=root_path / "models",
@@ -170,7 +170,7 @@ class RunPaths(BaseModel):
 
     # Internal Methods
     @staticmethod
-    def _generate_unique_id(ds_slug: str, m_slug: str, cfg: Dict[str, Any]) -> str:
+    def _generate_unique_id(ds_slug: str, a_slug: str, cfg: Dict[str, Any]) -> str:
         """
         Generate a deterministic unique run identifier.
 
@@ -204,7 +204,7 @@ class RunPaths(BaseModel):
         run_hash = hashlib.blake2b(params_json.encode(), digest_size=3).hexdigest()
 
         date_str = time.strftime("%Y%m%d")
-        return f"{date_str}_{ds_slug}_{m_slug}_{run_hash}"
+        return f"{date_str}_{ds_slug}_{a_slug}_{run_hash}"
 
     def _setup_run_directories(self) -> None:
         """
@@ -226,7 +226,7 @@ class RunPaths(BaseModel):
         Returns:
             Path in format: models/best_{model_slug}.pth
         """
-        return self.models / f"best_{self.model_slug}.pth"
+        return self.models / f"best_{self.architecture_slug}.pth"
 
     @property
     def final_report_path(self) -> Path:
