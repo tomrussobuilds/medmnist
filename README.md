@@ -233,24 +233,35 @@ Every run generates a complete artifact suite for total traceability. Both train
 
 <table>
 <tr>
-<td width="45%" valign="top">
-<img src="docs/artifacts/artifacts_structure.png" alt="Artifact Structure" width="100%">
+<td valign="top">
+<img src="docs/artifacts/artifacts_structure.png" alt="Artifact Structure" width="380">
 </td>
-<td width="55%" valign="top">
+<td valign="top">
 
-**Key Artifacts:**
-
-| Directory | Contents |
-|-----------|----------|
-| `figures/` | Confusion matrices, training curves, predictions, Optuna HTML plots* |
-| `reports/` | `training_summary.xlsx`, `best_config.yaml`*, `study_summary.json`* |
-| `models/` | Best model weights (`.pth`) |
-| `exports/` | Production-ready ONNX export |
-| `database/` | Optuna study database* |
+| Artifact | Description |
+|----------|-------------|
+| `config_snapshot.yaml` | Frozen config at run start |
+| **figures/** | |
+| ├ `confusion_matrix.png` | Per-class predictions |
+| ├ `training_curves.png` | Loss/AUC over epochs |
+| ├ `sample_grid.png` | Dataset samples |
+| ├ `param_importances.html`* | Hyperparameter importance |
+| ├ `optimization_history.html`* | Trial progression |
+| ├ `slice.html`* | Parameter slices |
+| └ `parallel_coordinate.html`* | Multi-param view |
+| **reports/** | |
+| ├ `training_summary.xlsx` | Metrics + predictions |
+| ├ `best_config.yaml`* | Optimized hyperparams |
+| ├ `study_summary.json`* | Study metadata |
+| └ `top_10_trials.xlsx`* | Best trials ranked |
+| **models/** | |
+| └ `best_<arch>.pth` | Model weights |
+| **exports/** | |
+| └ `model.onnx` | Production export |
+| **database/** | |
+| └ `optuna_study.db`* | SQLite study DB |
 
 *\*Optimization runs only*
-
-> **Note:** Training-only runs produce a simplified subset without optimization-specific files.
 
 </td>
 </tr>
