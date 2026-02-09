@@ -242,6 +242,8 @@ Every run generates a complete artifact suite for total traceability. Both train
 |----------|-------------|
 | `config_snapshot.yaml` | Frozen config at run start |
 | **figures/** | |
+| ├ `training_curves.npz` | Raw curves |
+| ├ `sample_grid.png` | Augmentation preview |
 | ├ `confusion_matrix.png` | Per-class predictions |
 | ├ `training_curves.png` | Loss/AUC over epochs |
 | ├ `sample_grid.png` | Dataset samples |

@@ -39,7 +39,7 @@ Before committing, run the automated quality checks:
 
 ```bash
 # Run all checks (linting, formatting, tests, coverage)
-bash scripts/run_checks.sh
+bash scripts/check_quality_full.sh
 ```
 
 This script validates:
@@ -60,7 +60,7 @@ This script validates:
 1. **Fork** the repository
 2. **Create a feature branch** (`git checkout -b fix/issue-description`)
 3. **Make your changes** with tests
-4. **Run quality checks** (`bash scripts/run_checks.sh`)
+4. **Run quality checks** (`bash scripts/check_quality_full.sh`)
 5. **Commit** with clear messages
 6. **Push** and open a Pull Request
 
