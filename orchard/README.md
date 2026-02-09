@@ -16,7 +16,7 @@ orchard/
 │   │   ├── dataset_config.py   # Data loading, resolution, normalization
 │   │   ├── augmentation_config.py  # MixUp, TTA, transforms
 │   │   ├── evaluation_config.py    # Metrics, visualization
-│   │   ├── models_config.py    # Architecture selection
+│   │   ├── architecture_config.py  # Architecture selection
 │   │   └── optuna_config.py    # Hyperparameter optimization
 │   ├── environment/            # Hardware abstraction
 │   │   ├── hardware.py         # Device detection, CPU/GPU/MPS
@@ -62,11 +62,13 @@ orchard/
 │   └── setup.py                # Optimizer/scheduler factories
 ├── evaluation/                 # Metrics and visualization
 │   ├── evaluator.py            # Evaluation orchestration
-│   ├── pipeline.py             # Full evaluation pipeline
+│   ├── evaluation_pipeline.py  # Full evaluation pipeline
 │   ├── metrics.py              # AUC, F1, Accuracy
 │   ├── tta.py                  # Test-time augmentation
 │   ├── visualization.py        # Confusion matrix, curves
 │   └── reporting.py            # Excel report generation
+├── pipeline/                   # Pipeline phase orchestration
+│   └── phases.py               # Training, optimization, export phases
 ├── export/                     # Model export for production
 │   ├── onnx_exporter.py        # ONNX export with quantization
 │   └── validation.py           # PyTorch vs ONNX validation

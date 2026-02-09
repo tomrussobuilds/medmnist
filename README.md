@@ -44,7 +44,7 @@
   <a href="https://flake8.pycqa.org/">
     <img src="https://img.shields.io/badge/linting-flake8-brightgreen?logo=python&logoColor=white" alt="Flake8">
   </a>
-  <img src="https://img.shields.io/badge/tests-950%2B-success" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-~1000-success" alt="Tests">
   <img src="https://img.shields.io/badge/Architecture-Decoupled-blueviolet" alt="Architecture">
   <img src="https://img.shields.io/badge/status-Active-success" alt="Status">
   <a href="https://github.com/tomrussobuilds/visionforge/issues">
@@ -59,8 +59,8 @@
 - [🎯 Overview](#-overview)
 - [⚡ Hardware Requirements](#-hardware-requirements)
 - [🚀 Quick Start](#-quick-start)
-- [📚 Documentation Hub](#-documentation-hub)
 - [📊 Experiment Management](#-experiment-management)
+- [📚 Documentation Hub](#-documentation-hub)
 - [📚 Citation](#-citation)
 - [🗺 Development Roadmap](#-development-roadmap)
 - [📄 License](#-license)
@@ -223,25 +223,42 @@ export:
   validate_export: true  # Verify PyTorch ↔ ONNX consistency
 ```
 
+For advanced export options (quantization, validation settings), see the [Export Guide](docs/guide/EXPORT.md).
+
 ---
 
-### Step 4: Explore Results
+## 📊 Experiment Management
 
-All outputs are isolated in timestamped directories:
-```bash
-ls outputs/YYYYMMDD_dataset_model_hash/
-├── figures/          # Confusion matrices, training curves, sample predictions
-├── reports/          # Excel summaries, best_config.yaml (optimization only)
-├── models/           # Trained model weights (.pth)
-└── database/         # Optuna study database (optimization only)
-```
+Every run generates a complete artifact suite for total traceability. Both training-only and optimization workflows share the same `RunPath` orchestrator, producing BLAKE2b-hashed timestamped directories.
 
-**Key files:**
-- `reports/training_summary.xlsx` - Complete metrics and hyperparameters
-- `models/best_*.pth` - Best model weights (by validation AUC)
-- `reports/best_config.yaml` - Optimized configuration (optimization runs only)
+<table>
+<tr>
+<td width="45%" valign="top">
+<img src="docs/artifacts/artifacts_structure.png" alt="Artifact Structure" width="100%">
+</td>
+<td width="55%" valign="top">
 
-For advanced export options (quantization, validation settings), see the [Export Guide](docs/guide/EXPORT.md).
+**Key Artifacts:**
+
+| Directory | Contents |
+|-----------|----------|
+| `figures/` | Confusion matrices, training curves, predictions, Optuna HTML plots* |
+| `reports/` | `training_summary.xlsx`, `best_config.yaml`*, `study_summary.json`* |
+| `models/` | Best model weights (`.pth`) |
+| `exports/` | Production-ready ONNX export |
+| `database/` | Optuna study database* |
+
+*\*Optimization runs only*
+
+> **Note:** Training-only runs produce a simplified subset without optimization-specific files.
+
+</td>
+</tr>
+</table>
+
+> [!IMPORTANT]
+> ### 📂 [View Sample Artifacts](./docs/artifacts)
+> Explore Excel reports, YAML configs, and diagnostic plots from real experiments.
 
 ---
 
@@ -283,7 +300,7 @@ Comprehensive guides for advanced usage and system internals:
 
 ### 🧪 Testing & Quality
 **[Testing Guide](docs/guide/TESTING.md)**
-- Test suite organization (950+ tests)
+- Test suite organization (nearly 1,000 tests)
 - Quality check automation (`check_quality.sh`)
 - Smoke tests and health checks
 - CI/CD pipeline details
@@ -298,41 +315,6 @@ Comprehensive guides for advanced usage and system internals:
 - Test organization and categories
 - Running specific test suites
 - Coverage reporting
-
----
-
-## 📊 Experiment Management
-
-Every run generates a complete artifact suite for total traceability. Both training-only and optimization workflows share the same `RunPath` orchestrator, producing BLAKE2b-hashed timestamped directories with consistent structure.
-
-> **Note:** The artifact structure below shows a complete optimization + training workflow. Training-only runs produce a simplified subset (without optimization-specific files like `study.db`, `best_config.yaml`, HTML plots). See [Testing Guide](docs/guide/TESTING.md) and [Optimization Guide](docs/guide/OPTIMIZATION.md) for workflow-specific details.
-
-**Artifact Structure (Full Pipeline):**
-```
-outputs/20260123_organcmnist_efficientnetb0_a3f7c2/
-├── figures/
-│   ├── confusion_matrix_efficientnet_b0_224.png
-│   ├── training_curves_efficientnet_b0_224.png
-│   ├── sample_predictions_efficientnet_b0_224.png
-│   ├── param_importances.html          # (optimization only)
-│   ├── optimization_history.html       # (optimization only)
-│   └── parallel_coordinates.html       # (optimization only)
-├── reports/
-│   ├── training_summary.xlsx           # Comprehensive metrics spreadsheet
-│   ├── best_config.yaml                # (optimization only)
-│   ├── study_summary.json              # (optimization only)
-│   └── top_10_trials.xlsx              # (optimization only)
-├── models/
-│   └── best_efficientnetb0.pth         # Trained model weights
-├── exports/
-│   └── model.onnx                      # Production-ready export
-└── database/
-    └── study.db                        # (optimization only)
-```
-
-> [!IMPORTANT]
-> ### 📂 [View Sample Artifacts](./docs/artifacts)
-> Explore Excel reports, YAML configs, and diagnostic plots from real experiments.
 
 ## 📚 Citation
 
@@ -359,7 +341,7 @@ outputs/20260123_organcmnist_efficientnetb0_a3f7c2/
 - YAML-driven execution model
 - Optuna hyperparameter optimization
 - Multi-resolution support (28×28, 224×224)
-- Comprehensive test suite (950+ tests, 100% coverage)
+- Comprehensive test suite (nearly 1,000 tests, 100% coverage)
 - CI/CD pipeline with GitHub Actions
 
 ### ✅ Phase 3: Modern Architectures (Completed)
@@ -368,7 +350,7 @@ outputs/20260123_organcmnist_efficientnetb0_a3f7c2/
 - **Weight Variant Search**: Automatic exploration of ImageNet-1k/21k pretraining strategies
 
 ### ✅ Phase 4: Quality Assurance & Multi-Domain Support (Completed)
-- **Test Coverage**: 100% across 950+ tests (unit, integration, smoke)
+- **Test Coverage**: 100% across nearly 1,000 tests (unit, integration, smoke)
 - **Artifact Export**: HTML visualizations (parameter importance, optimization history, slices, parallel coordinates)
 - **Comprehensive Reporting**: Excel summaries, JSON metadata, YAML snapshots
 - **Multi-Domain Architecture**: Medical imaging (MedMNIST v2) + Astronomical imaging (Galaxy10 DECals)
@@ -381,7 +363,7 @@ outputs/20260123_organcmnist_efficientnetb0_a3f7c2/
 - **Export Configuration**: Type-safe Pydantic schema for export parameters
 
 ### 🎯 Current Status
-- **Test Coverage**: 100% across 950+ tests (minimal pragma for defensive guards)
+- **Test Coverage**: 100% across nearly 1,000 tests (minimal pragma for defensive guards)
 - **Architectures**: 4 total (2 for 28×28, 2 for 224×224)
   - 28×28: ResNet-18-Adapted, MiniCNN
   - 224×224: EfficientNet-B0, ViT-Tiny

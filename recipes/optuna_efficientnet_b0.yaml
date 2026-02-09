@@ -143,3 +143,8 @@ optuna:
   # Output
   save_plots: true
   save_best_config: true
+
+export:
+  format: onnx
+  opset_version: 18
+  validate_export: true

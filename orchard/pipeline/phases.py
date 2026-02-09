@@ -266,6 +266,4 @@ def run_export_phase(
         validate=True,
     )
 
-    run_logger.info(f"Model exported to: {onnx_path}")
-
     return onnx_path

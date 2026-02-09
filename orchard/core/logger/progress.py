@@ -201,9 +201,6 @@ def log_best_config_export(config_path: Any, logger_instance: logging.Logger | N
     log.info(LogStyle.DOUBLE)
     log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Configuration saved to: {config_path}")
     log.info("")
-    log.info(f"{LogStyle.INDENT}To train with optimized hyperparameters:")
-    log.info(f"{LogStyle.DOUBLE_INDENT}python forge.py --config {config_path}")
-    log.info("")
     log.info(f"{LogStyle.INDENT}To visualize optimization results:")
     log.info(
         f"{LogStyle.DOUBLE_INDENT}firefox "

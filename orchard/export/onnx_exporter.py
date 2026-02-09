@@ -14,6 +14,7 @@ import torch
 import torch.nn as nn
 
 from orchard.core import LOGGER_NAME
+from orchard.core.logger import LogStyle
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -48,7 +49,8 @@ def export_to_onnx(
         ...     output_path=Path("exports/model.onnx"),
         ... )
     """
-    logger.info(f"Loading checkpoint from {checkpoint_path}")
+    logger.info("  [Source]")
+    logger.info(f"    {LogStyle.BULLET} Checkpoint       : {checkpoint_path.name}")
 
     # Create output directory if needed
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -67,9 +69,10 @@ def export_to_onnx(
     # Create dummy input (batch_size=1 for tracing)
     dummy_input = torch.randn(1, *input_shape)
 
-    logger.info(f"Exporting to ONNX (opset {opset_version})...")
-    logger.info(f"  Input shape: {dummy_input.shape}")
-    logger.info(f"  Dynamic axes: {dynamic_axes}")
+    logger.info("  [Export Settings]")
+    logger.info(f"    {LogStyle.BULLET} Format            : ONNX (opset {opset_version})")
+    logger.info(f"    {LogStyle.BULLET} Input shape       : {tuple(dummy_input.shape)}")
+    logger.info(f"    {LogStyle.BULLET} Dynamic axes      : {dynamic_axes}")
 
     # Prepare dynamic axes configuration
     if dynamic_axes:
@@ -118,22 +121,27 @@ def export_to_onnx(
         try:
             import onnx
 
-            logger.info("Validating ONNX model...")
             onnx_model = onnx.load(str(output_path))
             onnx.checker.check_model(onnx_model)
-            logger.info("✓ ONNX model is valid")
 
             # Report model size
             file_size_mb = output_path.stat().st_size / (1024 * 1024)
-            logger.info(f"✓ Exported model size: {file_size_mb:.2f} MB")
+
+            logger.info("  [Validation]")
+            logger.info(f"    {LogStyle.BULLET} ONNX check        : {LogStyle.SUCCESS} Valid")
+            logger.info(f"    {LogStyle.BULLET} Model size        : {file_size_mb:.2f} MB")
 
         except ImportError:
-            logger.warning("onnx package not installed. Skipping validation.")
+            logger.warning(
+                f"    {LogStyle.WARNING} onnx package not installed. Skipping validation."
+            )
         except Exception as e:
-            logger.error(f"ONNX validation failed: {e}")
+            logger.error(f"    {LogStyle.WARNING} ONNX validation failed: {e}")
             raise
 
-    logger.info(f"✓ Model exported successfully to {output_path}")
+    logger.info("")
+    logger.info(f"  {LogStyle.SUCCESS} Export completed")
+    logger.info(f"  {LogStyle.ARROW} Output            : {output_path.name}")
 
 
 def benchmark_onnx_inference(
