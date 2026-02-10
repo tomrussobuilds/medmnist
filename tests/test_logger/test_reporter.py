@@ -7,6 +7,7 @@ and summary logging functions.
 
 from unittest.mock import MagicMock, PropertyMock, patch
 
+import optuna
 import pytest
 import torch
 
@@ -165,7 +166,7 @@ def test_log_optimization_summary_completed_trials():
     mock_paths.root = "/tmp/outputs"
     mock_study = MagicMock()
     mock_trial = MagicMock()
-    mock_trial.state.name = "COMPLETE"
+    mock_trial.state = optuna.trial.TrialState.COMPLETE
     mock_study.trials = [mock_trial, mock_trial, mock_trial]
     mock_study.best_value = 0.9876
     mock_study.best_trial.number = 5
@@ -196,7 +197,7 @@ def test_log_optimization_summary_no_completed_trials():
     mock_paths = MagicMock()
     mock_study = MagicMock()
     mock_trial = MagicMock()
-    mock_trial.state.name = "PRUNED"
+    mock_trial.state = optuna.trial.TrialState.PRUNED
     mock_study.trials = [mock_trial]
 
     log_optimization_summary(
@@ -221,9 +222,9 @@ def test_log_optimization_summary_with_failed_trials():
     mock_paths = MagicMock()
     mock_study = MagicMock()
     mock_trial_complete = MagicMock()
-    mock_trial_complete.state.name = "COMPLETE"
+    mock_trial_complete.state = optuna.trial.TrialState.COMPLETE
     mock_trial_failed = MagicMock()
-    mock_trial_failed.state.name = "FAIL"
+    mock_trial_failed.state = optuna.trial.TrialState.FAIL
     mock_study.trials = [mock_trial_complete, mock_trial_failed]
     mock_study.best_value = 0.95
     mock_study.best_trial.number = 0

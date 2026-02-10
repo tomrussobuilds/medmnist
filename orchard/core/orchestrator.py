@@ -290,6 +290,13 @@ class RootOrchestrator:
             num_workers=self.num_workers,
         )
 
+    def _close_logging_handlers(self) -> None:
+        """Flush and close all logging handlers to release file resources."""
+        if self.run_logger:
+            for handler in self.run_logger.handlers[:]:
+                handler.close()
+                self.run_logger.removeHandler(handler)
+
     # --- Public Interface ---
 
     def initialize_core_services(self) -> RunPaths:
@@ -324,8 +331,6 @@ class RootOrchestrator:
         Guarantees clean state for subsequent runs by unlinking
         InfrastructureManager guards and closing logging handlers.
         """
-        # Release infrastructure resources (locks, caches)
-        # Use run_logger if available, otherwise fallback to module logger
         cleanup_logger = self.run_logger or logging.getLogger(LOGGER_NAME)
         try:
             if self.infra:
@@ -333,11 +338,7 @@ class RootOrchestrator:
         except Exception as e:
             cleanup_logger.error(f"Failed to release system lock: {e}")
 
-        # Always close logging handlers to flush buffers
-        if self.run_logger:
-            for handler in self.run_logger.handlers[:]:
-                handler.close()
-                self.run_logger.removeHandler(handler)
+        self._close_logging_handlers()
 
     def get_device(self) -> torch.device:
         """

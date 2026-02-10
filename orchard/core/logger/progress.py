@@ -22,6 +22,22 @@ if TYPE_CHECKING:  # pragma: no cover
 logger = logging.getLogger(LOGGER_NAME)
 
 
+def _count_trial_states(study: "optuna.Study") -> tuple[list, list, list]:
+    """
+    Count trials by state.
+
+    Args:
+        study: Optuna study containing trials to count.
+
+    Returns:
+        Tuple of (completed, pruned, failed) trial lists.
+    """
+    completed = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
+    pruned = [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]
+    failed = [t for t in study.trials if t.state == optuna.trial.TrialState.FAIL]
+    return completed, pruned, failed
+
+
 def log_optimization_header(cfg: "Config", logger_instance: logging.Logger | None = None) -> None:
     """
     Log Optuna optimization configuration details.
@@ -109,10 +125,7 @@ def log_study_summary(
         metric_name: Name of optimization metric
     """
     log = logger_instance or logger
-
-    completed = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
-    pruned = [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]
-    failed = [t for t in study.trials if t.state == optuna.trial.TrialState.FAIL]
+    completed, pruned, failed = _count_trial_states(study)
 
     log.info("")
     log.info(LogStyle.DOUBLE)
@@ -268,10 +281,7 @@ def log_optimization_summary(
         logger_instance: Logger instance to use (defaults to module logger)
     """
     log = logger_instance or logger
-
-    completed = [t for t in study.trials if t.state.name == "COMPLETE"]
-    pruned = [t for t in study.trials if t.state.name == "PRUNED"]
-    failed = [t for t in study.trials if t.state.name == "FAIL"]
+    completed, pruned, failed = _count_trial_states(study)
 
     log.info(f"{LogStyle.DOUBLE}")
     log.info(f"{'OPTIMIZATION SUMMARY':^80}")
