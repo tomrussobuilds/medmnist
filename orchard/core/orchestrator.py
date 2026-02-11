@@ -30,7 +30,7 @@ Typical Usage:
 """
 
 import logging
-from typing import TYPE_CHECKING, Callable, Literal, Optional, TypeVar
+from typing import TYPE_CHECKING, Callable, Literal, TypeVar
 
 import torch
 
@@ -50,10 +50,12 @@ from .paths import LOGGER_NAME, RunPaths, setup_static_directories
 if TYPE_CHECKING:  # pragma: no cover
     from .config.manifest import Config
 
+logger = logging.getLogger(LOGGER_NAME)
+
 T = TypeVar("T")
 
 
-def _resolve(value: Optional[T], default_factory: Callable[[], T]) -> T:
+def _resolve(value: T | None, default_factory: Callable[[], T]) -> T:
     """
     Resolve optional dependency with lazy default instantiation.
 
@@ -89,7 +91,7 @@ class RootOrchestrator:
 
     Initialization Phases:
         1. Determinism: Global RNG seeding (Python, NumPy, PyTorch)
-        2. Hardware Optimization: CPU thread configuration, system libraries
+        2. Runtime Configuration: CPU thread affinity, system libraries
         3. Filesystem Provisioning: Dynamic workspace creation via RunPaths
         4. Logging Initialization: File-based persistent logging setup
         5. Config Persistence: YAML manifest export for auditability
@@ -112,6 +114,7 @@ class RootOrchestrator:
         cfg (Config): Validated global configuration (Single Source of Truth)
         infra (InfraManagerProtocol): Infrastructure resource manager
         reporter (ReporterProtocol): Environment telemetry engine
+        time_tracker (TimeTrackerProtocol): Pipeline duration tracker
         paths (RunPaths): Session-specific directory structure
         run_logger (logging.Logger): Active logger instance for session
         repro_mode (bool): Strict determinism flag
@@ -136,16 +139,16 @@ class RootOrchestrator:
     def __init__(
         self,
         cfg: "Config",
-        infra_manager: Optional[InfraManagerProtocol] = None,
-        reporter: Optional[ReporterProtocol] = None,
-        time_tracker: Optional[TimeTrackerProtocol] = None,
-        log_initializer: Optional[Callable] = None,
-        seed_setter: Optional[Callable] = None,
-        thread_applier: Optional[Callable] = None,
-        system_configurator: Optional[Callable] = None,
-        static_dir_setup: Optional[Callable] = None,
-        config_saver: Optional[Callable] = None,
-        device_resolver: Optional[Callable] = None,
+        infra_manager: InfraManagerProtocol | None = None,
+        reporter: ReporterProtocol | None = None,
+        time_tracker: TimeTrackerProtocol | None = None,
+        log_initializer: Callable | None = None,
+        seed_setter: Callable | None = None,
+        thread_applier: Callable | None = None,
+        system_configurator: Callable | None = None,
+        static_dir_setup: Callable | None = None,
+        config_saver: Callable | None = None,
+        device_resolver: Callable | None = None,
     ) -> None:
         """
         Initializes orchestrator with dependency injection.
@@ -178,9 +181,10 @@ class RootOrchestrator:
         self._device_resolver = device_resolver or to_device_obj
 
         # Lazy initialization
-        self.paths: Optional[RunPaths] = None
-        self.run_logger: Optional[logging.Logger] = None
-        self._device_cache: Optional[torch.device] = None
+        self._initialized: bool = False
+        self.paths: RunPaths | None = None
+        self.run_logger: logging.Logger | None = None
+        self._device_cache: torch.device | None = None
 
         # Policy extraction from SSOT
         self.repro_mode = self.cfg.hardware.use_deterministic_algorithms
@@ -207,9 +211,9 @@ class RootOrchestrator:
             self.time_tracker.start()
             self.initialize_core_services()
             return self
-        except Exception as e:
+        except Exception:
             self.cleanup()
-            raise e
+            raise
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> Literal[False]:
         """
@@ -243,15 +247,17 @@ class RootOrchestrator:
 
     def _phase_1_determinism(self) -> None:
         """Enforces global RNG seeding and algorithmic determinism."""
+        logger.debug("Phase 1: Applying deterministic seeding (seed=%d)", self.cfg.training.seed)
         self._seed_setter(self.cfg.training.seed, strict=self.repro_mode)
 
-    def _phase_2_hardware_optimization(self) -> int:
+    def _phase_2_runtime_configuration(self) -> int:
         """
-        Configures compute thread affinity and accelerator libraries.
+        Configures compute thread affinity and system libraries.
 
         Returns:
             Number of CPU threads applied to runtime
         """
+        logger.debug("Phase 2: Configuring runtime (workers=%d)", self.num_workers)
         applied_threads = self._thread_applier(self.num_workers)
         self._system_configurator()
         return applied_threads
@@ -261,6 +267,7 @@ class RootOrchestrator:
         Constructs experiment workspace via RunPaths.
         Anchors relative paths to validated PROJECT_ROOT.
         """
+        logger.debug("Phase 3: Provisioning filesystem")
         self._static_dir_setup()
         self.paths = RunPaths.create(
             dataset_slug=self.cfg.dataset.dataset_name,
@@ -274,6 +281,7 @@ class RootOrchestrator:
         Bridges static Logger to session-specific filesystem.
         Reconfigures handlers for file-based persistence in run directory.
         """
+        logger.debug("Phase 4: Initializing session logging")
         assert self.paths is not None, "Paths must be initialized before logging"
         self.run_logger = self._log_initializer(
             name=LOGGER_NAME, log_dir=self.paths.logs, level=self.cfg.telemetry.log_level
@@ -284,6 +292,7 @@ class RootOrchestrator:
         Mirrors hydrated configuration to experiment root.
         Saves portable YAML manifest for session auditability.
         """
+        logger.debug("Phase 5: Persisting configuration to YAML")
         assert self.paths is not None, "Paths must be initialized before config persistence"
         self._config_saver(data=self.cfg, yaml_path=self.paths.get_config_path())
 
@@ -292,6 +301,7 @@ class RootOrchestrator:
         Secures system-level resource locks via InfrastructureManager.
         Prevents concurrent execution conflicts and manages cleanup.
         """
+        logger.debug("Phase 6: Acquiring infrastructure locks")
         phase_logger = self.run_logger or logging.getLogger(LOGGER_NAME)
         if self.infra is not None:
             try:
@@ -304,6 +314,7 @@ class RootOrchestrator:
         Emits baseline environment report to active logging streams.
         Summarizes hardware, dataset metadata, and execution policies.
         """
+        logger.debug("Phase 7: Generating environment report")
         assert self.paths is not None, "Paths must be initialized before reporting"
         phase_logger = self.run_logger or logging.getLogger(LOGGER_NAME)
 
@@ -358,19 +369,19 @@ class RootOrchestrator:
         Synchronizes global state through 7 phases, progressing from
         deterministic seeding to full environment reporting.
 
-        Idempotent: if already initialized, returns the existing RunPaths
-        without re-executing any phase. This prevents orphaned directories
-        (Phase 3 creates unique paths per call) and resource leaks
-        (Phase 6 acquires filesystem locks).
+        Idempotent: guarded by ``_initialized`` flag. If already initialized,
+        returns existing RunPaths without re-executing any phase. This prevents
+        orphaned directories (Phase 3 creates unique paths per call) and
+        resource leaks (Phase 6 acquires filesystem locks).
 
         Returns:
             Verified and provisioned directory structure
         """
-        if self.paths is not None:
-            return self.paths
+        if self._initialized:
+            return self.paths  # type: ignore[return-value]
 
         self._phase_1_determinism()
-        applied_threads = self._phase_2_hardware_optimization()
+        applied_threads = self._phase_2_runtime_configuration()
         self._phase_3_filesystem_provisioning()
         self._phase_4_logging_initialization()
 
@@ -382,6 +393,7 @@ class RootOrchestrator:
         self._phase_6_infrastructure_guarding()
         self._phase_7_environment_reporting(applied_threads)
 
+        self._initialized = True
         return self.paths
 
     def cleanup(self) -> None:

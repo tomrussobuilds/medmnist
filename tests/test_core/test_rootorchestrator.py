@@ -328,7 +328,7 @@ def test_phase_1_determinism_always_calls_seed_setter():
 
 
 @pytest.mark.unit
-def test_phase_2_hardware_optimization_applies_threads_and_system():
+def test_phase_2_runtime_configuration_applies_threads_and_system():
     mock_cfg = MagicMock()
     mock_cfg.hardware.effective_num_workers = 4
     mock_thread_applier = MagicMock(return_value=7)
@@ -339,7 +339,7 @@ def test_phase_2_hardware_optimization_applies_threads_and_system():
         thread_applier=mock_thread_applier,
         system_configurator=mock_system_configurator,
     )
-    threads = orch._phase_2_hardware_optimization()
+    threads = orch._phase_2_runtime_configuration()
     assert threads == 7
     mock_thread_applier.assert_called_once_with(4)
     mock_system_configurator.assert_called_once()
@@ -808,8 +808,8 @@ def test_initialize_core_services_idempotent_returns_cached_paths(tmp_path):
 
 
 @pytest.mark.unit
-def test_initialize_core_services_skips_when_paths_already_set():
-    """Test that initialize_core_services returns immediately when self.paths is already set."""
+def test_initialize_core_services_skips_when_already_initialized():
+    """Test that initialize_core_services returns immediately when _initialized is True."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
     mock_cfg.hardware.effective_num_workers = 2
@@ -819,6 +819,7 @@ def test_initialize_core_services_skips_when_paths_already_set():
 
     orch = RootOrchestrator(cfg=mock_cfg, seed_setter=mock_seed_setter)
     orch.paths = existing_paths
+    orch._initialized = True
 
     result = orch.initialize_core_services()
 
