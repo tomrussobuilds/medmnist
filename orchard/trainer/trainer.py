@@ -139,7 +139,7 @@ class ModelTrainer:
         # Mixup configuration
         self.mixup_fn = None
         if cfg.training.mixup_alpha > 0:
-            self.mixup_fn = partial(mixup_data, alpha=cfg.training.mixup_alpha, device=device)
+            self.mixup_fn = partial(mixup_data, alpha=cfg.training.mixup_alpha)
 
         # Output Management
         self.best_path = output_path or Path("./best_model.pth")

@@ -22,7 +22,7 @@ from orchard.core import Config
 
 
 # DATASET CLASS
-class MedMNISTDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
+class VisionDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
     """
     Enhanced PyTorch Dataset for MedMNIST data.
 
@@ -77,7 +77,6 @@ class MedMNISTDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
                 self.images = np.array(raw_images)
                 self.labels = raw_labels
 
-            # Standard Imports
             # This ensures consistent PIL conversion regardless of source format
             if self.images.ndim == 3:  # (N, H, W) -> (N, H, W, 1)
                 self.images = np.expand_dims(self.images, axis=-1)

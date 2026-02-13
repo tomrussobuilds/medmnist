@@ -15,6 +15,7 @@ import torch.nn as nn
 from orchard.optimization import MetricExtractor, TrialTrainingExecutor
 
 
+# Add the missing hyperparameters momentum and weight_decay for this PyTorch optimizer. everywhere
 # FIXTURES
 @pytest.fixture
 def mock_cfg():

@@ -76,8 +76,6 @@ def test_get_project_root_finds_git_marker(tmp_path):
                 tmp_path,
             ]
 
-            pass
-
 
 @pytest.mark.unit
 def test_get_project_root_finds_requirements_marker(tmp_path):

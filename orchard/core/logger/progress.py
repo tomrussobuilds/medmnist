@@ -157,7 +157,7 @@ def log_study_summary(
             log.info("")
 
             log.info("Best Hyperparameters:")
-            log_trial_params_compact(study.best_trial.number, study.best_params)
+            log_trial_params_compact(study.best_params)
         except ValueError:
             log.warning(f"{LogStyle.INDENT}{LogStyle.WARNING} Best trial lookup failed")
             log.info(LogStyle.DOUBLE)
@@ -169,7 +169,7 @@ def log_study_summary(
 
 
 def log_trial_params_compact(
-    trial_number: int, params: Dict[str, Any], logger_instance: logging.Logger | None = None
+    params: Dict[str, Any], logger_instance: logging.Logger | None = None
 ) -> None:
     """
     Compact parameter logging for best trial summary.

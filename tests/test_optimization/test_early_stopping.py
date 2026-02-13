@@ -26,7 +26,7 @@ def test_initialization_invalid_direction():
 def test_initialization_valid():
     """Test valid initialization."""
     callback = StudyEarlyStoppingCallback(threshold=0.9999, direction="maximize", patience=3)
-    assert callback.threshold == 0.9999
+    assert callback.threshold == pytest.approx(0.9999)
     assert callback.direction == "maximize"
     assert callback.patience == 3
 

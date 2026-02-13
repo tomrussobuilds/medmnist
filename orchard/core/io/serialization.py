@@ -69,7 +69,7 @@ def save_config_as_yaml(data: Any, yaml_path: Path) -> Path:
         logger.info(f"Configuration frozen successfully at → {yaml_path.name}")
         return yaml_path
 
-    except (OSError, PermissionError) as e:
+    except OSError as e:
         logger.error(f"IO Error: Could not write YAML to {yaml_path}. Error: {e}")
         raise
 

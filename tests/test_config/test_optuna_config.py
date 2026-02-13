@@ -14,6 +14,7 @@ from pydantic import ValidationError
 from orchard.core.config import OptunaConfig
 
 
+# Do not perform equality checks with floating point values.
 # OPTUNA CONFIG: DEFAULTS
 @pytest.mark.unit
 def test_optuna_config_defaults():
@@ -118,7 +119,7 @@ def test_early_stopping_configuration():
     )
 
     assert config.enable_early_stopping is True
-    assert config.early_stopping_threshold == 0.999
+    assert config.early_stopping_threshold == pytest.approx(0.999)
     assert config.early_stopping_patience == 2
 
 
@@ -127,13 +128,13 @@ def test_early_stopping_threshold_bounds():
     """Test early_stopping_threshold accepts values >= 0."""
     # Valid
     config = OptunaConfig(early_stopping_threshold=0.0)
-    assert config.early_stopping_threshold == 0.0
+    assert config.early_stopping_threshold == pytest.approx(0.0)
 
     config = OptunaConfig(early_stopping_threshold=0.999)
-    assert config.early_stopping_threshold == 0.999
+    assert config.early_stopping_threshold == pytest.approx(0.999)
 
     config = OptunaConfig(early_stopping_threshold=1.5)
-    assert config.early_stopping_threshold == 1.5
+    assert config.early_stopping_threshold == pytest.approx(1.5)
 
 
 @pytest.mark.unit

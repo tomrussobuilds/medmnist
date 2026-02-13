@@ -43,7 +43,7 @@ def criterion():
 @pytest.fixture
 def optimizer(simple_model):
     """SGD optimizer."""
-    return torch.optim.SGD(simple_model.parameters(), lr=0.01)
+    return torch.optim.SGD(simple_model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0)
 
 
 # TESTS: train_one_epoch
@@ -138,7 +138,7 @@ def test_train_one_epoch_scaler_grad_clip_minimal():
     batch = (torch.randn(4, 10), torch.randint(0, 2, (4,)))
     loader = [batch]
 
-    scaler = torch.amp.GradScaler(enabled=True)
+    scaler = torch.amp.grad_scaler.GradScaler(enabled=True)
 
     original_unscale = scaler.unscale_
     unscale_called = [False]
@@ -173,7 +173,7 @@ def test_train_one_epoch_with_scaler_and_grad_clip(
 ):
     """Test train_one_epoch with AMP scaler AND gradient clipping."""
     device = torch.device("cpu")
-    scaler = torch.amp.GradScaler()
+    scaler = torch.amp.grad_scaler.GradScaler()
 
     loss = train_one_epoch(
         model=simple_model,
@@ -215,7 +215,7 @@ def test_mixup_data_cuda_indexing():
     x = torch.randn(4, 3, 32, 32).cuda()
     y = torch.randint(0, 10, (4,)).cuda()
 
-    mixed_x, y_a, y_b, lam = mixup_data(x, y, alpha=1.0)
+    mixed_x, _, _, _ = mixup_data(x, y, alpha=1.0)
 
     assert mixed_x.is_cuda
     assert mixed_x.device == x.device
@@ -235,7 +235,7 @@ def test_train_one_epoch_updates_tqdm_postfix(simple_model, simple_loader, crite
         batch2 = (torch.randn(4, 1, 28, 28), torch.randint(0, 10, (4,)))
         mock_iterator.__iter__ = MagicMock(return_value=iter([batch1, batch2]))
 
-        loss = train_one_epoch(
+        _ = train_one_epoch(
             model=simple_model,
             loader=simple_loader,
             criterion=criterion,
@@ -331,7 +331,7 @@ def test_mixup_data_disabled():
     x = torch.randn(4, 3, 32, 32)
     y = torch.randint(0, 10, (4,))
 
-    mixed_x, y_a, y_b, lam = mixup_data(x, y, alpha=0.0)
+    mixed_x, y_a, _, lam = mixup_data(x, y, alpha=0.0)
 
     assert torch.equal(mixed_x, x)
     assert torch.equal(y_a, y)
@@ -348,7 +348,7 @@ def test_mixup_data_cuda_aware():
         x = x.cuda()
         y = y.cuda()
 
-    mixed_x, y_a, y_b, lam = mixup_data(x, y, alpha=1.0)
+    mixed_x, y_a, _, _ = mixup_data(x, y, alpha=1.0)
 
     assert mixed_x.device == x.device
     assert y_a.device == y.device

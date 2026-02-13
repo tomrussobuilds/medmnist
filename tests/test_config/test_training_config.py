@@ -22,9 +22,9 @@ def test_training_config_defaults():
     assert config.seed == 42
     assert config.batch_size == 16
     assert config.epochs == 60
-    assert config.learning_rate == 0.008
+    assert config.learning_rate == pytest.approx(0.008)
     assert config.min_lr == 1e-6
-    assert config.momentum == 0.9
+    assert config.momentum == pytest.approx(0.9)
     assert config.weight_decay == 5e-4
 
 
@@ -34,7 +34,7 @@ def test_lr_within_bounds():
     """Test valid learning rate values."""
     config = TrainingConfig(learning_rate=0.001, min_lr=1e-7)
 
-    assert config.learning_rate == 0.001
+    assert config.learning_rate == pytest.approx(0.001)
     assert config.min_lr == 1e-7
 
 
@@ -96,11 +96,11 @@ def test_amp_with_sufficient_batch_allowed():
 def test_label_smoothing_bounds():
     """Test label_smoothing within valid range."""
     config = TrainingConfig(label_smoothing=0.1)
-    assert config.label_smoothing == 0.1
+    assert config.label_smoothing == pytest.approx(0.1)
 
     # Maximum
     config = TrainingConfig(label_smoothing=0.3)
-    assert config.label_smoothing == 0.3
+    assert config.label_smoothing == pytest.approx(0.3)
 
 
 @pytest.mark.unit
@@ -121,11 +121,11 @@ def test_label_smoothing_negative_rejected():
 def test_mixup_alpha_non_negative():
     """Test mixup_alpha >= 0."""
     config = TrainingConfig(mixup_alpha=0.2)
-    assert config.mixup_alpha == 0.2
+    assert config.mixup_alpha == pytest.approx(0.2)
 
     # Zero is valid (disables mixup)
     config = TrainingConfig(mixup_alpha=0.0)
-    assert config.mixup_alpha == 0.0
+    assert config.mixup_alpha == pytest.approx(0.0)
 
 
 @pytest.mark.unit
@@ -136,7 +136,7 @@ def test_weight_decay_bounds():
 
     # Maximum
     config = TrainingConfig(weight_decay=0.2)
-    assert config.weight_decay == 0.2
+    assert config.weight_decay == pytest.approx(0.2)
 
 
 @pytest.mark.unit
@@ -151,9 +151,9 @@ def test_weight_decay_too_large_rejected():
 def test_momentum_bounds():
     """Test momentum within valid range [0, 1)."""
     config = TrainingConfig(momentum=0.9)
-    assert config.momentum == 0.9
+    assert config.momentum == pytest.approx(0.9)
     config = TrainingConfig(momentum=0.0)
-    assert config.momentum == 0.0
+    assert config.momentum == pytest.approx(0.0)
 
 
 @pytest.mark.unit
@@ -175,7 +175,7 @@ def test_momentum_negative_rejected():
 def test_grad_clip_valid():
     """Test gradient clipping within valid range."""
     config = TrainingConfig(grad_clip=1.0)
-    assert config.grad_clip == 1.0
+    assert config.grad_clip == pytest.approx(1.0)
 
 
 @pytest.mark.unit
@@ -204,7 +204,7 @@ def test_from_args_basic():
 
     assert config.epochs == 100
     assert config.batch_size == 32
-    assert config.learning_rate == 0.001
+    assert config.learning_rate == pytest.approx(0.001)
     assert config.use_amp is True
 
 
@@ -260,7 +260,7 @@ def test_criterion_types():
 def test_cosine_fraction_probability():
     """Test cosine_fraction is probability [0, 1]."""
     config = TrainingConfig(cosine_fraction=0.5)
-    assert config.cosine_fraction == 0.5
+    assert config.cosine_fraction == pytest.approx(0.5)
 
     with pytest.raises(ValidationError):
         TrainingConfig(cosine_fraction=1.5)

@@ -81,6 +81,7 @@ def test_download_galaxy10_h5_cleans_tmp_on_failure(tmp_path):
 
     def iter_with_failure(*_):
         yield b"chunk1"
+        # Replace this generic exception class with a more specific one.
         raise Exception("Network error during download")
 
     mock_response = Mock()

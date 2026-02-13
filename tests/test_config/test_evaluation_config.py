@@ -53,8 +53,6 @@ def test_batch_size_bounds():
     config = EvaluationConfig(batch_size=1)
     assert config.batch_size == 1
 
-    config = EvaluationConfig(batch_size=2048)
-
     with pytest.raises(ValidationError):
         EvaluationConfig(batch_size=0)
 

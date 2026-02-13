@@ -156,7 +156,7 @@ class OptunaOrchestrator:
                 "No completed trials. Skipping visualizations, best config, "
                 "and detailed exports."
             )
-            export_study_summary(study, self.paths, self.cfg.optuna.metric_name)
+            export_study_summary(study, self.paths)
             return
 
         if self.cfg.optuna.save_plots:
@@ -165,7 +165,7 @@ class OptunaOrchestrator:
         if self.cfg.optuna.save_best_config:
             export_best_config(study, self.cfg, self.paths)
 
-        export_study_summary(study, self.paths, self.cfg.optuna.metric_name)
+        export_study_summary(study, self.paths)
         export_top_trials(study, self.paths, self.cfg.optuna.metric_name)
 
 

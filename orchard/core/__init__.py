@@ -133,7 +133,6 @@ __all__ = [
     "worker_init_fn",
     "ensure_single_instance",
     "release_single_instance",
-    "kill_duplicate_processes",
     "is_repro_mode_requested",
     # I/O
     "save_config_as_yaml",

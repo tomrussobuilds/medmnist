@@ -84,6 +84,7 @@ def health_check_single_dataset(ds_meta, orchestrator, resolution: int = 28) -> 
         run_logger.exception(e)
 
 
+# TODO: refactor
 def fetch_all_datasets_health_check() -> None:
     """
     Iterates over the MedMNIST dataset registry and performs a health check for each dataset.

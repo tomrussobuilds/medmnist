@@ -44,7 +44,7 @@ def test_parse_args_training_hyperparameters():
 
         assert args.epochs == 100
         assert args.batch_size == 64
-        assert args.lr == 0.001
+        assert args.lr == pytest.approx(0.001)
 
 
 @pytest.mark.unit
@@ -228,9 +228,9 @@ def test_parse_args_augmentation_params():
     ):
         args = parse_args()
 
-        assert args.hflip == 0.5
+        assert args.hflip == pytest.approx(0.5)
         assert args.rotation_angle == 15
-        assert args.jitter_val == 0.3
+        assert args.jitter_val == pytest.approx(0.3)
 
 
 # PARSE ARGS: PATHS
@@ -308,7 +308,7 @@ def test_parse_args_complex_combination():
         assert args.model_name == "efficientnet_b0"
         assert args.epochs == 50
         assert args.batch_size == 128
-        assert args.lr == 0.0001
+        assert args.lr == pytest.approx(0.0001)
         assert args.device == "cuda"
         assert args.resolution == 224
         assert args.pretrained is False

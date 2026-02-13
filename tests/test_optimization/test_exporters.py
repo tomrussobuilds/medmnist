@@ -72,7 +72,7 @@ def config():
 @pytest.mark.unit
 def test_export_study_summary(study, paths):
     """Test export of study summary to JSON."""
-    export_study_summary(study, paths, metric_name="accuracy")
+    export_study_summary(study, paths)
 
     output_path = paths.reports / "study_summary.json"
     assert output_path.exists()
@@ -120,7 +120,7 @@ def test_export_best_config_invalid_config(study, paths):
 def test_export_study_summary_no_completed_trials(study, paths):
     """Test export when no completed trials exist."""
     study.trials = []
-    export_study_summary(study, paths, metric_name="accuracy")
+    export_study_summary(study, paths)
 
     output_path = paths.reports / "study_summary.json"
     assert output_path.exists()
@@ -208,7 +208,7 @@ def test_build_trial_data_without_timestamps():
     result = build_trial_data(trial)
 
     assert result["number"] == 5
-    assert result["value"] == 0.95
+    assert result["value"] == pytest.approx(0.95)
     assert result["params"] == {"lr": 0.001}
     assert result["state"] == "COMPLETE"
     assert result["datetime_start"] is None
@@ -379,7 +379,7 @@ def test_export_top_trials_all_type_branches(paths, tmp_path):
     assert df.loc[0, "Rank"] == 1
     assert df.loc[0, "Trial"] == 1
     assert df.loc[0, "AUC"] == 0.9567
-    assert df.loc[0, "learning_rate"] == 0.001234
+    assert df.loc[0, "learning_rate"] == pytest.approx(0.001234)
     assert df.loc[0, "batch_size"] == 32
     assert df.loc[0, "Duration (s)"] == 330
 

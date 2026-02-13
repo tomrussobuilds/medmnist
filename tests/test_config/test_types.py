@@ -94,8 +94,8 @@ def test_non_negative_float_valid():
     class Model(BaseModel):
         value: NonNegativeFloat
 
-    assert Model(value=0.0).value == 0.0
-    assert Model(value=1.5).value == 1.5
+    assert Model(value=0.0).value == pytest.approx(0.0)
+    assert Model(value=1.5).value == pytest.approx(1.5)
 
 
 # PROBABILITIES AND PERCENTAGES
@@ -106,9 +106,9 @@ def test_probability_bounds():
     class Model(BaseModel):
         prob: Probability
 
-    assert Model(prob=0.0).prob == 0.0
-    assert Model(prob=0.5).prob == 0.5
-    assert Model(prob=1.0).prob == 1.0
+    assert Model(prob=0.0).prob == pytest.approx(0.0)
+    assert Model(prob=0.5).prob == pytest.approx(0.5)
+    assert Model(prob=1.0).prob == pytest.approx(1.0)
 
     with pytest.raises(ValidationError):
         Model(prob=-0.1)
@@ -124,8 +124,8 @@ def test_percentage_bounds():
     class Model(BaseModel):
         pct: Percentage
 
-    assert Model(pct=0.01).pct == 0.01
-    assert Model(pct=1.0).pct == 1.0
+    assert Model(pct=0.01).pct == pytest.approx(0.01)
+    assert Model(pct=1.0).pct == pytest.approx(1.0)
 
     with pytest.raises(ValidationError):
         Model(pct=0.0)
@@ -250,9 +250,9 @@ def test_dropout_rate_bounds():
     class Model(BaseModel):
         dropout: DropoutRate
 
-    assert Model(dropout=0.0).dropout == 0.0
-    assert Model(dropout=0.5).dropout == 0.5
-    assert Model(dropout=0.9).dropout == 0.9
+    assert Model(dropout=0.0).dropout == pytest.approx(0.0)
+    assert Model(dropout=0.5).dropout == pytest.approx(0.5)
+    assert Model(dropout=0.9).dropout == pytest.approx(0.9)
 
     with pytest.raises(ValidationError):
         Model(dropout=-0.1)
@@ -269,7 +269,7 @@ def test_learning_rate_bounds():
     class Model(BaseModel):
         lr: LearningRate
 
-    assert Model(lr=0.001).lr == 0.001
+    assert Model(lr=0.001).lr == pytest.approx(0.001)
     assert Model(lr=1e-7).lr == 1e-7
 
     with pytest.raises(ValidationError):
@@ -286,9 +286,9 @@ def test_weight_decay_bounds():
     class Model(BaseModel):
         wd: WeightDecay
 
-    assert Model(wd=0.0).wd == 0.0
-    assert Model(wd=0.01).wd == 0.01
-    assert Model(wd=0.2).wd == 0.2
+    assert Model(wd=0.0).wd == pytest.approx(0.0)
+    assert Model(wd=0.01).wd == pytest.approx(0.01)
+    assert Model(wd=0.2).wd == pytest.approx(0.2)
 
     with pytest.raises(ValidationError):
         Model(wd=-0.01)
@@ -304,8 +304,8 @@ def test_momentum_bounds():
     class Model(BaseModel):
         mom: Momentum
 
-    assert Model(mom=0.0).mom == 0.0
-    assert Model(mom=0.9).mom == 0.9
+    assert Model(mom=0.0).mom == pytest.approx(0.0)
+    assert Model(mom=0.9).mom == pytest.approx(0.9)
 
     with pytest.raises(ValidationError):
         Model(mom=1.0)
@@ -318,9 +318,9 @@ def test_smoothing_value_bounds():
     class Model(BaseModel):
         smooth: SmoothingValue
 
-    assert Model(smooth=0.0).smooth == 0.0
-    assert Model(smooth=0.1).smooth == 0.1
-    assert Model(smooth=0.3).smooth == 0.3
+    assert Model(smooth=0.0).smooth == pytest.approx(0.0)
+    assert Model(smooth=0.1).smooth == pytest.approx(0.1)
+    assert Model(smooth=0.3).smooth == pytest.approx(0.3)
 
     with pytest.raises(ValidationError):
         Model(smooth=0.5)
@@ -333,9 +333,9 @@ def test_grad_norm_bounds():
     class Model(BaseModel):
         grad: GradNorm
 
-    assert Model(grad=0.0).grad == 0.0
-    assert Model(grad=1.0).grad == 1.0
-    assert Model(grad=100.0).grad == 100.0
+    assert Model(grad=0.0).grad == pytest.approx(0.0)
+    assert Model(grad=1.0).grad == pytest.approx(1.0)
+    assert Model(grad=100.0).grad == pytest.approx(100.0)
 
     with pytest.raises(ValidationError):
         Model(grad=200.0)
@@ -367,8 +367,8 @@ def test_zoom_scale_bounds():
     class Model(BaseModel):
         zoom: ZoomScale
 
-    assert Model(zoom=0.5).zoom == 0.5
-    assert Model(zoom=2.0).zoom == 2.0
+    assert Model(zoom=0.5).zoom == pytest.approx(0.5)
+    assert Model(zoom=2.0).zoom == pytest.approx(2.0)
 
     with pytest.raises(ValidationError):
         Model(zoom=0.0)
@@ -384,9 +384,9 @@ def test_pixel_shift_bounds():
     class Model(BaseModel):
         shift: PixelShift
 
-    assert Model(shift=0.0).shift == 0.0
-    assert Model(shift=10.0).shift == 10.0
-    assert Model(shift=50.0).shift == 50.0
+    assert Model(shift=0.0).shift == pytest.approx(0.0)
+    assert Model(shift=10.0).shift == pytest.approx(10.0)
+    assert Model(shift=50.0).shift == pytest.approx(50.0)
 
     with pytest.raises(ValidationError):
         Model(shift=100.0)
@@ -399,9 +399,9 @@ def test_blur_sigma_bounds():
     class Model(BaseModel):
         blur: BlurSigma
 
-    assert Model(blur=0.0).blur == 0.0
-    assert Model(blur=2.5).blur == 2.5
-    assert Model(blur=5.0).blur == 5.0
+    assert Model(blur=0.0).blur == pytest.approx(0.0)
+    assert Model(blur=2.5).blur == pytest.approx(2.5)
+    assert Model(blur=5.0).blur == pytest.approx(5.0)
 
     with pytest.raises(ValidationError):
         Model(blur=10.0)

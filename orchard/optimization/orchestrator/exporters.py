@@ -70,7 +70,7 @@ def export_best_config(study: optuna.Study, cfg: Config, paths: RunPaths) -> Pat
     return output_path
 
 
-def export_study_summary(study: optuna.Study, paths: RunPaths, metric_name: str) -> None:
+def export_study_summary(study: optuna.Study, paths: RunPaths) -> None:
     """
     Export complete study metadata to JSON.
 
@@ -80,7 +80,6 @@ def export_study_summary(study: optuna.Study, paths: RunPaths, metric_name: str)
     Args:
         study: Optuna study (may contain failed/pruned trials)
         paths: RunPaths instance for output location
-        metric_name: Name of optimization metric (for metadata)
 
     Output Structure:
         {

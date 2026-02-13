@@ -85,7 +85,7 @@ def test_build_loaders_with_weighted_sampler(mock_cfg, mock_metadata):
                 def __len__(self):
                     return 4
 
-            with patch("orchard.data_handler.loader.MedMNISTDataset", FakeDataset):
+            with patch("orchard.data_handler.loader.VisionDataset", FakeDataset):
                 factory = DataLoaderFactory(mock_cfg, mock_metadata)
                 train, val, test = factory.build()
 
@@ -122,7 +122,7 @@ def test_build_loaders_without_weighted_sampler(mock_cfg_no_sampler, mock_metada
                 def __len__(self):
                     return 4
 
-            with patch("orchard.data_handler.loader.MedMNISTDataset", FakeDataset):
+            with patch("orchard.data_handler.loader.VisionDataset", FakeDataset):
                 factory = DataLoaderFactory(mock_cfg_no_sampler, mock_metadata)
                 train, val, test = factory.build()
 

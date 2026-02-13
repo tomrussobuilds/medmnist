@@ -184,7 +184,7 @@ def test_max_deviation_accepts_float():
     assert config.max_deviation == 1e-3
 
     config2 = ExportConfig(max_deviation=0.001)
-    assert config2.max_deviation == 0.001
+    assert config2.max_deviation == pytest.approx(0.001)
 
 
 # EXPORT CONFIG: OUTPUT PATH

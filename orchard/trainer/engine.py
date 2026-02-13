@@ -12,7 +12,7 @@ Key Functions:
 """
 
 import logging
-from typing import Tuple
+from typing import Callable, Optional, Tuple
 
 import numpy as np
 import torch
@@ -27,14 +27,50 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 # TRAINING ENGINE
+def _backward_step(
+    loss: torch.Tensor,
+    optimizer: torch.optim.Optimizer,
+    model: nn.Module,
+    scaler: Optional[torch.amp.grad_scaler.GradScaler],
+    grad_clip: float,
+) -> None:
+    """Perform a backward pass with optional gradient scaling and clipping.
+
+    This function handles mixed precision training via a `GradScaler` if provided.
+    It also applies gradient clipping if `grad_clip` is greater than zero.
+
+    Args:
+        loss (torch.Tensor): The computed loss for the current batch.
+        optimizer (torch.optim.Optimizer): The optimizer used to update model parameters.
+        model (nn.Module): The neural network model whose parameters will be updated.
+        scaler (Optional[torch.cuda.amp.GradScaler]): Automatic Mixed Precision (AMP) scaler.
+            If `None`, standard precision backward pass is used.
+        grad_clip (float): Maximum norm for gradient clipping. If <= 0, no clipping is applied.
+    """
+    if scaler:
+        # Mixed precision backward pass
+        scaler.scale(loss).backward()
+        if grad_clip > 0:
+            scaler.unscale_(optimizer)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
+        scaler.step(optimizer)
+        scaler.update()
+    else:
+        # Standard backward pass
+        loss.backward()
+        if grad_clip > 0:
+            torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
+        optimizer.step()
+
+
 def train_one_epoch(
     model: nn.Module,
     loader: torch.utils.data.DataLoader,
     criterion: nn.Module,
     optimizer: torch.optim.Optimizer,
     device: torch.device,
-    mixup_fn=None,
-    scaler=None,
+    mixup_fn: Optional[Callable] = None,
+    scaler: Optional[torch.amp.grad_scaler.GradScaler] = None,
     grad_clip: float = 0.0,
     epoch: int = 0,
     total_epochs: int = 1,
@@ -84,18 +120,7 @@ def train_one_epoch(
             loss = criterion(outputs, targets)
 
         # Backward pass with optional AMP and gradient clipping
-        if scaler:
-            scaler.scale(loss).backward()
-            if grad_clip > 0:
-                scaler.unscale_(optimizer)
-                torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
-            scaler.step(optimizer)
-            scaler.update()
-        else:
-            loss.backward()
-            if grad_clip > 0:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
-            optimizer.step()
+        _backward_step(loss, optimizer, model, scaler, grad_clip)
 
         # Accumulate loss
         batch_size = inputs.size(0)
@@ -197,11 +222,13 @@ def validate_epoch(
 
 
 # MIXUP UTILITY
+_mixup_rng = np.random.default_rng()
+
+
 def mixup_data(
     x: torch.Tensor,
     y: torch.Tensor,
     alpha: float = 1.0,
-    device: torch.device | None = None,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, float]:
     """
     Applies MixUp augmentation by blending two random samples.
@@ -214,7 +241,6 @@ def mixup_data(
         x: Input data batch (images)
         y: Target labels batch
         alpha: Beta distribution parameter (0 disables MixUp)
-        device: Device for tensor placement (unused, kept for compatibility)
 
     Returns:
         Tuple containing:
@@ -227,7 +253,7 @@ def mixup_data(
         return x, y, y, 1.0
 
     # Draw mixing coefficient from Beta distribution
-    lam: float = np.random.beta(alpha, alpha)
+    lam: float = float(_mixup_rng.beta(alpha, alpha))
     batch_size: int = x.size(0)
 
     # Generate random permutation (device-aware)
@@ -236,7 +262,7 @@ def mixup_data(
         index = index.to(x.device)
 
     # Create mixed input
-    mixed_x: torch.Tensor = lam * x + (1 - lam) * x[index, :]
+    mixed_x: torch.Tensor = lam * x + (1 - lam) * x[index]
 
     # Get corresponding targets
     y_a: torch.Tensor = y

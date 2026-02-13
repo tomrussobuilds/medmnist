@@ -9,7 +9,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import psutil
 import pytest
@@ -363,7 +363,7 @@ def test_detect_duplicates_handles_no_such_process():
     cleaner = DuplicateProcessCleaner()
 
     mock_proc = MagicMock()
-    type(mock_proc).info = property(lambda self: (_ for _ in ()).throw(psutil.NoSuchProcess(9999)))
+    type(mock_proc).info = PropertyMock(side_effect=psutil.NoSuchProcess(9999))
 
     with patch("psutil.process_iter", return_value=[mock_proc]):
         duplicates = cleaner.detect_duplicates()
@@ -377,7 +377,7 @@ def test_detect_duplicates_handles_access_denied():
     cleaner = DuplicateProcessCleaner()
 
     mock_proc = MagicMock()
-    type(mock_proc).info = property(lambda self: (_ for _ in ()).throw(psutil.AccessDenied()))
+    type(mock_proc).info = PropertyMock(side_effect=psutil.AccessDenied())
 
     with patch("psutil.process_iter", return_value=[mock_proc]):
         duplicates = cleaner.detect_duplicates()
@@ -391,7 +391,7 @@ def test_detect_duplicates_handles_zombie_process():
     cleaner = DuplicateProcessCleaner()
 
     mock_proc = MagicMock()
-    type(mock_proc).info = property(lambda self: (_ for _ in ()).throw(psutil.ZombieProcess(9999)))
+    type(mock_proc).info = PropertyMock(side_effect=psutil.ZombieProcess(9999))
 
     with patch("psutil.process_iter", return_value=[mock_proc]):
         duplicates = cleaner.detect_duplicates()

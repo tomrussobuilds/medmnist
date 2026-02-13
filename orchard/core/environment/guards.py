@@ -175,21 +175,18 @@ class DuplicateProcessCleaner:
                 proc.terminate()
                 proc.wait(timeout=1)
                 count += 1
+                continue
             except psutil.TimeoutExpired:
-                # Process didn't terminate gracefully, force kill
-                try:
-                    proc.kill()
-                    proc.wait(timeout=1)
-                    count += 1
-                except (
-                    psutil.NoSuchProcess,
-                    psutil.AccessDenied,
-                    psutil.ZombieProcess,
-                    psutil.TimeoutExpired,
-                ):
-                    # Process is stuck or already gone, skip
-                    continue
-            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                pass
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+
+            # If terminate failed, try kill
+            try:
+                proc.kill()
+                proc.wait(timeout=1)
+                count += 1
+            except (psutil.TimeoutExpired, psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
 
         if count and logger:

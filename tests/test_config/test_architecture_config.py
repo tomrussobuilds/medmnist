@@ -21,7 +21,7 @@ def test_architecture_config_defaults():
 
     assert config.name == "resnet_18_adapted"
     assert config.pretrained is True
-    assert config.dropout == 0.2
+    assert config.dropout == pytest.approx(0.2)
     assert config.weight_variant is None
 
 
@@ -34,7 +34,7 @@ def test_architecture_config_custom_values():
 
     assert config.name == "efficientnet_b0"
     assert config.pretrained is False
-    assert config.dropout == 0.3
+    assert config.dropout == pytest.approx(0.3)
     assert config.weight_variant == "imagenet"
 
 
@@ -44,13 +44,13 @@ def test_dropout_bounds():
     """Test dropout must be in [0.0, 0.9]."""
 
     config = ArchitectureConfig(dropout=0.0)
-    assert config.dropout == 0.0
+    assert config.dropout == pytest.approx(0.0)
 
     config = ArchitectureConfig(dropout=0.5)
-    assert config.dropout == 0.5
+    assert config.dropout == pytest.approx(0.5)
 
     config = ArchitectureConfig(dropout=0.9)
-    assert config.dropout == 0.9
+    assert config.dropout == pytest.approx(0.9)
 
     with pytest.raises(ValidationError):
         ArchitectureConfig(dropout=-0.1)
@@ -130,7 +130,7 @@ def test_from_args():
 
     assert config.name == "vit_tiny"
     assert config.pretrained is False
-    assert config.dropout == 0.25
+    assert config.dropout == pytest.approx(0.25)
 
 
 @pytest.mark.unit
@@ -142,7 +142,7 @@ def test_from_args_with_defaults():
 
     assert config.name == "resnet18"
     assert config.pretrained is True
-    assert config.dropout == 0.2
+    assert config.dropout == pytest.approx(0.2)
 
 
 @pytest.mark.unit
@@ -154,7 +154,7 @@ def test_from_args_partial():
 
     assert config.name == "efficientnet_b0"
     assert config.pretrained is True
-    assert config.dropout == 0.2
+    assert config.dropout == pytest.approx(0.2)
 
 
 # ARCHITECTURE CONFIG: DESCRIPTION FIELD

@@ -86,9 +86,7 @@ def ensure_dataset_npz(
 
             if not _is_valid_npz(tmp_path, metadata.md5_checksum):
                 actual_md5 = md5_checksum(tmp_path)
-                logger.error(
-                    f"MD5 mismatch: expected {metadata.md5_checksum}, " f"got {actual_md5}"
-                )
+                logger.error(f"MD5 mismatch: expected {metadata.md5_checksum}, got {actual_md5}")
                 raise ValueError("Downloaded file failed MD5 or header validation")
 
             # Atomic move
@@ -112,7 +110,7 @@ def ensure_dataset_npz(
                 raise RuntimeError(f"Could not download {metadata.name}") from e
 
             logger.warning(
-                f"Attempt {attempt}/{retries} failed: {e}. " f"Retrying in {actual_delay}s..."
+                f"Attempt {attempt}/{retries} failed: {e}. Retrying in {actual_delay}s..."
             )
             time.sleep(actual_delay)
 

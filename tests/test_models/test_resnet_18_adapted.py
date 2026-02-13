@@ -106,7 +106,7 @@ class TestResNet18Adapted:
             mock_models.resnet18.return_value = mock_model
             mock_models.ResNet18_Weights.IMAGENET1K_V1 = "mock_weights"
 
-            model = build_resnet18_adapted(device, num_classes=5, in_channels=1, cfg=mock_cfg)
+            _ = build_resnet18_adapted(device, num_classes=5, in_channels=1, cfg=mock_cfg)
 
             mock_models.resnet18.assert_called_once_with(weights="mock_weights")
 
@@ -145,7 +145,7 @@ class TestResNet18Adapted:
             model.conv1.register_forward_hook(get_activation("conv1"))
             model.layer1.register_forward_hook(get_activation("layer1"))
 
-            output = model(dummy_input)
+            _ = model(dummy_input)
 
             assert activations["conv1"][2] == 28
             assert activations["conv1"][3] == 28

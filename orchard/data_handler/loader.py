@@ -33,7 +33,7 @@ from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
 from orchard.core import Config, DatasetRegistryWrapper, worker_init_fn
 
-from .dataset import MedMNISTDataset
+from .dataset import VisionDataset
 from .fetcher import DatasetData
 from .transforms import get_pipeline_transforms
 
@@ -75,7 +75,7 @@ class DataLoaderFactory:
         """
         return get_pipeline_transforms(self.cfg, self.ds_meta)
 
-    def _get_balancing_sampler(self, dataset: MedMNISTDataset) -> Optional[WeightedRandomSampler]:
+    def _get_balancing_sampler(self, dataset: VisionDataset) -> Optional[WeightedRandomSampler]:
         """Calculates class weights and builds a WeightedRandomSampler.
 
         This method addresses class imbalance by assigning higher sampling
@@ -163,7 +163,7 @@ class DataLoaderFactory:
         # 2. Instantiate Dataset splits
         ds_params = {"path": self.metadata.path, "cfg": self.cfg}
 
-        train_ds = MedMNISTDataset(
+        train_ds = VisionDataset(
             **ds_params,
             split="train",
             transform=train_trans,
@@ -175,10 +175,10 @@ class DataLoaderFactory:
         if self.cfg.dataset.max_samples:
             sub_samples = max(1, int(self.cfg.dataset.max_samples * 0.10))
 
-        val_ds = MedMNISTDataset(
+        val_ds = VisionDataset(
             **ds_params, split="val", transform=val_trans, max_samples=sub_samples
         )
-        test_ds = MedMNISTDataset(
+        test_ds = VisionDataset(
             **ds_params, split="test", transform=val_trans, max_samples=sub_samples
         )
 
@@ -275,5 +275,5 @@ def create_temp_loader(dataset_path: Path, batch_size: int = 16) -> DataLoader:
     for large datasets (e.g., 224x224 images).
     """
     dataset = LazyNPZDataset(dataset_path)
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0)
     return loader

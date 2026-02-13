@@ -468,8 +468,7 @@ def test_cleanup_with_no_infra_manager():
     orch.run_logger = mock_logger
 
     orch.cleanup()
-
-    assert mock_logger.handlers == mock_logger.handlers
+    assert True
 
 
 @pytest.mark.unit

@@ -6,7 +6,7 @@ confusion matrices, and prediction grids.
 These are essential smoke tests to boost coverage from 0% to ~30%.
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import numpy as np
 import pytest
@@ -198,8 +198,7 @@ def test_show_predictions_without_config(mock_get_batch, mock_plt):
     mock_cfg.dataset.mean = [0.5, 0.5, 0.5]
     mock_cfg.dataset.std = [0.5, 0.5, 0.5]
     mock_cfg.training.use_tta = False
-
-    type(mock_cfg.dataset).metadata = property(lambda self: (_ for _ in ()).throw(AttributeError()))
+    type(mock_cfg.dataset).metadata = PropertyMock(side_effect=AttributeError())
 
     show_predictions(mock_model, mock_loader, device, classes, save_path=None, cfg=mock_cfg)
 

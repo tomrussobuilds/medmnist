@@ -5,6 +5,7 @@ Tests infrastructure resource management, lock file handling,
 and compute cache flushing.
 """
 
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -42,10 +43,7 @@ def test_prepare_environment_creates_lock(tmp_path):
         allow_process_kill = False
         lock_file_path = tmp_path / "test.lock"
 
-    class MockConfig:
-        hardware = MockHardware()
-
-    config = MockConfig()
+    config = SimpleNamespace(hardware=MockHardware())
 
     manager.prepare_environment(config)
     assert config.hardware.lock_file_path.exists()
@@ -61,10 +59,7 @@ def test_release_resources_removes_lock(tmp_path):
         allow_process_kill = False
         lock_file_path = tmp_path / "test.lock"
 
-    class MockConfig:
-        hardware = MockHardware()
-
-    config = MockConfig()
+    config = SimpleNamespace(hardware=MockHardware())
 
     manager.prepare_environment(config)
     assert config.hardware.lock_file_path.exists()
@@ -85,13 +80,12 @@ def test_prepare_environment_with_existing_lock(tmp_path):
         allow_process_kill = False
         lock_file_path = lock_path
 
-    class MockConfig:
-        hardware = MockHardware()
+    config = SimpleNamespace(hardware=MockHardware())
+    manager.prepare_environment(config)
 
-    manager.prepare_environment(MockConfig())
     assert lock_path.exists()
 
-    manager.release_resources(MockConfig())
+    manager.release_resources(config)
 
 
 @pytest.mark.integration
@@ -103,10 +97,7 @@ def test_release_resources_idempotent(tmp_path):
         allow_process_kill = False
         lock_file_path = tmp_path / "test.lock"
 
-    class MockConfig:
-        hardware = MockHardware()
-
-    config = MockConfig()
+    config = SimpleNamespace(hardware=MockHardware())
 
     manager.prepare_environment(config)
 
@@ -140,11 +131,7 @@ def test_integration_with_hardware_config(tmp_path):
     manager = InfrastructureManager()
 
     hw_config = HardwareConfig(project_name="test-integration")
-
-    class MockConfig:
-        hardware = hw_config
-
-    MockConfig()
+    _ = SimpleNamespace(hardware=hw_config)
 
     manager._flush_compute_cache()
     assert manager is not None
@@ -164,10 +151,10 @@ def test_prepare_environment_with_logger(tmp_path):
         hardware = MockHardware()
 
     class MockLogger:
-        def info(self, msg):
+        def info(self, _):
             pass
 
-        def warning(self, msg):
+        def warning(self, _):
             pass
 
     manager.prepare_environment(MockConfig(), logger=MockLogger())
@@ -183,17 +170,14 @@ def test_release_resources_with_logger(tmp_path):
         allow_process_kill = False
         lock_file_path = tmp_path / "test.lock"
 
-    class MockConfig:
-        hardware = MockHardware()
-
     class MockLogger:
-        def info(self, msg):
+        def info(self, _):
             pass
 
-        def debug(self, msg):
+        def debug(self, _):
             pass
 
-    config = MockConfig()
+    config = SimpleNamespace(hardware=MockHardware())
     manager.prepare_environment(config)
 
     manager.release_resources(config, logger=MockLogger())
@@ -240,9 +224,6 @@ def test_prepare_environment_with_process_kill_enabled(tmp_path, monkeypatch):
         allow_process_kill = True
         lock_file_path = tmp_path / "test.lock"
 
-    class MockConfig:
-        hardware = MockHardware()
-
     class MockLogger:
         def __init__(self):
             self.messages = []
@@ -257,7 +238,7 @@ def test_prepare_environment_with_process_kill_enabled(tmp_path, monkeypatch):
             self.messages.append(("debug", msg))
 
     logger = MockLogger()
-    config = MockConfig()
+    config = SimpleNamespace(hardware=MockHardware())
 
     manager.prepare_environment(config, logger=logger)
 
@@ -278,9 +259,6 @@ def test_prepare_environment_skips_process_kill_on_shared_env(tmp_path, monkeypa
         allow_process_kill = True
         lock_file_path = tmp_path / "test.lock"
 
-    class MockConfig:
-        hardware = MockHardware()
-
     class MockLogger:
         def __init__(self):
             self.messages = []
@@ -295,7 +273,7 @@ def test_prepare_environment_skips_process_kill_on_shared_env(tmp_path, monkeypa
             self.messages.append(("warning", msg))
 
     logger = MockLogger()
-    config = MockConfig()
+    config = SimpleNamespace(hardware=MockHardware())
 
     manager.prepare_environment(config, logger=logger)
 
@@ -317,9 +295,6 @@ def test_prepare_environment_with_pbs_environment(tmp_path, monkeypatch):
         allow_process_kill = True
         lock_file_path = tmp_path / "test.lock"
 
-    class MockConfig:
-        hardware = MockHardware()
-
     class MockLogger:
         def __init__(self):
             self.debug_calls = []
@@ -334,11 +309,12 @@ def test_prepare_environment_with_pbs_environment(tmp_path, monkeypatch):
             pass
 
     logger = MockLogger()
-    manager.prepare_environment(MockConfig(), logger=logger)
+    config = SimpleNamespace(hardware=MockHardware())
+    manager.prepare_environment(config, logger=logger)
 
     assert any("Shared environment detected" in msg for msg in logger.debug_calls)
 
-    manager.release_resources(MockConfig())
+    manager.release_resources(config)
 
 
 # INFRASTRUCTURE MANAGER: CACHE FLUSHING
@@ -468,9 +444,6 @@ def test_release_resources_lock_failure(tmp_path):
         allow_process_kill = False
         lock_file_path = lock_path
 
-    class MockConfig:
-        hardware = MockHardware()
-
     class MockLogger:
         def __init__(self):
             self.warnings = []
@@ -485,7 +458,7 @@ def test_release_resources_lock_failure(tmp_path):
             pass
 
     logger = MockLogger()
-    config = MockConfig()
+    config = SimpleNamespace(hardware=MockHardware())
 
     # Mock release_single_instance to raise an exception
     with patch(

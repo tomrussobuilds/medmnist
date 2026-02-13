@@ -152,7 +152,7 @@ def _create_splits(
     Returns:
         Tuple of (train_imgs, train_labels, val_imgs, val_labels, test_imgs, test_labels)
     """
-    rng = np.random.RandomState(seed)
+    rng = np.random.default_rng(seed)
 
     train_imgs_list = []
     train_labels_list = []
@@ -164,7 +164,7 @@ def _create_splits(
     unique_labels = np.unique(labels)
 
     for label in unique_labels:
-        indices = np.where(labels == label)[0]
+        indices = np.flatnonzero(labels == label)
         rng.shuffle(indices)
 
         n = len(indices)

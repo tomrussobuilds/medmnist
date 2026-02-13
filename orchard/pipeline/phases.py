@@ -45,6 +45,9 @@ from orchard.trainer import ModelTrainer, get_criterion, get_optimizer, get_sche
 
 logger = logging.getLogger(LOGGER_NAME)
 
+_ERR_LOGGER_NOT_INIT = "Logger not initialized"
+_ERR_PATHS_NOT_INIT = "Paths not initialized"
+
 
 def run_optimization_phase(
     orchestrator: RootOrchestrator,
@@ -74,8 +77,8 @@ def run_optimization_phase(
     run_logger = orchestrator.run_logger
 
     # Type guards for MyPy
-    assert run_logger is not None, "Logger not initialized"
-    assert paths is not None, "Paths not initialized"
+    assert run_logger is not None, _ERR_LOGGER_NOT_INIT
+    assert paths is not None, _ERR_PATHS_NOT_INIT
 
     run_logger.info("")
     run_logger.info(LogStyle.DOUBLE)
@@ -128,8 +131,8 @@ def run_training_phase(
     run_logger = orchestrator.run_logger
 
     # Type guards for MyPy
-    assert run_logger is not None, "Logger not initialized"
-    assert paths is not None, "Paths not initialized"
+    assert run_logger is not None, _ERR_LOGGER_NOT_INIT
+    assert paths is not None, _ERR_PATHS_NOT_INIT
 
     # Dataset metadata
     wrapper = DatasetRegistryWrapper(resolution=cfg.dataset.resolution)
@@ -237,8 +240,8 @@ def run_export_phase(
     run_logger = orchestrator.run_logger
 
     # Type guards for MyPy
-    assert run_logger is not None, "Logger not initialized"
-    assert paths is not None, "Paths not initialized"
+    assert run_logger is not None, _ERR_LOGGER_NOT_INIT
+    assert paths is not None, _ERR_PATHS_NOT_INIT
 
     run_logger.info("")
     run_logger.info(LogStyle.HEAVY)

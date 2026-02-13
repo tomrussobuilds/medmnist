@@ -19,13 +19,13 @@ def test_augmentation_config_defaults():
     """Test AugmentationConfig with default values."""
     config = AugmentationConfig()
 
-    assert config.hflip == 0.5
+    assert config.hflip == pytest.approx(0.5)
     assert config.rotation_angle == 10
-    assert config.jitter_val == 0.2
-    assert config.min_scale == 0.9
-    assert config.tta_translate == 2.0
-    assert config.tta_scale == 1.1
-    assert config.tta_blur_sigma == 0.4
+    assert config.jitter_val == pytest.approx(0.2)
+    assert config.min_scale == pytest.approx(0.9)
+    assert config.tta_translate == pytest.approx(2.0)
+    assert config.tta_scale == pytest.approx(1.1)
+    assert config.tta_blur_sigma == pytest.approx(0.4)
 
 
 @pytest.mark.unit
@@ -33,10 +33,10 @@ def test_augmentation_config_custom_values():
     """Test AugmentationConfig with custom parameters."""
     config = AugmentationConfig(hflip=0.7, rotation_angle=15, jitter_val=0.3, min_scale=0.85)
 
-    assert config.hflip == 0.7
+    assert config.hflip == pytest.approx(0.7)
     assert config.rotation_angle == 15
-    assert config.jitter_val == 0.3
-    assert config.min_scale == 0.85
+    assert config.jitter_val == pytest.approx(0.3)
+    assert config.min_scale == pytest.approx(0.85)
 
 
 # AUGMENTATION CONFIG: VALIDATION
@@ -45,10 +45,10 @@ def test_hflip_probability_bounds():
     """Test hflip probability must be in [0, 1]."""
 
     config = AugmentationConfig(hflip=0.0)
-    assert config.hflip == 0.0
+    assert config.hflip == pytest.approx(0.0)
 
     config = AugmentationConfig(hflip=1.0)
-    assert config.hflip == 1.0
+    assert config.hflip == pytest.approx(1.0)
 
     with pytest.raises(ValidationError):
         AugmentationConfig(hflip=-0.1)
@@ -89,10 +89,10 @@ def test_min_scale_probability_bounds():
     """Test min_scale must be in (0, 1]."""
 
     config = AugmentationConfig(min_scale=0.5)
-    assert config.min_scale == 0.5
+    assert config.min_scale == pytest.approx(0.5)
 
     config = AugmentationConfig(min_scale=1.0)
-    assert config.min_scale == 1.0
+    assert config.min_scale == pytest.approx(1.0)
 
     with pytest.raises(ValidationError):
         AugmentationConfig(min_scale=1.5)
@@ -104,10 +104,10 @@ def test_tta_translate_bounds():
     """Test tta_translate must be in [0, 50]."""
 
     config = AugmentationConfig(tta_translate=0.0)
-    assert config.tta_translate == 0.0
+    assert config.tta_translate == pytest.approx(0.0)
 
     config = AugmentationConfig(tta_translate=10.0)
-    assert config.tta_translate == 10.0
+    assert config.tta_translate == pytest.approx(10.0)
 
     with pytest.raises(ValidationError):
         AugmentationConfig(tta_translate=-1.0)
@@ -121,10 +121,10 @@ def test_tta_scale_bounds():
     """Test tta_scale must be in (0, 2]."""
 
     config = AugmentationConfig(tta_scale=1.0)
-    assert config.tta_scale == 1.0
+    assert config.tta_scale == pytest.approx(1.0)
 
     config = AugmentationConfig(tta_scale=2.0)
-    assert config.tta_scale == 2.0
+    assert config.tta_scale == pytest.approx(2.0)
 
     with pytest.raises(ValidationError):
         AugmentationConfig(tta_scale=0.0)
@@ -138,10 +138,10 @@ def test_tta_blur_sigma_bounds():
     """Test tta_blur_sigma must be in [0, 5]."""
 
     config = AugmentationConfig(tta_blur_sigma=0.0)
-    assert config.tta_blur_sigma == 0.0
+    assert config.tta_blur_sigma == pytest.approx(0.0)
 
     config = AugmentationConfig(tta_blur_sigma=5.0)
-    assert config.tta_blur_sigma == 5.0
+    assert config.tta_blur_sigma == pytest.approx(5.0)
 
     with pytest.raises(ValidationError):
         AugmentationConfig(tta_blur_sigma=-0.5)
@@ -158,10 +158,10 @@ def test_from_args():
 
     config = AugmentationConfig.from_args(args)
 
-    assert config.hflip == 0.7
+    assert config.hflip == pytest.approx(0.7)
     assert config.rotation_angle == 20
-    assert config.jitter_val == 0.25
-    assert config.min_scale == 0.8
+    assert config.jitter_val == pytest.approx(0.25)
+    assert config.min_scale == pytest.approx(0.8)
 
 
 @pytest.mark.unit
@@ -171,9 +171,9 @@ def test_from_args_partial():
 
     config = AugmentationConfig.from_args(args)
 
-    assert config.hflip == 0.3
+    assert config.hflip == pytest.approx(0.3)
     assert config.rotation_angle == 10
-    assert config.jitter_val == 0.2
+    assert config.jitter_val == pytest.approx(0.2)
 
 
 @pytest.mark.unit
@@ -183,9 +183,9 @@ def test_from_args_empty():
 
     config = AugmentationConfig.from_args(args)
 
-    assert config.hflip == 0.5
+    assert config.hflip == pytest.approx(0.5)
     assert config.rotation_angle == 10
-    assert config.jitter_val == 0.2
+    assert config.jitter_val == pytest.approx(0.2)
 
 
 # AUGMENTATION CONFIG: IMMUTABILITY
@@ -195,7 +195,7 @@ def test_config_is_frozen():
     config = AugmentationConfig()
 
     with pytest.raises(ValidationError):
-        config.hflip = 0.9
+        config.hflip = pytest.approx(0.9)
 
 
 @pytest.mark.unit

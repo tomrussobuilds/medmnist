@@ -45,7 +45,7 @@ def mock_orchestrator():
 @patch("orchard.pipeline.phases.run_optimization")
 @patch("orchard.pipeline.phases.log_optimization_summary")
 def test_run_optimization_phase_returns_study_and_path(
-    mock_log_summary, mock_run_opt, mock_orchestrator, tmp_path
+    _mock_log_summary, mock_run_opt, mock_orchestrator, tmp_path
 ):
     """Test run_optimization_phase returns (study, config_path)."""
     mock_study = MagicMock()
@@ -69,7 +69,7 @@ def test_run_optimization_phase_returns_study_and_path(
 @patch("orchard.pipeline.phases.run_optimization")
 @patch("orchard.pipeline.phases.log_optimization_summary")
 def test_run_optimization_phase_with_custom_config(
-    mock_log_summary, mock_run_opt, mock_orchestrator, tmp_path
+    _mock_log_summary, mock_run_opt, mock_orchestrator, tmp_path
 ):
     """Test run_optimization_phase uses provided config override."""
     custom_cfg = MagicMock()
@@ -81,7 +81,7 @@ def test_run_optimization_phase_with_custom_config(
     reports_dir.mkdir()
     mock_orchestrator.paths.reports = reports_dir
 
-    study, config_path = run_optimization_phase(mock_orchestrator, cfg=custom_cfg)
+    _study, _config_path = run_optimization_phase(mock_orchestrator, cfg=custom_cfg)
 
     call_args = mock_run_opt.call_args
     assert call_args.kwargs["cfg"] is custom_cfg
@@ -109,7 +109,7 @@ def test_run_optimization_phase_logs_summary(
 @patch("orchard.pipeline.phases.run_optimization")
 @patch("orchard.pipeline.phases.log_optimization_summary")
 def test_run_optimization_phase_handles_none_config_path(
-    mock_log_summary, mock_run_opt, mock_orchestrator, tmp_path
+    _mock_log_summary, mock_run_opt, mock_orchestrator, tmp_path
 ):
     """Test run_optimization_phase returns None when best_config.yaml doesn't exist."""
     mock_run_opt.return_value = MagicMock()
@@ -119,7 +119,7 @@ def test_run_optimization_phase_handles_none_config_path(
     reports_dir.mkdir()
     mock_orchestrator.paths.reports = reports_dir
 
-    study, config_path = run_optimization_phase(mock_orchestrator)
+    _study, config_path = run_optimization_phase(mock_orchestrator)
 
     assert config_path is None
 
@@ -141,13 +141,13 @@ def test_run_training_phase_returns_expected_tuple(
     mock_aug_desc,
     mock_final_eval,
     mock_trainer_cls,
-    mock_get_scheduler,
-    mock_get_optimizer,
-    mock_get_criterion,
+    _mock_get_scheduler,
+    _mock_get_optimizer,
+    _mock_get_criterion,
     mock_get_model,
-    mock_show_samples,
+    _mock_show_samples,
     mock_get_loaders,
-    mock_load_dataset,
+    _mock_load_dataset,
     mock_registry,
     mock_orchestrator,
 ):
@@ -167,7 +167,7 @@ def test_run_training_phase_returns_expected_tuple(
     result = run_training_phase(mock_orchestrator)
 
     assert len(result) == 6
-    best_path, losses, metrics, model, f1, acc = result
+    best_path, losses, _metrics, _model, f1, acc = result
     assert best_path == Path("/tmp/best.pth")
     assert losses == [0.5, 0.4]
     assert f1 == 0.85
@@ -190,13 +190,13 @@ def test_run_training_phase_with_custom_config(
     mock_aug_desc,
     mock_final_eval,
     mock_trainer_cls,
-    mock_get_scheduler,
-    mock_get_optimizer,
-    mock_get_criterion,
+    _mock_get_scheduler,
+    _mock_get_optimizer,
+    _mock_get_criterion,
     mock_get_model,
-    mock_show_samples,
+    _mock_show_samples,
     mock_get_loaders,
-    mock_load_dataset,
+    _mock_load_dataset,
     mock_registry,
     mock_orchestrator,
 ):
@@ -266,7 +266,7 @@ def test_run_export_phase_exports_onnx(mock_export_onnx, mock_get_model, mock_or
 @pytest.mark.unit
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
-def test_run_export_phase_grayscale_input(mock_export_onnx, mock_get_model, mock_orchestrator):
+def test_run_export_phase_grayscale_input(mock_export_onnx, _mock_get_model, mock_orchestrator):
     """Test run_export_phase determines input channels from config."""
     mock_orchestrator.cfg.dataset.force_rgb = False
     mock_orchestrator.cfg.dataset.effective_in_channels = 1
@@ -285,7 +285,7 @@ def test_run_export_phase_grayscale_input(mock_export_onnx, mock_get_model, mock
 @pytest.mark.unit
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
-def test_run_export_phase_with_custom_config(mock_export_onnx, mock_get_model, mock_orchestrator):
+def test_run_export_phase_with_custom_config(mock_export_onnx, _mock_get_model, mock_orchestrator):
     """Test run_export_phase uses provided config override."""
     custom_cfg = MagicMock()
     custom_cfg.dataset.resolution = 64
@@ -305,7 +305,7 @@ def test_run_export_phase_with_custom_config(mock_export_onnx, mock_get_model, m
 @pytest.mark.unit
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
-def test_run_export_phase_logs_output_path(mock_export_onnx, mock_get_model, mock_orchestrator):
+def test_run_export_phase_logs_output_path(_mock_export_onnx, _mock_get_model, mock_orchestrator):
     """Test run_export_phase logs the export path."""
     run_export_phase(
         mock_orchestrator,

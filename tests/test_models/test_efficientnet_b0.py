@@ -92,7 +92,7 @@ class TestEfficientNetB0:
             mock_models.efficientnet_b0.return_value = mock_model
             mock_models.EfficientNet_B0_Weights.IMAGENET1K_V1 = "mock_weights"
 
-            model = build_efficientnet_b0(device, num_classes=5, in_channels=1, cfg=mock_cfg)
+            _ = build_efficientnet_b0(device, num_classes=5, in_channels=1, cfg=mock_cfg)
 
             mock_models.efficientnet_b0.assert_called_once_with(weights="mock_weights")
 

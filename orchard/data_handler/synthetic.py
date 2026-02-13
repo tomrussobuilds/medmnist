@@ -41,25 +41,25 @@ def create_synthetic_dataset(
         >>> data = create_synthetic_dataset(num_classes=8, samples=100)
         >>> train_loader, val_loader, test_loader = get_dataloaders(data, cfg)
     """
+    rng = np.random.default_rng(42)
+
     # Generate synthetic image data
-    train_images = np.random.randint(
-        0, 255, (samples, resolution, resolution, channels), dtype=np.uint8
-    )
-    train_labels = np.random.randint(0, num_classes, (samples, 1), dtype=np.uint8)
+    train_images = rng.integers(0, 255, (samples, resolution, resolution, channels), dtype=np.uint8)
+    train_labels = rng.integers(0, num_classes, (samples, 1), dtype=np.uint8)
 
     # Validation and test sets are smaller (10% of training size each)
     val_samples = max(10, samples // 10)
     test_samples = max(10, samples // 10)
 
-    val_images = np.random.randint(
+    val_images = rng.integers(
         0, 255, (val_samples, resolution, resolution, channels), dtype=np.uint8
     )
-    val_labels = np.random.randint(0, num_classes, (val_samples, 1), dtype=np.uint8)
+    val_labels = rng.integers(0, num_classes, (val_samples, 1), dtype=np.uint8)
 
-    test_images = np.random.randint(
+    test_images = rng.integers(
         0, 255, (test_samples, resolution, resolution, channels), dtype=np.uint8
     )
-    test_labels = np.random.randint(0, num_classes, (test_samples, 1), dtype=np.uint8)
+    test_labels = rng.integers(0, num_classes, (test_samples, 1), dtype=np.uint8)
 
     # Create a temporary .npz file with MedMNIST format
     temp_file = tempfile.NamedTemporaryFile(

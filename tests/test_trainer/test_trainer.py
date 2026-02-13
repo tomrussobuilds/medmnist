@@ -64,7 +64,12 @@ def criterion():
 @pytest.fixture
 def optimizer(simple_model):
     """SGD optimizer."""
-    return torch.optim.SGD(simple_model.parameters(), lr=0.01)
+    return torch.optim.SGD(
+        simple_model.parameters(),
+        lr=0.01,
+        momentum=0.0,
+        weight_decay=0.0,
+    )
 
 
 @pytest.fixture
