@@ -150,7 +150,7 @@ class InfrastructureManager(BaseModel):
         try:
             release_single_instance(cfg.hardware.lock_file_path)
             log.info(f" » Lock released at {cfg.hardware.lock_file_path}")
-        except Exception as e:
+        except OSError as e:
             log.warning(f" » Failed to release lock: {e}")
 
         # Flush caches
@@ -173,5 +173,5 @@ class InfrastructureManager(BaseModel):
             try:
                 torch.mps.empty_cache()
                 log.debug(" » MPS cache cleared.")
-            except Exception:
+            except RuntimeError:
                 log.debug(" » MPS cache cleanup failed (non-fatal).")

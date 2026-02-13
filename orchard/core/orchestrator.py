@@ -306,7 +306,7 @@ class RootOrchestrator:
         if self.infra is not None:
             try:
                 self.infra.prepare_environment(self.cfg, logger=phase_logger)
-            except Exception as e:
+            except (OSError, RuntimeError) as e:
                 phase_logger.warning(f"Infra guard failed: {e}")
 
     def _phase_7_environment_reporting(self, applied_threads: int) -> None:
@@ -321,7 +321,7 @@ class RootOrchestrator:
         if self._device_cache is None:
             try:
                 self._device_cache = self.get_device()
-            except Exception as e:
+            except RuntimeError as e:
                 self._device_cache = torch.device("cpu")
                 phase_logger.warning(f"Device detection failed, fallback to CPU: {e}")
 
@@ -407,7 +407,7 @@ class RootOrchestrator:
         try:
             if self.infra:
                 self.infra.release_resources(self.cfg, logger=cleanup_logger)
-        except Exception as e:
+        except (OSError, RuntimeError) as e:
             cleanup_logger.error(f"Failed to release system lock: {e}")
 
         self._close_logging_handlers()

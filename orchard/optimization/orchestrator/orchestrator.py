@@ -85,9 +85,8 @@ class OptunaOrchestrator:
         Returns:
             Configured Optuna study instance
         """
-        # Pass cfg to builders
-        sampler = build_sampler(self.cfg.optuna.sampler_type, self.cfg)
-        pruner = build_pruner(self.cfg.optuna.enable_pruning, self.cfg.optuna.pruner_type, self.cfg)
+        sampler = build_sampler(self.cfg)
+        pruner = build_pruner(self.cfg)
         storage_url = self.cfg.optuna.get_storage_url(self.paths)
 
         study = optuna.create_study(

@@ -92,30 +92,28 @@ def log_trial_start(
     log.info(f"{LogStyle.LIGHT}")
     log.info(f"Trial {trial_number} Hyperparameters:")
 
-    categories = [
-        ("Optimization", ["learning_rate", "weight_decay", "momentum", "min_lr"]),
-        ("Regularization", ["mixup_alpha", "label_smoothing", "dropout"]),
-        ("Scheduling", ["cosine_fraction", "scheduler_patience", "batch_size"]),
-        ("Augmentation", ["rotation_angle", "jitter_val", "min_scale"]),
-        ("Architecture", ["model_name", "weight_variant"]),
-    ]
+    categories = {
+        "Optimization": ["learning_rate", "weight_decay", "momentum", "min_lr"],
+        "Regularization": ["mixup_alpha", "label_smoothing", "dropout"],
+        "Scheduling": ["cosine_fraction", "scheduler_patience", "batch_size"],
+        "Augmentation": ["rotation_angle", "jitter_val", "min_scale"],
+        "Architecture": ["model_name", "weight_variant"],
+    }
 
-    for category_name, param_list in categories:
-        category_params = {k: v for k, v in params.items() if k in param_list}
+    def _format_value(value: Any) -> str:
+        """Return nicely formatted string for logging."""
+        if isinstance(value, float):
+            return f"{value:.2e}" if value < 0.001 else f"{value:.4f}"
+        return str(value)
+
+    for category_name, keys in categories.items():
+        category_params = {k: params[k] for k in keys if k in params}
         if category_params:
             log.info(f"{LogStyle.INDENT}[{category_name}]")
             for key, value in category_params.items():
-                if isinstance(value, float):
-                    if value < 0.001:
-                        log.info(
-                            f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {value:.2e}"
-                        )
-                    else:
-                        log.info(
-                            f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {value:.4f}"
-                        )
-                else:
-                    log.info(f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {value}")
+                log.info(
+                    f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {_format_value(value)}"
+                )
 
     log.info(LogStyle.LIGHT)
 

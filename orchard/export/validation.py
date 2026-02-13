@@ -95,6 +95,6 @@ def validate_export(
     except ImportError as e:
         logger.warning(f"onnxruntime not installed. Skipping validation: {e}")
         return False
-    except Exception as e:
+    except (RuntimeError, ValueError) as e:
         logger.error(f"Validation failed: {e}", exc_info=True)
-        raise  # Re-raise to help debug test failures
+        raise

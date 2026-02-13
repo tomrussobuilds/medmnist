@@ -57,8 +57,8 @@ def export_to_onnx(
     # Create output directory if needed
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Load trained weights (nosec: loading our own checkpoints, not untrusted input)
-    checkpoint = torch.load(checkpoint_path, map_location="cpu")  # nosec B614
+    # Load trained weights
+    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
     if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
         model.load_state_dict(checkpoint["model_state_dict"])
     else:
@@ -141,7 +141,7 @@ def export_to_onnx(
             logger.warning(
                 f"    {LogStyle.WARNING} onnx package not installed. Skipping validation."
             )
-        except Exception as e:
+        except (ValueError, RuntimeError) as e:
             logger.error(f"    {LogStyle.WARNING} ONNX validation failed: {e}")
             raise
 
@@ -203,6 +203,6 @@ def benchmark_onnx_inference(
     except ImportError:
         logger.warning("onnxruntime not installed. Skipping benchmark.")
         return -1.0
-    except Exception as e:
+    except Exception as e:  # noqa: broad-except — onnxruntime raises non-standard exceptions
         logger.error(f"Benchmark failed: {e}")
         return -1.0

@@ -27,23 +27,18 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 # CONFIGURATION BUILDERS
-def build_sampler(sampler_type: str, cfg: Config) -> optuna.samplers.BaseSampler:
+def build_sampler(cfg: Config) -> optuna.samplers.BaseSampler:
     """
-    Create Optuna sampler from configuration string.
+    Create Optuna sampler from configuration.
 
     Args:
-        sampler_type: Sampler algorithm name ("tpe", "cmaes", "random", "grid")
+        cfg: Global configuration with optuna.sampler_type
 
     Returns:
         Configured Optuna sampler instance
 
     Raises:
         ValueError: If sampler_type is not in SAMPLER_REGISTRY
-
-    Example:
-        >>> sampler = build_sampler("tpe")
-        >>> isinstance(sampler, optuna.samplers.TPESampler)
-        True
     """
     sampler_cls = SAMPLER_REGISTRY.get(cfg.optuna.sampler_type)
     if sampler_cls is None:
@@ -54,25 +49,18 @@ def build_sampler(sampler_type: str, cfg: Config) -> optuna.samplers.BaseSampler
     return sampler_cls()
 
 
-def build_pruner(
-    enable_pruning: bool, pruner_type: str, cfg: Config
-) -> MedianPruner | PercentilePruner | HyperbandPruner | NopPruner:
+def build_pruner(cfg: Config) -> MedianPruner | PercentilePruner | HyperbandPruner | NopPruner:
     """
     Create Optuna pruner from configuration.
 
     Args:
-        pruner_type: Pruner algorithm name ("median", "percentile", "hyperband", "none")
+        cfg: Global configuration with optuna.enable_pruning and optuna.pruner_type
 
     Returns:
         Configured Optuna pruner instance (NopPruner if disabled)
 
     Raises:
         ValueError: If pruner_type is not in PRUNER_REGISTRY
-
-    Example:
-        >>> pruner = build_pruner(enable_pruning=True, pruner_type="median")
-        >>> isinstance(pruner, optuna.pruners.MedianPruner)
-        True
     """
     if not cfg.optuna.enable_pruning:
         return NopPruner()

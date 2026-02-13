@@ -75,7 +75,7 @@ def build_vit_tiny(
             num_classes=num_classes,
             in_chans=3,  # Initially load for 3 channels (will adapt below)
         )
-    except Exception as e:
+    except (RuntimeError, ValueError) as e:
         logger.error(f"Failed to load ViT variant '{weight_variant}': {e}")
         raise ValueError(f"Invalid ViT weight variant: {weight_variant}") from e
 

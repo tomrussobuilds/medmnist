@@ -223,7 +223,7 @@ class TrialTrainingExecutor:
 
             return val_metrics
 
-        except Exception as e:
+        except (RuntimeError, ValueError) as e:
             logger.error(f"Validation failed: {e}")
             return {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}
 

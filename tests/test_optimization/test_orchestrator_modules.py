@@ -101,21 +101,21 @@ def test_map_param_to_config_path_architecture():
 @pytest.mark.unit
 def test_build_sampler_tpe(mock_cfg):
     """Test building TPE sampler."""
-    sampler = build_sampler("tpe", mock_cfg)
+    sampler = build_sampler(mock_cfg)
     assert isinstance(sampler, optuna.samplers.TPESampler)
 
 
 @pytest.mark.unit
 def test_build_pruner_median(mock_cfg):
     """Test building Median pruner."""
-    pruner = build_pruner(True, "median", mock_cfg)
+    pruner = build_pruner(mock_cfg)
     assert isinstance(pruner, optuna.pruners.MedianPruner)
 
 
 @pytest.mark.unit
 def test_build_pruner_disabled(mock_cfg):
     """Test disabled pruning returns NopPruner."""
-    pruner = build_pruner(False, "median", mock_cfg)
+    pruner = build_pruner(mock_cfg)
     assert isinstance(pruner, optuna.pruners.BasePruner)
 
 
@@ -208,7 +208,7 @@ def test_save_plot_handles_exception(completed_trial):
     study = MagicMock()
     study.trials = [completed_trial]
 
-    mock_plot_fn = MagicMock(side_effect=Exception("Plot failed"))
+    mock_plot_fn = MagicMock(side_effect=ValueError("Plot failed"))
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_dir = Path(tmpdir)

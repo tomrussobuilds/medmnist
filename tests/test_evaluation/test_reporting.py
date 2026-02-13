@@ -99,7 +99,7 @@ def test_report_save_failure(mock_logger, sample_report_data):
     """Test error handling when Excel saving fails."""
     report = TrainingReport(**sample_report_data)
 
-    with patch.object(TrainingReport, "to_vertical_df", side_effect=Exception("Write Error")):
+    with patch.object(TrainingReport, "to_vertical_df", side_effect=ValueError("Write Error")):
         report.save(Path("error.xlsx"))
 
         mock_logger.error.assert_called()

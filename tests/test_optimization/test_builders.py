@@ -16,7 +16,7 @@ from orchard.optimization.orchestrator.builders import build_callbacks, build_pr
 def test_build_sampler_tpe(mock_config):
     """Test building TPE sampler."""
     mock_config.optuna.sampler_type = "tpe"
-    sampler = build_sampler("tpe", mock_config)
+    sampler = build_sampler(mock_config)
     assert isinstance(sampler, TPESampler)
 
 
@@ -24,7 +24,7 @@ def test_build_sampler_tpe(mock_config):
 def test_build_sampler_random(mock_config):
     """Test building random sampler."""
     mock_config.optuna.sampler_type = "random"
-    sampler = build_sampler("random", mock_config)
+    sampler = build_sampler(mock_config)
     assert isinstance(sampler, RandomSampler)
 
 
@@ -32,7 +32,7 @@ def test_build_sampler_random(mock_config):
 def test_build_sampler_cmaes(mock_config):
     """Test building CMA-ES sampler."""
     mock_config.optuna.sampler_type = "cmaes"
-    sampler = build_sampler("cmaes", mock_config)
+    sampler = build_sampler(mock_config)
     assert isinstance(sampler, CmaEsSampler)
 
 
@@ -42,7 +42,7 @@ def test_build_sampler_invalid(mock_config):
     mock_config.optuna.sampler_type = "invalid_sampler"
 
     with pytest.raises(ValueError) as exc_info:
-        build_sampler("invalid_sampler", mock_config)
+        build_sampler(mock_config)
 
     assert "Unknown sampler: invalid_sampler" in str(exc_info.value)
     assert "Valid options:" in str(exc_info.value)
@@ -54,7 +54,7 @@ def test_build_pruner_disabled(mock_config):
     mock_config.optuna.enable_pruning = False
     mock_config.optuna.pruner_type = "median"
 
-    pruner = build_pruner(False, "median", mock_config)
+    pruner = build_pruner(mock_config)
     assert isinstance(pruner, NopPruner)
 
 
@@ -64,7 +64,7 @@ def test_build_pruner_median(mock_config):
     mock_config.optuna.enable_pruning = True
     mock_config.optuna.pruner_type = "median"
 
-    pruner = build_pruner(True, "median", mock_config)
+    pruner = build_pruner(mock_config)
     assert isinstance(pruner, MedianPruner)
 
 
@@ -74,7 +74,7 @@ def test_build_pruner_percentile(mock_config):
     mock_config.optuna.enable_pruning = True
     mock_config.optuna.pruner_type = "percentile"
 
-    pruner = build_pruner(True, "percentile", mock_config)
+    pruner = build_pruner(mock_config)
     assert isinstance(pruner, PercentilePruner)
 
 
@@ -84,7 +84,7 @@ def test_build_pruner_hyperband(mock_config):
     mock_config.optuna.enable_pruning = True
     mock_config.optuna.pruner_type = "hyperband"
 
-    pruner = build_pruner(True, "hyperband", mock_config)
+    pruner = build_pruner(mock_config)
     assert isinstance(pruner, HyperbandPruner)
 
 
@@ -95,7 +95,7 @@ def test_build_pruner_invalid(mock_config):
     mock_config.optuna.pruner_type = "invalid_pruner"
 
     with pytest.raises(ValueError) as exc_info:
-        build_pruner(True, "invalid_pruner", mock_config)
+        build_pruner(mock_config)
 
     assert "Unknown pruner: invalid_pruner" in str(exc_info.value)
     assert "Valid options:" in str(exc_info.value)

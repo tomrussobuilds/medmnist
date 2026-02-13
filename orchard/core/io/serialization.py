@@ -49,7 +49,7 @@ def save_config_as_yaml(data: Any, yaml_path: Path) -> Path:
         elif hasattr(data, "model_dump"):
             try:
                 raw_dict = data.model_dump(mode="json")
-            except Exception:
+            except (TypeError, ValueError):  # pragma: no cover
                 # Fallback for older Pydantic V2 versions or complex types
                 raw_dict = data.model_dump()
 

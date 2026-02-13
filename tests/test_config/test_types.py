@@ -270,7 +270,7 @@ def test_learning_rate_bounds():
         lr: LearningRate
 
     assert Model(lr=0.001).lr == pytest.approx(0.001)
-    assert Model(lr=1e-7).lr == 1e-7
+    assert Model(lr=1e-7).lr == pytest.approx(1e-7)
 
     with pytest.raises(ValidationError):
         Model(lr=0.0)

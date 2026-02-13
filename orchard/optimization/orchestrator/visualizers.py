@@ -102,5 +102,5 @@ def save_plot(
         output_path = output_dir / f"{plot_name}.html"
         fig.write_html(str(output_path))
         logger.info(f"Saved {plot_name} to {output_path}")
-    except Exception as e:
+    except (ValueError, RuntimeError) as e:
         logger.warning(f"Failed to generate {plot_name}: {e}")

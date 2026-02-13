@@ -39,7 +39,7 @@ def compute_classification_metrics(
     try:
         # One-vs-Rest ROC-AUC calculation
         auc = roc_auc_score(labels, probs, multi_class="ovr", average="macro")
-    except Exception as e:
+    except ValueError as e:
         logger.warning(f"ROC-AUC calculation failed: {e}. Defaulting to 0.0")
         auc = 0.0
 

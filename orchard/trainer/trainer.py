@@ -331,6 +331,6 @@ class ModelTrainer:
                 f" » [LIFECYCLE] Success: Model state restored to best checkpoint "
                 f"({self.best_path.name})"
             )
-        except Exception as e:
+        except (RuntimeError, FileNotFoundError) as e:
             logger.error(f" » [LIFECYCLE] Critical failure during weight restoration: {e}")
-            raise e
+            raise

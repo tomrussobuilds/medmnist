@@ -22,10 +22,10 @@ def test_logger_init_console_only():
     """Test Logger initializes with console handler only when no log_dir."""
     logger = Logger(name="test_console", log_dir=None, log_to_file=False)
 
-    assert logger.logger is not None
+    assert logger._log is not None
     assert logger.name == "test_console"
     assert logger.log_to_file is False
-    assert len(logger.logger.handlers) == 1
+    assert len(logger._log.handlers) == 1
 
 
 @pytest.mark.unit
@@ -37,7 +37,7 @@ def test_logger_init_with_file(tmp_path):
 
     assert logger.log_to_file is True
     assert log_dir.exists()
-    assert len(logger.logger.handlers) == 2
+    assert len(logger._log.handlers) == 2
 
 
 @pytest.mark.unit
@@ -53,7 +53,7 @@ def test_logger_default_level():
     """Test Logger defaults to INFO level."""
     logger = Logger(name="test_level")
 
-    assert logger.logger.level == logging.INFO
+    assert logger._log.level == logging.INFO
 
 
 # LOGGER: CONFIGURATION
@@ -62,7 +62,7 @@ def test_logger_custom_level():
     """Test Logger accepts custom log level."""
     logger = Logger(name="test_debug", level=logging.DEBUG)
 
-    assert logger.logger.level == logging.DEBUG
+    assert logger._log.level == logging.DEBUG
 
 
 @pytest.mark.unit
@@ -70,7 +70,7 @@ def test_logger_formatter():
     """Test Logger applies correct formatter to handlers."""
     logger = Logger(name="test_format")
 
-    handler = logger.logger.handlers[0]
+    handler = logger._log.handlers[0]
     formatter = handler.formatter
 
     assert formatter is not None
@@ -84,7 +84,7 @@ def test_logger_propagate_false():
     """Test Logger sets propagate to False to prevent duplicate logs."""
     logger = Logger(name="test_propagate")
 
-    assert logger.logger.propagate is False
+    assert logger._log.propagate is False
 
 
 # LOGGER: FILE HANDLING
@@ -130,7 +130,7 @@ def test_logger_rotating_file_handler(tmp_path):
     )
 
     file_handler = None
-    for handler in logger.logger.handlers:
+    for handler in logger._log.handlers:
         if hasattr(handler, "maxBytes"):
             file_handler = handler
             break
@@ -148,11 +148,11 @@ def test_logger_reconfiguration_removes_old_handlers(tmp_path):
     log_dir2 = tmp_path / "logs2"
 
     logger1 = Logger(name="test_reconfig", log_dir=log_dir1, log_to_file=True)
-    initial_handler_count = len(logger1.logger.handlers)
+    initial_handler_count = len(logger1._log.handlers)
 
     logger2 = Logger(name="test_reconfig", log_dir=log_dir2, log_to_file=True)
 
-    assert len(logger2.logger.handlers) == initial_handler_count
+    assert len(logger2._log.handlers) == initial_handler_count
 
 
 @pytest.mark.unit
@@ -161,7 +161,7 @@ def test_logger_singleton_behavior():
     logger1 = Logger(name="test_singleton")
     logger2 = Logger(name="test_singleton")
 
-    assert logger1.logger is logger2.logger
+    assert logger1._log is logger2._log
 
 
 # LOGGER: CLASS METHODS
@@ -255,7 +255,7 @@ def test_logger_can_log_messages(tmp_path):
 
     logger = Logger(name="test_logging", log_dir=log_dir, log_to_file=True)
 
-    logger.logger.info("Test message")
+    logger._log.info("Test message")
 
     log_files = list(log_dir.glob("test_logging_*.log"))
     assert len(log_files) == 1
@@ -271,7 +271,7 @@ def test_logger_handles_unicode(tmp_path):
 
     logger = Logger(name="test_unicode", log_dir=log_dir, log_to_file=True)
 
-    logger.logger.info("Test emoji: 🚀 ✓ ⚠")
+    logger._log.info("Test emoji: 🚀 ✓ ⚠")
 
     log_files = list(log_dir.glob("test_unicode_*.log"))
     log_content = log_files[0].read_text(encoding="utf-8")
@@ -301,8 +301,8 @@ def test_logger_multiple_names_independent():
     logger1 = Logger(name="logger_a")
     logger2 = Logger(name="logger_b")
 
-    assert logger1.logger.name != logger2.logger.name
-    assert logger1.logger is not logger2.logger
+    assert logger1._log.name != logger2._log.name
+    assert logger1._log is not logger2._log
 
 
 if __name__ == "__main__":

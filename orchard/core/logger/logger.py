@@ -54,7 +54,7 @@ class Logger:
         level (int): Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         max_bytes (int): Maximum log file size before rotation (default: 5MB)
         backup_count (int): Number of rotated log files to retain (default: 5)
-        logger (logging.Logger): Underlying Python logger instance
+        _log (logging.Logger): Underlying Python logger instance
 
     Example:
         >>> # Bootstrap phase (console-only)
@@ -110,7 +110,7 @@ class Logger:
         self.max_bytes = max_bytes
         self.backup_count = backup_count
 
-        self.logger = logging.getLogger(name)
+        self._log = logging.getLogger(name)
 
         if name not in Logger._configured_names or log_dir is not None:
             self._setup_logger()
@@ -135,19 +135,19 @@ class Logger:
             "%Y-%m-%d %H:%M:%S",
         )
 
-        self.logger.setLevel(self.level)
-        self.logger.propagate = False
+        self._log.setLevel(self.level)
+        self._log.propagate = False
 
         # Clean up existing handlers to prevent duplicates during reconfiguration
-        if self.logger.hasHandlers():
-            for handler in self.logger.handlers[:]:
+        if self._log.hasHandlers():
+            for handler in self._log.handlers[:]:
                 handler.close()
-                self.logger.removeHandler(handler)
+                self._log.removeHandler(handler)
 
         # 1. Console Handler (Standard Output)
         console_h = logging.StreamHandler(sys.stdout)
         console_h.setFormatter(formatter)
-        self.logger.addHandler(console_h)
+        self._log.addHandler(console_h)
 
         # 2. Rotating File Handler (Activated when log_dir is known)
         if self.log_to_file and self.log_dir:
@@ -159,7 +159,7 @@ class Logger:
                 filename, maxBytes=self.max_bytes, backupCount=self.backup_count, encoding="utf-8"
             )
             file_h.setFormatter(formatter)
-            self.logger.addHandler(file_h)
+            self._log.addHandler(file_h)
 
             Logger._active_log_file = filename
 
@@ -170,7 +170,7 @@ class Logger:
         Returns:
             The underlying Python logging.Logger instance with configured handlers
         """
-        return self.logger
+        return self._log
 
     @classmethod
     def get_log_file(cls) -> Optional[Path]:

@@ -343,7 +343,7 @@ def test_stream_download_success(tmp_path, monkeypatch):
             self.headers = {"Content-Type": "application/octet-stream"}
 
         def raise_for_status(self):
-            pass
+            """No-op: simulates a successful HTTP response (no error to raise)."""
 
         def iter_content(self, chunk_size):
             yield test_content
@@ -375,7 +375,7 @@ def test_stream_download_html_content_raises_error(tmp_path, monkeypatch):
             self.headers = {"Content-Type": "text/html"}
 
         def raise_for_status(self):
-            pass
+            """No-op: simulates a successful HTTP response (no error to raise)."""
 
         def iter_content(self, chunk_size):
             yield b"<html>Not Found</html>"
@@ -405,7 +405,7 @@ def test_stream_download_skips_empty_chunks(tmp_path, monkeypatch):
             self.headers = {"Content-Type": "application/octet-stream"}
 
         def raise_for_status(self):
-            pass
+            """No-op: simulates a successful HTTP response (no error to raise)."""
 
         def iter_content(self, chunk_size):
             yield b"first"

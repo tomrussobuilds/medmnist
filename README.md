@@ -3,54 +3,57 @@
 ---
 
 <!-- Badges Section -->
-<p align="center">
-  <!-- CI/CD & Quality -->
-  <a href="https://github.com/tomrussobuilds/visionforge/actions/workflows/ci.yml">
-    <img src="https://github.com/tomrussobuilds/visionforge/actions/workflows/ci.yml/badge.svg" alt="CI/CD Pipeline">
-  </a>
-  <a href="https://codecov.io/gh/tomrussobuilds/visionforge">
-    <img src="https://codecov.io/gh/tomrussobuilds/visionforge/branch/main/graph/badge.svg" alt="Coverage">
-  </a>
-  <a href="https://docs.pytest.org/">
-    <img src="https://img.shields.io/badge/tested%20with-pytest-blue?logo=pytest&logoColor=white" alt="Tested with pytest">
-  </a>
-  <a href="LICENSE">
-    <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
-  </a>
-</p>
-
-<p align="center">
-  <!-- Core Technologies -->
+<table align="center">
+<tr>
+<td align="right"><strong>CI/CD & Coverage</strong></td>
+<td>
+  <a href="https://github.com/tomrussobuilds/visionforge/actions/workflows/ci.yml"><img src="https://github.com/tomrussobuilds/visionforge/actions/workflows/ci.yml/badge.svg" alt="CI/CD Pipeline"></a>
+  <a href="https://codecov.io/gh/tomrussobuilds/visionforge"><img src="https://codecov.io/gh/tomrussobuilds/visionforge/branch/main/graph/badge.svg" alt="Coverage"></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_visionforge"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_visionforge&metric=alert_status" alt="Quality Gate"></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_visionforge"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_visionforge&metric=coverage" alt="SonarCloud Coverage"></a>
+</td>
+</tr>
+<tr>
+<td align="right"><strong>Code Quality</strong></td>
+<td>
+  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_visionforge"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_visionforge&metric=reliability_rating" alt="Reliability"></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_visionforge"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_visionforge&metric=security_rating" alt="Security"></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_visionforge"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_visionforge&metric=sqale_rating" alt="Maintainability"></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_visionforge"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_visionforge&metric=bugs" alt="Bugs"></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_visionforge"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_visionforge&metric=code_smells" alt="Code Smells"></a>
+</td>
+</tr>
+<tr>
+<td align="right"><strong>Tech Stack</strong></td>
+<td>
   <img src="https://img.shields.io/badge/python-3.10--3.14-blue?logo=python&logoColor=white" alt="Python">
-  <a href="https://pytorch.org/">
-    <img src="https://img.shields.io/badge/PyTorch-2.0%2B-orange?logo=pytorch&logoColor=white" alt="PyTorch">
-  </a>
-  <a href="https://docs.pydantic.dev/">
-    <img src="https://img.shields.io/badge/Pydantic-v2-e92063?logo=pydantic&logoColor=white" alt="Pydantic">
-  </a>
-  <a href="https://optuna.org/">
-    <img src="https://img.shields.io/badge/Optuna-3.0%2B-00ADD8?logo=optuna&logoColor=white" alt="Optuna">
-  </a>
-</p>
-
-<p align="center">
-  <!-- Code Quality & Status -->
-  <a href="https://github.com/psf/black">
-    <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
-  </a>
-  <a href="https://pycqa.github.io/isort/">
-    <img src="https://img.shields.io/badge/imports-isort-1674b1?logo=python&logoColor=white" alt="isort">
-  </a>
-  <a href="https://flake8.pycqa.org/">
-    <img src="https://img.shields.io/badge/linting-flake8-brightgreen?logo=python&logoColor=white" alt="Flake8">
-  </a>
+  <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-2.0%2B-orange?logo=pytorch&logoColor=white" alt="PyTorch"></a>
+  <a href="https://docs.pydantic.dev/"><img src="https://img.shields.io/badge/Pydantic-v2-e92063?logo=pydantic&logoColor=white" alt="Pydantic"></a>
+  <a href="https://optuna.org/"><img src="https://img.shields.io/badge/Optuna-3.0%2B-00ADD8?logo=optuna&logoColor=white" alt="Optuna"></a>
+</td>
+</tr>
+<tr>
+<td align="right"><strong>Code Style</strong></td>
+<td>
+  <a href="https://github.com/psf/black"><img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black"></a>
+  <a href="https://pycqa.github.io/isort/"><img src="https://img.shields.io/badge/imports-isort-1674b1?logo=python&logoColor=white" alt="isort"></a>
+  <a href="https://flake8.pycqa.org/"><img src="https://img.shields.io/badge/linting-flake8-brightgreen?logo=python&logoColor=white" alt="Flake8"></a>
+  <a href="https://mypy-lang.org/"><img src="https://img.shields.io/badge/type%20check-mypy-blue?logo=python&logoColor=white" alt="mypy"></a>
+  <a href="https://radon.readthedocs.io/"><img src="https://img.shields.io/badge/complexity-radon-yellow" alt="Radon"></a>
+</td>
+</tr>
+<tr>
+<td align="right"><strong>Project</strong></td>
+<td>
+  <a href="https://docs.pytest.org/"><img src="https://img.shields.io/badge/tested%20with-pytest-blue?logo=pytest&logoColor=white" alt="Tested with pytest"></a>
   <img src="https://img.shields.io/badge/tests-~1000-success" alt="Tests">
   <img src="https://img.shields.io/badge/Architecture-Decoupled-blueviolet" alt="Architecture">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
   <img src="https://img.shields.io/badge/status-Active-success" alt="Status">
-  <a href="https://github.com/tomrussobuilds/visionforge/issues">
-    <img src="https://img.shields.io/github/issues/tomrussobuilds/visionforge" alt="GitHub Issues">
-  </a>
-</p>
+  <a href="https://github.com/tomrussobuilds/visionforge/issues"><img src="https://img.shields.io/github/issues/tomrussobuilds/visionforge" alt="GitHub Issues"></a>
+</td>
+</tr>
+</table>
 
 ---
 
