@@ -161,7 +161,7 @@ class DataLoaderFactory:
         train_trans, val_trans = self._get_transformation_pipelines()
 
         # 2. Instantiate Dataset splits
-        ds_params = {"path": self.metadata.path, "cfg": self.cfg}
+        ds_params = {"path": self.metadata.path, "seed": self.cfg.training.seed}
 
         train_ds = VisionDataset(
             **ds_params,

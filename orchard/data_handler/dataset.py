@@ -18,8 +18,6 @@ from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 
-from orchard.core import Config
-
 
 # DATASET CLASS
 class VisionDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
@@ -38,7 +36,7 @@ class VisionDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
         split: str = "train",
         transform: transforms.Compose | None = None,
         max_samples: int | None = None,
-        cfg: Config = None,
+        seed: int = 42,
     ):
         """
         Initializes the dataset by loading the specified .npz split into RAM.
@@ -48,14 +46,11 @@ class VisionDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
             split (str): Dataset split to load ('train', 'val', or 'test').
             transform (transforms.Compose | None): Pipeline of Torchvision transforms.
             max_samples (int | None): If set, limits the number of samples (subsampling).
-            cfg (Config): Global configuration used to extract the random seed.
+            seed (int): Random seed for deterministic subsampling.
         """
-        if cfg is None:
-            raise ValueError("A valid Config instance is required.")
         if not path.exists():
             raise FileNotFoundError(f"Dataset file not found at: {path}")
 
-        self.cfg: Final[Config] = cfg
         self.path: Final[Path] = path
         self.transform: Final[transforms.Compose | None] = transform
         self.split: Final[str] = split
@@ -69,7 +64,7 @@ class VisionDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
 
             # Deterministic subsampling logic
             if max_samples and max_samples < total_available:
-                rng = np.random.default_rng(cfg.training.seed)
+                rng = np.random.default_rng(seed)
                 chosen_indices = rng.choice(total_available, size=max_samples, replace=False)
                 self.images = raw_images[chosen_indices]
                 self.labels = raw_labels[chosen_indices]

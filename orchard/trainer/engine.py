@@ -21,12 +21,9 @@ from sklearn.metrics import roc_auc_score
 from tqdm.auto import tqdm
 
 from orchard.core import LOGGER_NAME
-from orchard.core.config import TrainingConfig
 
 # Module-level logger (avoid dynamic imports in exception handlers)
 logger = logging.getLogger(LOGGER_NAME)
-
-cfg = TrainingConfig()
 
 
 # TRAINING ENGINE
@@ -225,7 +222,7 @@ def validate_epoch(
 
 
 # MIXUP UTILITY
-_mixup_rng = np.random.default_rng(cfg.seed)
+_mixup_rng = np.random.default_rng(42)
 
 
 def mixup_data(
@@ -260,6 +257,7 @@ def mixup_data(
     batch_size: int = x.size(0)
 
     # Generate random permutation (device-aware)
+    # GPU branch excluded from coverage — CI runs CPU-only, covered in local GPU testing
     index = torch.randperm(batch_size)
     if x.is_cuda:  # pragma: no cover
         index = index.to(x.device)
