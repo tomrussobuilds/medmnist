@@ -238,20 +238,15 @@ For advanced export options (quantization, validation settings), see the [Export
 
 Every run generates a complete artifact suite for total traceability. Both training-only and optimization workflows share the same `RunPath` orchestrator, producing BLAKE2b-hashed timestamped directories.
 
-<table>
-<tr>
-<td valign="top">
-<img src="docs/artifacts/artifacts_structure.png" alt="Artifact Structure" width="480">
-</td>
-<td valign="top">
+**📂 [Browse Sample Artifacts](./docs/artifacts)** — Excel reports, YAML configs, and diagnostic plots from real training runs.
+See the [full artifact tree](docs/artifacts/artifacts_structure.png) for the complete directory layout — logs, model weights, and HTML plots are generated locally and not tracked in the repo.
 
-> [!IMPORTANT]
-> ### 📂 [View Sample Artifacts](./docs/artifacts)
-> Explore Excel reports, YAML configs, and diagnostic plots from real experiments.
-
-</td>
-</tr>
-</table>
+**🧪 [Browse Recipe Configs](./recipes)** — Ready-to-use YAML configurations for every architecture and workflow.
+Copy the closest recipe, tweak the parameters, and run:
+```bash
+cp recipes/config_efficientnet_b0.yaml my_run.yaml
+python forge.py --config my_run.yaml
+```
 
 ---
 
