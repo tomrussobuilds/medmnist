@@ -1,12 +1,16 @@
 """
-PyTorch Dataset Definition Module
+PyTorch Dataset Definition Module.
 
-This module contains the custom Dataset class for MedMNIST, handling
+This module contains the custom Dataset classes for MedMNIST, handling
 the conversion from NumPy arrays to PyTorch tensors and applying
 image transformations for training and inference.
 
 It implements selective RAM loading to balance I/O speed with memory
 efficiency and ensures deterministic subsampling for reproducible research.
+
+Key Components:
+    VisionDataset: Full-featured dataset with transforms, subsampling, and PIL conversion.
+    LazyNPZDataset: Memory-mapped dataset for lightweight health checks.
 """
 
 from pathlib import Path
@@ -98,3 +102,58 @@ class VisionDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
             img = transforms.functional.to_tensor(pil_img)
 
         return img, torch.tensor(label, dtype=torch.long)
+
+
+class LazyNPZDataset(Dataset):
+    """Memory-mapped PyTorch Dataset for lazy loading from ``.npz`` files.
+
+    Uses NumPy memory-mapping (``mmap_mode="r"``) to avoid loading the entire
+    archive into RAM, making it suitable for large-scale health checks and
+    quick data integrity verification.
+
+    Attributes:
+        npz_path (Path): Filesystem path to the ``.npz`` archive.
+        images (np.ndarray): Memory-mapped view of ``train_images``.
+        labels (np.ndarray): Memory-mapped view of ``train_labels``.
+    """
+
+    def __init__(self, npz_path: Path):
+        """Initializes the dataset with a memory-mapped ``.npz`` archive.
+
+        Args:
+            npz_path: Path to the ``.npz`` file containing
+                ``train_images`` and ``train_labels`` arrays.
+        """
+        self.npz_path = npz_path
+        self.data = np.load(npz_path, mmap_mode="r")
+        self.images = self.data["train_images"]
+        self.labels = self.data["train_labels"]
+
+    def __len__(self) -> int:
+        """Returns the total number of samples in the dataset."""
+        return len(self.labels)
+
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int]:
+        """Retrieves a normalized (C, H, W) tensor and its integer label.
+
+        Args:
+            idx: Sample index.
+
+        Returns:
+            A tuple of (image_tensor, label) where the image is scaled to [0, 1].
+
+        Raises:
+            ValueError: If the image has an unexpected number of dimensions.
+        """
+        img = self.images[idx]
+        # Ensure channel dimension (C,H,W)
+        if img.ndim == 2:  # (H,W) grayscale
+            img = np.expand_dims(img, axis=0)
+        elif img.ndim == 3:  # (H,W,C)
+            img = np.transpose(img, (2, 0, 1))
+        else:
+            raise ValueError(f"Unexpected image shape: {img.shape}")
+
+        img = torch.from_numpy(img).float() / 255.0
+        label = int(self.labels[idx][0])
+        return img, label

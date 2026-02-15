@@ -5,11 +5,10 @@ using the Dataset Registry to providing fully configured PyTorch DataLoaders.
 """
 
 from .data_explorer import show_sample_images, show_samples_for_dataset
-from .dataset import VisionDataset
+from .dataset import LazyNPZDataset, VisionDataset
 from .fetcher import DatasetData, ensure_dataset_npz, load_dataset
 from .loader import (
     DataLoaderFactory,
-    LazyNPZDataset,
     create_temp_loader,
     get_dataloaders,
 )

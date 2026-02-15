@@ -14,7 +14,7 @@ Architecture:
 Key Components:
     DataLoaderFactory: Main orchestrator for train/val/test loader creation
     get_dataloaders: Convenience function for direct loader retrieval
-    LazyNPZDataset: Memory-mapped dataset for large-scale health checks
+    create_temp_loader: Quick DataLoader builder for health checks
 
 Example:
     >>> from orchard.data_handler import get_dataloaders, load_medmnist
@@ -29,11 +29,11 @@ from typing import Dict, Optional, Tuple
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
+from torch.utils.data import DataLoader, WeightedRandomSampler
 
 from orchard.core import Config, DatasetRegistryWrapper, worker_init_fn
 
-from .dataset import VisionDataset
+from .dataset import LazyNPZDataset, VisionDataset
 from .fetcher import DatasetData
 from .transforms import get_pipeline_transforms
 
@@ -146,13 +146,14 @@ class DataLoaderFactory:
         }
 
     def build(self, is_optuna: bool = False) -> Tuple[DataLoader, DataLoader, DataLoader]:
-        """
-        Constructs and returns the full suite of DataLoaders.
+        """Constructs and returns the full suite of DataLoaders.
 
-        MODIFIED: Added is_optuna flag for optimization-specific configuration.
+        Assembles train/val/test splits with transforms, optional class
+        balancing, and hardware-aware infrastructure settings.
 
         Args:
-            is_optuna: If True, use memory-conservative settings
+            is_optuna: If True, use memory-conservative settings for
+                hyperparameter tuning (fewer workers, no persistent workers).
 
         Returns:
             A tuple of (train_loader, val_loader, test_loader).
@@ -240,33 +241,6 @@ def get_dataloaders(metadata, cfg, is_optuna: bool = False):
 
 
 # HEALTH UTILITIES
-class LazyNPZDataset(Dataset):
-    """Torch Dataset that lazily loads images from a .npz file using memmap."""
-
-    def __init__(self, npz_path: Path):
-        self.npz_path = npz_path
-        self.data = np.load(npz_path, mmap_mode="r")
-        self.images = self.data["train_images"]
-        self.labels = self.data["train_labels"]
-
-    def __len__(self):
-        return len(self.labels)
-
-    def __getitem__(self, idx):
-        img = self.images[idx]
-        # Ensure channel dimension (C,H,W)
-        if img.ndim == 2:  # (H,W) grayscale
-            img = np.expand_dims(img, axis=0)
-        elif img.ndim == 3:  # (H,W,C)
-            img = np.transpose(img, (2, 0, 1))
-        else:
-            raise ValueError(f"Unexpected image shape: {img.shape}")
-
-        img = torch.from_numpy(img).float() / 255.0
-        label = int(self.labels[idx][0])
-        return img, label
-
-
 def create_temp_loader(dataset_path: Path, batch_size: int = 16) -> DataLoader:
     """
     Load a NPZ dataset lazily and return a DataLoader for health checks.

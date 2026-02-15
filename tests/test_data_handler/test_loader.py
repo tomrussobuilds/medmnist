@@ -17,7 +17,8 @@ import pytest
 import torch
 
 from orchard.core import DatasetRegistryWrapper
-from orchard.data_handler import DataLoaderFactory, LazyNPZDataset, create_temp_loader
+from orchard.data_handler import DataLoaderFactory, create_temp_loader
+from orchard.data_handler.dataset import LazyNPZDataset
 
 
 # MOCK CONFIG AND METADATA
