@@ -84,6 +84,10 @@ evaluation:
   save_confusion_matrix: true
   save_predictions_grid: true
 
+tracking:
+  enabled: true
+  experiment_name: "visionforge"
+
 export:
   format: onnx
   opset_version: 18

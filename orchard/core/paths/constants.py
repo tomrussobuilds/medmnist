@@ -78,6 +78,9 @@ DATASET_DIR: Final[Path] = (PROJECT_ROOT / "dataset").resolve()
 # Output: Default root directory for all experiment results
 OUTPUTS_ROOT: Final[Path] = (PROJECT_ROOT / "outputs").resolve()
 
+# Tracking: SQLite database for MLflow experiment tracking
+MLRUNS_DB: Final[Path] = (PROJECT_ROOT / "mlruns.db").resolve()
+
 # Directories that must exist at startup
 STATIC_DIRS: Final[List[Path]] = [DATASET_DIR, OUTPUTS_ROOT]
 

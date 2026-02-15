@@ -28,7 +28,9 @@ Pipeline Logic:
 """
 
 from orchard.core import Config, LogStyle, RootOrchestrator, log_pipeline_summary, parse_args
+from orchard.core.paths import MLRUNS_DB
 from orchard.pipeline import run_export_phase, run_optimization_phase, run_training_phase
+from orchard.tracking import create_tracker
 
 
 def main() -> None:
@@ -49,13 +51,18 @@ def main() -> None:
         run_logger = orchestrator.run_logger
         paths = orchestrator.paths
 
+        # Experiment tracking (no-op if tracking section absent or mlflow not installed)
+        tracker = create_tracker(cfg)
+        tracking_uri = f"sqlite:///{MLRUNS_DB}"
+        tracker.start_run(cfg=cfg, run_name=paths.run_id, tracking_uri=tracking_uri)
+
         training_cfg = cfg
         best_config_path = None
 
         try:
             # Phase 1: Optimization (if optuna config present)
             if cfg.optuna is not None:
-                _, best_config_path = run_optimization_phase(orchestrator)
+                _, best_config_path = run_optimization_phase(orchestrator, tracker=tracker)
 
                 # Load optimized config for training
                 if best_config_path and best_config_path.exists():
@@ -67,7 +74,7 @@ def main() -> None:
 
             # Phase 2: Training
             best_model_path, _, _, _, macro_f1, test_acc = run_training_phase(
-                orchestrator, cfg=training_cfg
+                orchestrator, cfg=training_cfg, tracker=tracker
             )
 
             # Phase 3: Export (if export config present)
@@ -80,6 +87,11 @@ def main() -> None:
                     export_format=cfg.export.format,
                     opset_version=cfg.export.opset_version,
                 )
+
+            # Log final artifacts to MLflow
+            tracker.log_artifacts_dir(paths.figures)
+            tracker.log_artifact(paths.final_report_path)
+            tracker.log_artifact(paths.get_config_path())
 
             # Pipeline Summary
             log_pipeline_summary(
@@ -99,6 +111,9 @@ def main() -> None:
         except Exception as e:
             run_logger.error(f"{LogStyle.WARNING} Pipeline failed: {e}", exc_info=True)
             raise
+
+        finally:
+            tracker.end_run()
 
 
 if __name__ == "__main__":

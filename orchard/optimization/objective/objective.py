@@ -17,13 +17,18 @@ Key features:
     - Memory-efficient cleanup between trials
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, Optional, Protocol
+from typing import TYPE_CHECKING, Any, Dict, Optional, Protocol
 
 import optuna
 import torch
 
 from orchard.core import LOGGER_NAME, Config, log_trial_start
+
+if TYPE_CHECKING:  # pragma: no cover
+    from orchard.tracking import MLflowTracker, NoOpTracker
 from orchard.data_handler import DatasetData, get_dataloaders, load_dataset
 from orchard.models import get_model
 from orchard.trainer import get_criterion, get_optimizer, get_scheduler
@@ -103,6 +108,7 @@ class OptunaObjective:
         dataset_loader: Optional[DatasetLoaderProtocol] = None,
         dataloader_factory: Optional[DataloaderFactoryProtocol] = None,
         model_factory: Optional[ModelFactoryProtocol] = None,
+        tracker: MLflowTracker | NoOpTracker | None = None,
     ):
         """
         Initialize Optuna objective.
@@ -114,10 +120,12 @@ class OptunaObjective:
             dataset_loader: Dataset loading function (default: load_dataset)
             dataloader_factory: DataLoader factory (default: get_dataloaders)
             model_factory: Model factory (default: get_model)
+            tracker: Optional experiment tracker for nested trial logging
         """
         self.cfg = cfg
         self.search_space = search_space
         self.device = device
+        self.tracker = tracker
 
         # Dependency injection with defaults
         self._dataset_loader = dataset_loader or load_dataset
@@ -156,6 +164,10 @@ class OptunaObjective:
         # Log trial start
         log_trial_start(trial.number, params)
 
+        # Start nested MLflow run for this trial
+        if self.tracker is not None:
+            self.tracker.start_optuna_trial(trial.number, params)
+
         try:
             # Setup training components
             train_loader, val_loader, _ = self._dataloader_factory(
@@ -184,6 +196,11 @@ class OptunaObjective:
             return best_metric
 
         finally:
+            # End nested MLflow run for this trial
+            if self.tracker is not None:
+                best_metric_val = self.metric_extractor.best_metric
+                self.tracker.end_optuna_trial(best_metric_val)
+
             # Cleanup GPU memory between trials
             self._cleanup()
 

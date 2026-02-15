@@ -30,6 +30,7 @@ from orchard.core import (
 
 if TYPE_CHECKING:  # pragma: no cover
     from orchard.core import RootOrchestrator
+    from orchard.tracking import MLflowTracker, NoOpTracker
 
 from orchard.data_handler import (
     get_augmentations_description,
@@ -52,6 +53,7 @@ _ERR_PATHS_NOT_INIT = "Paths not initialized"
 def run_optimization_phase(
     orchestrator: RootOrchestrator,
     cfg: Config | None = None,
+    tracker: "MLflowTracker | NoOpTracker | None" = None,
 ) -> Tuple[optuna.Study, Path | None]:
     """
     Execute hyperparameter optimization phase.
@@ -62,6 +64,7 @@ def run_optimization_phase(
     Args:
         orchestrator: Active RootOrchestrator providing paths, device, logger
         cfg: Optional config override (defaults to orchestrator's config)
+        tracker: Optional experiment tracker for MLflow nested trial logging
 
     Returns:
         Tuple of (completed study, path to best_config.yaml or None)
@@ -86,7 +89,7 @@ def run_optimization_phase(
     run_logger.info(LogStyle.DOUBLE)
 
     # Execute Optuna study (includes post-processing: visualizations, best config export)
-    study = run_optimization(cfg=cfg, device=device, paths=paths)
+    study = run_optimization(cfg=cfg, device=device, paths=paths, tracker=tracker)
 
     log_optimization_summary(
         study=study,
@@ -105,6 +108,7 @@ def run_optimization_phase(
 def run_training_phase(
     orchestrator: RootOrchestrator,
     cfg: Config | None = None,
+    tracker: "MLflowTracker | NoOpTracker | None" = None,
 ) -> Tuple[Path, List[float], List[dict], nn.Module, float, float]:
     """
     Execute model training phase.
@@ -115,6 +119,7 @@ def run_training_phase(
     Args:
         orchestrator: Active RootOrchestrator providing paths, device, logger
         cfg: Optional config override (defaults to orchestrator's config)
+        tracker: Optional experiment tracker for MLflow metric logging
 
     Returns:
         Tuple of (best_model_path, train_losses, val_metrics, model, macro_f1, test_acc)
@@ -178,6 +183,7 @@ def run_training_phase(
         device=device,
         cfg=cfg,
         output_path=paths.best_model_path,
+        tracker=tracker,
     )
 
     best_model_path, train_losses, val_metrics_history = trainer.train()
@@ -198,6 +204,7 @@ def run_training_phase(
         cfg=cfg,
         aug_info=get_augmentations_description(cfg),
         log_path=paths.logs / "session.log",
+        tracker=tracker,
     )
 
     return best_model_path, train_losses, val_metrics_history, model, macro_f1, test_acc

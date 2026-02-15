@@ -37,6 +37,7 @@ from .export_config import ExportConfig
 from .hardware_config import HardwareConfig
 from .optuna_config import OptunaConfig
 from .telemetry_config import TelemetryConfig
+from .tracking_config import TrackingConfig
 from .training_config import TrainingConfig
 
 
@@ -79,6 +80,7 @@ class Config(BaseModel):
     architecture: ArchitectureConfig = Field(default_factory=ArchitectureConfig)
     optuna: Optional[OptunaConfig] = Field(default=None)
     export: Optional[ExportConfig] = Field(default=None)
+    tracking: Optional[TrackingConfig] = Field(default=None)
 
     @model_validator(mode="after")
     def validate_logic(self) -> "Config":

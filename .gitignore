@@ -176,6 +176,7 @@ wandb/
 
 # MLflow
 mlruns/
+mlruns.db
 mlartifacts/
 
 # TensorBoard

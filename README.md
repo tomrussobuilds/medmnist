@@ -222,16 +222,7 @@ python forge.py --config recipes/config_efficientnet_b0.yaml
 # → Training + ONNX export to outputs/*/exports/model.onnx
 ```
 
-To disable export, remove the `export:` section from your config. To customize:
-```yaml
-export:
-  format: onnx           # or "torchscript", "both"
-  opset_version: 18      # ONNX opset (18 = latest, no warnings)
-  quantize: true         # Optional: INT8 quantization
-  validate_export: true  # Verify PyTorch ↔ ONNX consistency
-```
-
-For advanced export options (quantization, validation settings), see the [Export Guide](docs/guide/EXPORT.md).
+See the [Export Guide](docs/guide/EXPORT.md) for configuration options (format, quantization, validation).
 
 ---
 
@@ -246,7 +237,7 @@ See the [full artifact tree](docs/artifacts/artifacts_structure.png) for the com
 Copy the closest recipe, tweak the parameters, and run:
 ```bash
 cp recipes/config_efficientnet_b0.yaml my_run.yaml
-# modify your recipe
+# edit hyperparameters, swap dataset/model, add or remove sections (optuna, export, tracking)
 python forge.py --config my_run.yaml
 ```
 
@@ -293,6 +284,12 @@ Comprehensive guides for advanced usage and system internals:
 - ONNX export for production deployment
 - Quantization for mobile/server
 - Validation and benchmarking
+
+### 📈 Experiment Tracking
+**[Tracking Guide](docs/guide/TRACKING.md)**
+- MLflow integration (optional, local SQLite)
+- Dashboard setup and run comparison
+- Programmatic querying of metrics and runs
 
 ### 🗂️ Artifact Reference
 **[Artifact Guide](docs/guide/ARTIFACTS.md)**

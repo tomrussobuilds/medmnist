@@ -286,7 +286,9 @@ class TestOptunaOrchestrator:
 
         result = run_opt(cfg=mock_cfg, device="cpu", paths=mock_paths)
 
-        mock_orch_class.assert_called_once_with(cfg=mock_cfg, device="cpu", paths=mock_paths)
+        mock_orch_class.assert_called_once_with(
+            cfg=mock_cfg, device="cpu", paths=mock_paths, tracker=None
+        )
         mock_orch.optimize.assert_called_once()
         assert result == mock_study
 

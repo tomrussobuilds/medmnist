@@ -42,6 +42,7 @@ __all__ = [
     "ValidatedPath",
     "OptunaConfig",
     "ExportConfig",
+    "TrackingConfig",
 ]
 
 # LAZY IMPORTS MAPPING
@@ -59,6 +60,7 @@ _LAZY_IMPORTS: dict[str, str] = {
     "ValidatedPath": "orchard.core.config.types",
     "OptunaConfig": "orchard.core.config.optuna_config",
     "ExportConfig": "orchard.core.config.export_config",
+    "TrackingConfig": "orchard.core.config.tracking_config",
 }
 
 

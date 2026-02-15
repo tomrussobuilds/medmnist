@@ -145,6 +145,10 @@ optuna:
   save_plots: true
   save_best_config: true
 
+tracking:
+  enabled: true
+  experiment_name: "visionforge"
+
 export:
   format: onnx
   opset_version: 18

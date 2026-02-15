@@ -21,7 +21,10 @@ Typical Usage:
     >>> print(f"Best trial: {study.best_trial.number}")
 """
 
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING
 
 import optuna
 
@@ -31,6 +34,9 @@ from orchard.core import (
     RunPaths,
     log_optimization_header,
 )
+
+if TYPE_CHECKING:  # pragma: no cover
+    from orchard.tracking import MLflowTracker, NoOpTracker
 
 from ..objective.objective import OptunaObjective
 from ..search_spaces import get_search_space
@@ -67,17 +73,25 @@ class OptunaOrchestrator:
         >>> # Artifacts saved to paths.figures/ and paths.exports/
     """
 
-    def __init__(self, cfg: Config, device, paths: RunPaths):
+    def __init__(
+        self,
+        cfg: Config,
+        device,
+        paths: RunPaths,
+        tracker: MLflowTracker | NoOpTracker | None = None,
+    ):
         """Initialize orchestrator.
 
         Args:
             cfg: Base Config to override per trial
             device: PyTorch device
             paths: Root directory for outputs
+            tracker: Optional experiment tracker for nested trial logging
         """
         self.cfg = cfg
         self.device = device
         self.paths = paths
+        self.tracker = tracker
 
     def create_study(self) -> optuna.Study:
         """Create or load Optuna study with configured sampler and pruner.
@@ -121,6 +135,7 @@ class OptunaOrchestrator:
             cfg=self.cfg,
             search_space=search_space,
             device=self.device,
+            tracker=self.tracker,
         )
 
         # Configure callbacks and log our structured header
@@ -168,7 +183,12 @@ class OptunaOrchestrator:
         export_top_trials(study, self.paths, self.cfg.optuna.metric_name)
 
 
-def run_optimization(cfg: Config, device, paths: RunPaths) -> optuna.Study:
+def run_optimization(
+    cfg: Config,
+    device,
+    paths: RunPaths,
+    tracker: MLflowTracker | NoOpTracker | None = None,
+) -> optuna.Study:
     """
     Convenience function to run complete optimization pipeline.
 
@@ -176,6 +196,7 @@ def run_optimization(cfg: Config, device, paths: RunPaths) -> optuna.Study:
         cfg: Global configuration with optuna section
         device: PyTorch device for training
         paths: RunPaths instance for output management
+        tracker: Optional experiment tracker for nested trial logging
 
     Returns:
         Completed Optuna study with trial results
@@ -184,5 +205,5 @@ def run_optimization(cfg: Config, device, paths: RunPaths) -> optuna.Study:
         >>> study = run_optimization(cfg=config, device="cuda", paths=paths)
         >>> print(f"Best AUC: {study.best_value:.3f}")
     """
-    orchestrator = OptunaOrchestrator(cfg=cfg, device=device, paths=paths)
+    orchestrator = OptunaOrchestrator(cfg=cfg, device=device, paths=paths, tracker=tracker)
     return orchestrator.optimize()

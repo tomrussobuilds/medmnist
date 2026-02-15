@@ -126,7 +126,7 @@ optuna:
   # Search strategy
   sampler_type: "tpe"
   search_space_preset: "full"
-  enable_model_search: true     # Compare mini_cnn vs resnet_18
+  enable_model_search: false     # Compare mini_cnn vs resnet_18
 
   # Pruning
   enable_pruning: true
@@ -145,6 +145,10 @@ optuna:
   # Output
   save_plots: true
   save_best_config: true
+
+tracking:
+  enabled: true
+  experiment_name: "visionforge"
 
 export:
   format: onnx

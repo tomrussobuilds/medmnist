@@ -5,15 +5,20 @@ This package coordinates model inference, performance visualization,
 and structured experiment reporting using a memory-efficient Lazy approach.
 """
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
-from typing import List, Tuple
+from typing import TYPE_CHECKING, List, Tuple
 
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from orchard.core import LOGGER_NAME, Config, RunPaths
+
+if TYPE_CHECKING:  # pragma: no cover
+    from orchard.tracking import MLflowTracker, NoOpTracker
 
 from .evaluator import evaluate_model
 from .reporting import create_structured_report
@@ -34,12 +39,16 @@ def run_final_evaluation(
     cfg: Config,
     aug_info: str = "N/A",
     log_path: Path | None = None,
+    tracker: MLflowTracker | NoOpTracker | None = None,
 ) -> Tuple[float, float]:
     """
     Executes the complete evaluation pipeline.
 
     Coordinates full-set inference (with TTA support), visualizes metrics,
     and generates the final structured Excel report.
+
+    Args:
+        tracker: Optional experiment tracker for logging test metrics to MLflow.
     """
 
     # Resolve device from config
@@ -109,6 +118,11 @@ def run_final_evaluation(
     report.save(paths.final_report_path)
 
     test_acc = test_metrics["accuracy"]
+
+    # Log test metrics to experiment tracker
+    if tracker is not None:
+        tracker.log_test_metrics(test_acc=test_acc, macro_f1=macro_f1)
+
     logger.info("Final Evaluation Phase Complete.")
 
     return macro_f1, test_acc

@@ -20,7 +20,7 @@ Key Features:
 import logging
 from functools import partial
 from pathlib import Path
-from typing import List, Tuple
+from typing import TYPE_CHECKING, List, Tuple
 
 import torch
 import torch.nn as nn
@@ -28,6 +28,9 @@ from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader
 
 from orchard.core import LOGGER_NAME, Config, load_model_weights
+
+if TYPE_CHECKING:  # pragma: no cover
+    from orchard.tracking import MLflowTracker, NoOpTracker
 
 from .engine import mixup_data, train_one_epoch, validate_epoch
 
@@ -102,6 +105,7 @@ class ModelTrainer:
         device: torch.device,
         cfg: Config,
         output_path: Path | None = None,
+        tracker: "MLflowTracker | NoOpTracker | None" = None,
     ):
         """
         Initializes the ModelTrainer with all required training components.
@@ -116,6 +120,7 @@ class ModelTrainer:
             device: Compute device (torch.device) for training
             cfg: Validated global configuration containing training hyperparameters
             output_path: Optional path for best model checkpoint (default: ./best_model.pth)
+            tracker: Optional experiment tracker for MLflow metric logging
         """
         self.model = model
         self.train_loader = train_loader
@@ -125,6 +130,7 @@ class ModelTrainer:
         self.criterion = criterion
         self.device = device
         self.cfg = cfg
+        self.tracker = tracker
 
         # Hyperparameters
         self.epochs = cfg.training.epochs
@@ -236,6 +242,10 @@ class ModelTrainer:
                 f"AUC: {val_auc:.4f} (Best AUC: {self.best_auc:.4f}) | "
                 f"LR: {current_lr:.2e} | Patience: {self.patience - self.epochs_no_improve}"
             )
+
+            # --- 6. Experiment Tracking ---
+            if self.tracker is not None:
+                self.tracker.log_epoch(epoch, epoch_loss, val_metrics, current_lr)
 
         logger.info(
             f"Training finished. Peak Performance -> AUC: {self.best_auc:.4f} "
