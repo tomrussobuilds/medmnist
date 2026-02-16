@@ -143,6 +143,8 @@ class OptunaOrchestrator:
 
         callbacks = build_callbacks(self.cfg)
 
+        study.set_user_attr("n_trials", self.cfg.optuna.n_trials)
+
         try:
             study.optimize(
                 objective,

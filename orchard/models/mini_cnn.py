@@ -16,15 +16,10 @@ Architecture:
                    → AdaptiveAvgPool [1×1×128] → Dropout → FC [num_classes]
 """
 
-import logging
-
 import torch
 import torch.nn as nn
 
-from orchard.core import LOGGER_NAME, Config
-
-# LOGGER CONFIGURATION
-logger = logging.getLogger(LOGGER_NAME)
+from orchard.core import Config
 
 
 # MODEL DEFINITION
@@ -95,18 +90,8 @@ def build_mini_cnn(
     Returns:
         MiniCNN model deployed to device
     """
-    logger.info(
-        f"Building MiniCNN for {in_channels}-channel "
-        f"{cfg.dataset.img_size}×{cfg.dataset.img_size} input"
-    )
-
     model = MiniCNN(
         in_channels=in_channels, num_classes=num_classes, dropout=cfg.architecture.dropout
     )
 
-    model = model.to(device)
-
-    total_params = sum(p.numel() for p in model.parameters())
-    logger.info(f"MiniCNN deployed | Parameters: {total_params:,}")
-
-    return model
+    return model.to(device)

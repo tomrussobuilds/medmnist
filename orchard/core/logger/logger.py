@@ -15,6 +15,7 @@ Key Features:
 
 import logging
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
@@ -22,6 +23,102 @@ from pathlib import Path
 from typing import Dict, Final, Optional
 
 from ..paths import LOGGER_NAME
+from .styles import LogStyle
+
+# Separator characters used to detect decorative lines
+_SEPARATOR_CHARS = {"━", "═", "─"}
+
+# Matches subtitle tags like [Hardware], [OPTIMIZATION], [Export Settings]
+# but NOT data brackets like [T: 0.2131 | V: 0.1196] or [!]
+_SUBTITLE_RE = re.compile(r"\[([A-Za-z][A-Za-z ]*)\]")
+
+
+class ColorFormatter(logging.Formatter):
+    """Formatter that applies ANSI colors to console output.
+
+    Colors are applied based on log level and message content:
+        - WARNING/ERROR/CRITICAL: yellow/red level prefix
+        - Lines with ✓ or 'New best model': green
+        - Lines with ⚠ or 'Early stopping': yellow
+        - Separator lines (━, ═, ─): dim
+        - Centered header text: bold magenta
+        - Subtitle tags like [Hardware], [OPTIMIZATION]: bold magenta
+    """
+
+    _LEVEL_COLORS = {
+        logging.WARNING: LogStyle.YELLOW,
+        logging.ERROR: LogStyle.RED,
+        logging.CRITICAL: LogStyle.RED + LogStyle.BOLD,
+    }
+
+    def format(self, record: logging.LogRecord) -> str:
+        """Format a log record with ANSI color codes.
+
+        Colors are applied **only to the message text**; the timestamp and
+        level prefix on the left remain uncolored.
+        """
+        formatted = super().format(record)
+        msg = record.getMessage()
+
+        # Color the level prefix for WARNING+
+        level_color = self._LEVEL_COLORS.get(record.levelno)
+        if level_color:
+            formatted = formatted.replace(
+                record.levelname,
+                f"{level_color}{record.levelname}{LogStyle.RESET}",
+                1,
+            )
+
+        # Content-based coloring for INFO messages
+        if record.levelno == logging.INFO:
+            stripped = msg.strip()
+
+            # Separator lines → dim
+            if stripped and all(c in _SEPARATOR_CHARS for c in stripped):
+                return self._color_message_only(formatted, msg, LogStyle.DIM)
+
+            # Centered headers (e.g. "ENVIRONMENT INITIALIZATION") → bold magenta
+            if (
+                stripped == stripped.upper()
+                and len(stripped) > 5
+                and stripped.replace(" ", "").isalpha()
+            ):
+                return self._color_message_only(formatted, msg, LogStyle.BOLD + LogStyle.MAGENTA)
+
+            # Success lines (✓, New best model) → green
+            if "✓" in msg or "New best model" in msg:
+                return self._color_message_only(formatted, msg, LogStyle.GREEN)
+
+        # Warning-level content coloring
+        if record.levelno == logging.WARNING:
+            return self._color_message_only(formatted, msg, LogStyle.YELLOW)
+
+        # Subtitle tags [Text] → bold magenta (within message portion only)
+        if _SUBTITLE_RE.search(msg):
+            formatted = self._color_subtitles(formatted, msg)
+
+        return formatted
+
+    def _color_message_only(self, formatted: str, msg: str, color: str) -> str:
+        """Apply *color* only to the message portion of *formatted*, leaving the prefix plain."""
+        idx = formatted.find(msg)
+        if idx == -1:
+            return formatted
+        prefix = formatted[:idx]
+        return f"{prefix}{color}{formatted[idx:]}{LogStyle.RESET}"
+
+    def _color_subtitles(self, formatted: str, msg: str) -> str:
+        """Apply bold magenta to ``[Subtitle]`` tags in the message portion only."""
+        idx = formatted.find(msg)
+        if idx == -1:
+            return formatted
+        prefix = formatted[:idx]
+        msg_part = formatted[idx:]
+        colored_msg = _SUBTITLE_RE.sub(
+            rf"{LogStyle.BOLD}{LogStyle.MAGENTA}\g<0>{LogStyle.RESET}",
+            msg_part,
+        )
+        return prefix + colored_msg
 
 
 # LOGGER CLASS
@@ -130,10 +227,9 @@ class Logger:
             - Format: "YYYY-MM-DD HH:MM:SS - LEVEL - message"
             - Rotation: Automatic when max_bytes threshold exceeded
         """
-        formatter = logging.Formatter(
-            "%(asctime)s - %(levelname)s - %(message)s",
-            "%Y-%m-%d %H:%M:%S",
-        )
+        fmt_str = "%(asctime)s - %(levelname)s - %(message)s"
+        datefmt = "%Y-%m-%d %H:%M:%S"
+        plain_formatter = logging.Formatter(fmt_str, datefmt)
 
         self._log.setLevel(self.level)
         self._log.propagate = False
@@ -146,7 +242,10 @@ class Logger:
 
         # 1. Console Handler (Standard Output)
         console_h = logging.StreamHandler(sys.stdout)
-        console_h.setFormatter(formatter)
+        if sys.stdout.isatty():
+            console_h.setFormatter(ColorFormatter(fmt_str, datefmt))
+        else:
+            console_h.setFormatter(plain_formatter)
         self._log.addHandler(console_h)
 
         # 2. Rotating File Handler (Activated when log_dir is known)
@@ -158,7 +257,7 @@ class Logger:
             file_h = RotatingFileHandler(
                 filename, maxBytes=self.max_bytes, backupCount=self.backup_count, encoding="utf-8"
             )
-            file_h.setFormatter(formatter)
+            file_h.setFormatter(plain_formatter)
             self._log.addHandler(file_h)
 
             Logger._active_log_file = filename

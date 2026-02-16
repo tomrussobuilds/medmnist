@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - extract domain fetchers into fetchers/ sub-package
+- add TrackerProtocol, unify environment log sections
 
 ### Documentation
 

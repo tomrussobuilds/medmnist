@@ -120,9 +120,4 @@ def build_vit_tiny(
         model.patch_embed.proj = new_proj  # type: ignore[union-attr]
 
     # --- Step 5: Device Placement ---
-    model = model.to(device)
-
-    total_params = sum(p.numel() for p in model.parameters())
-    logger.info(f"ViT-Tiny deployed | Parameters: {total_params:,}")
-
-    return model
+    return model.to(device)
