@@ -84,7 +84,7 @@ def validate_export(
 
                 if diff > max_deviation:
                     logger.error(
-                        f"✗ Validation failed on sample {i+1}: "
+                        f"✗ Validation failed on sample {i + 1}: "
                         f"max diff = {diff:.2e} (threshold = {max_deviation:.2e})"
                     )
                     return False

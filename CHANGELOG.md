@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- add ANSI color formatting, fix early-stop trials-saved count
+
 ### Changed
 
 - extract domain fetchers into fetchers/ sub-package

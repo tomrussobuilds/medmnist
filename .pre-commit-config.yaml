@@ -1,6 +1,24 @@
 repos:
   - repo: local
     hooks:
+      - id: black
+        name: black (formatting)
+        language: system
+        entry: black --check --quiet
+        types: [python]
+
+      - id: isort
+        name: isort (import sorting)
+        language: system
+        entry: isort --check-only
+        types: [python]
+
+      - id: flake8
+        name: flake8 (linting)
+        language: system
+        entry: flake8
+        types: [python]
+
       - id: git-cliff
         name: generate changelog
         language: system

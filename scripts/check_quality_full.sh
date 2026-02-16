@@ -19,7 +19,7 @@ echo "✓ isort passed"
 echo ""
 
 echo "✨ Flake8 (linting)..."
-flake8 orchard/ tests/ forge.py --max-line-length=100 --extend-ignore=E203,W503
+flake8 orchard/ tests/ forge.py
 echo "✓ Flake8 passed"
 echo ""
 
