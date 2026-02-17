@@ -1,8 +1,8 @@
 ← [Back to Main README](../../README.md)
 
-# Testing & Quality Assurance
+<h1 align="center">Testing & Quality Assurance</h1>
 
-## Environment Verification
+<h2>Environment Verification</h2>
 
 **Smoke Test** (1-epoch sanity check):
 ```bash
@@ -32,11 +32,11 @@ python -m tests.health_check --dataset organcmnist --resolution 224
 
 ---
 
-## Code Quality Checks
+<h2>Code Quality Checks</h2>
 
 Orchard ML includes automated quality check scripts that run all code quality tools in sequence.
 
-### Quick Check (Recommended)
+<h3>Quick Check (Recommended)</h3>
 
 Fast quality checks for everyday development (~30-60 seconds):
 
@@ -53,7 +53,7 @@ bash scripts/check_quality.sh
 - **Radon**: Cyclomatic complexity & maintainability index
 - **Pytest**: Full test suite with coverage report
 
-### Extended Check (Thorough)
+<h3>Extended Check (Thorough)</h3>
 
 Comprehensive checks with type checking (~60-120 seconds):
 
@@ -67,9 +67,9 @@ bash scripts/check_quality_full.sh
 - **Radon**: Extended metrics (raw metrics, detailed analysis)
 - **Pytest**: HTML coverage report
 
-### Tool Descriptions
+<h3>Tool Descriptions</h3>
 
-#### Formatting Tools
+<h4>Formatting Tools</h4>
 
 - **Black**: Opinionated code formatter (line length: 100)
   ```bash
@@ -81,7 +81,7 @@ bash scripts/check_quality_full.sh
   isort orchard/ tests/ forge.py  # Auto-fix
   ```
 
-#### Linting Tools
+<h4>Linting Tools</h4>
 
 - **Flake8**: PEP 8 style guide enforcement
   - Checks: unused variables, imports, style violations
@@ -91,7 +91,7 @@ bash scripts/check_quality_full.sh
   flake8 orchard/ tests/ --max-line-length=100 --extend-ignore=E203,W503
   ```
 
-#### Security Tools
+<h4>Security Tools</h4>
 
 - **Bandit**: Detects common security issues
   - Checks: hardcoded passwords, SQL injection, insecure temp files
@@ -100,7 +100,7 @@ bash scripts/check_quality_full.sh
   bandit -r orchard/ -ll -q
   ```
 
-#### Complexity Analysis
+<h4>Complexity Analysis</h4>
 
 - **Radon**: Code metrics analyzer
   - **Cyclomatic Complexity (CC)**: Measures code complexity (max: B = 6-10)
@@ -111,7 +111,7 @@ bash scripts/check_quality_full.sh
   radon mi orchard/ -n B                   # Maintainability
   ```
 
-#### Type Checking
+<h4>Type Checking</h4>
 
 - **MyPy**: Static type checker for Python
   - Verifies type hints and catches type errors at compile time
@@ -119,7 +119,7 @@ bash scripts/check_quality_full.sh
   mypy orchard/ --ignore-missing-imports --no-strict-optional
   ```
 
-### Individual Tool Usage
+<h3>Individual Tool Usage</h3>
 
 ```bash
 # Code formatting check
@@ -145,7 +145,7 @@ mypy orchard/ --ignore-missing-imports
 pytest --cov=orchard --cov-report=term-missing -v tests/
 ```
 
-### Installation
+<h3>Installation</h3>
 
 Install dev dependencies (includes all quality tools):
 
@@ -155,9 +155,9 @@ pip install -e ".[dev]"
 
 ---
 
-## Testing & Quality Assurance
+<h2>Testing & Quality Assurance</h2>
 
-### Test Suite
+<h3>Test Suite</h3>
 
 Orchard ML includes a comprehensive test suite with **1,100+ tests** targeting **→100% code coverage**:
 
@@ -176,14 +176,14 @@ pytest tests/ -m integration   # Integration tests only
 pytest tests/ -n auto
 ```
 
-### Test Categories
+<h3>Test Categories</h3>
 
-- **Unit Tests** (850+ tests): Config validation, metadata injection, type safety
+- **Unit Tests** (950+ tests): Config validation, metadata injection, type safety
 - **Integration Tests** (150+ tests): End-to-end pipeline validation, YAML hydration
 - **Smoke Tests**: 1-epoch sanity checks (~30 seconds)
 - **Health Checks**: Dataset integrity
 
-### Continuous Integration
+<h3>Continuous Integration</h3>
 
 GitHub Actions automatically run on every push:
 

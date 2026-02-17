@@ -108,15 +108,17 @@
 
 <h2>Hardware Requirements</h2>
 
-### CPU Training (28×28 Only)
+<h3>CPU Training (28×28 Only)</h3>
+
 - **Supported Resolution**: 28×28 **only**
 - **Time**: ~2.5 hours (`ResNet-18`, 60 epochs, 16 cores)
 - **Time**: ~5-10 minutes (`MiniCNN`, 60 epochs, 16 cores)
 - **Architectures**: `ResNet-18`, `MiniCNN`
 - **Use Case**: Development, testing, limited hardware environments
 
-### GPU Training (All Resolutions)
-- **28×28 Resolution**: 
+<h3>GPU Training (All Resolutions)</h3>
+
+- **28×28 Resolution**:
   - `MiniCNN`: ~2-3 minutes (60 epochs)
   - `ResNet-18`: ~10-15 minutes (60 epochs)
 - **224×224 Resolution**:
@@ -155,13 +157,16 @@
 
 <h2>Quick Start</h2>
 
-### Step 1: Environment Setup
+<h3>Step 1: Environment Setup</h3>
+
 ```bash
 # Option A: Install from PyPI
 pip install orchard-ml
 
 # Option B: Install from source
 git clone https://github.com/tomrussobuilds/orchard-ml.git
+
+# Enter the project directory and install in editable mode
 cd orchard-ml
 pip install -e .
 
@@ -169,7 +174,8 @@ pip install -e .
 pip install -e ".[dev]"
 ```
 
-### Step 2: Verify Installation (Optional)
+<h3>Step 2: Verify Installation (Optional)</h3>
+
 ```bash
 # Run 1-epoch sanity check (~30 seconds, CPU/GPU)
 # Downloads BloodMNIST 28×28 by default
@@ -178,7 +184,7 @@ python -m tests.smoke_test
 # Note: You can skip this step - forge.py will auto-download datasets as needed
 ```
 
-### Step 3: Training Workflow
+<h3>Step 3: Training Workflow</h3>
 
 Orchard ML uses `forge.py` as the **single entry point** for all workflows. The pipeline behavior is controlled entirely by the `YAML` configuration:
 
@@ -186,7 +192,7 @@ Orchard ML uses `forge.py` as the **single entry point** for all workflows. The 
 - **Optimization + Training**: Use an `optuna_*.yaml` file (has `optuna:` section)
 - **With Export**: Add an `export:` section to your config
 
-#### **Training Only** (Quick start)
+<h4><strong>Training Only</strong> (Quick start)</h4>
 
 ```bash
 # 28×28 resolution (CPU-compatible)
@@ -205,7 +211,7 @@ python forge.py --config recipes/config_vit_tiny.yaml              # ~25-35 min 
 
 ---
 
-#### **Hyperparameter Optimization + Training** (Full pipeline)
+<h4><strong>Hyperparameter Optimization + Training</strong> (Full pipeline)</h4>
 
 ```bash
 # 28×28 resolution - fast iteration
@@ -235,7 +241,7 @@ firefox outputs/*/figures/optimization_history.html    # Trial progression
 
 ---
 
-#### **Model Export** (Production deployment)
+<h4><strong>Model Export</strong> (Production deployment)</h4>
 
 All training configs (`config_*.yaml`) include `ONNX` export by default:
 ```bash
@@ -287,7 +293,7 @@ python forge.py --config my_run.yaml
 | [Export Guide](docs/guide/EXPORT.md) | `ONNX` export pipeline, quantization options, validation and benchmarking |
 | [Tracking Guide](docs/guide/TRACKING.md) | `MLflow` local setup, dashboard and run comparison, programmatic querying |
 | [Artifact Guide](docs/guide/ARTIFACTS.md) | Output directory structure, training vs optimization artifact differences |
-| [Testing Guide](docs/guide/TESTING.md) | 1,000+ test suite, quality automation scripts, CI/CD pipeline details |
+| [Testing Guide](docs/guide/TESTING.md) | 1,100+ test suite, quality automation scripts, CI/CD pipeline details |
 | [`orchard/`](orchard/README.md) / [`tests/`](tests/README.md) | Internal package structure, module responsibilities, extension points |
 
 <h2>Citation</h2>

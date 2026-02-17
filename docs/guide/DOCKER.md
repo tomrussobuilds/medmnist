@@ -1,10 +1,10 @@
 ← [Back to Main README](../../README.md)
 
-# Docker Training Guide
+<h1 align="center">Docker Training Guide</h1>
 
-## 🐳 Containerized Deployment
+<h2>Containerized Deployment</h2>
 
-### Prerequisites
+<h3>Prerequisites</h3>
 
 **Docker permissions** — add your user to the `docker` group to avoid `sudo`:
 ```bash
@@ -24,7 +24,7 @@ sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
 ```
 
-### Build Image
+<h3>Build Image</h3>
 
 ```bash
 # Option 1: convenience script
@@ -34,7 +34,7 @@ bash docker/build.sh
 docker build -t orchard-ml:latest -f docker/Dockerfile .
 ```
 
-### Execution Modes
+<h3>Execution Modes</h3>
 
 **Standard Mode** (Performance Optimized):
 ```bash

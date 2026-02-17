@@ -1,14 +1,14 @@
 ← [Back to Main README](../../README.md)
 
-# Supported Models
+<h1 align="center">Supported Models</h1>
 
-## Pretrained Weights and Transfer Learning
+<h2>Pretrained Weights and Transfer Learning</h2>
 
 All models except MiniCNN are initialized with **pretrained weights** — parameters learned by training on ImageNet, a large-scale dataset of natural images. Instead of starting from random values, the network begins with convolutional filters that already encode useful visual features: edge detectors, texture patterns, color gradients, and shape representations.
 
 **Transfer learning** leverages this prior knowledge: the pretrained feature extractor is kept (or fine-tuned), and only the final classifier layer is replaced to match the target task (e.g., 9 disease classes instead of 1000 ImageNet categories). This dramatically reduces the amount of labeled data and training time needed to reach strong performance, which is especially valuable in domains like medical imaging where annotated samples are scarce.
 
-### ImageNet Variants
+<h3>ImageNet Variants</h3>
 
 | Dataset | Images | Classes | Used by |
 |---------|--------|---------|---------|
@@ -20,7 +20,7 @@ ImageNet-21k provides a broader visual vocabulary at the cost of noisier labels.
 > [!IMPORTANT]
 > **Data leakage**: when using ImageNet-pretrained weights, ensure your target dataset has no overlap with ImageNet. All datasets currently supported by Orchard ML (MedMNIST, Galaxy10) come from entirely different domains (medical imaging, astronomy) and share zero samples with ImageNet. If you add a custom dataset of natural images, verify that it does not contain ImageNet samples — otherwise evaluation metrics will be inflated because the model has already seen those images during pretraining.
 
-### Weight Morphing
+<h3>Weight Morphing</h3>
 
 Pretrained weights assume RGB input (3 channels) at a specific resolution. When the target domain differs — grayscale medical images (1 channel) or lower resolution (28x28 instead of 224x224) — the weights must be **adapted** rather than discarded:
 
@@ -31,11 +31,11 @@ The exact transformations and tensor dimensions are documented under each model 
 
 ---
 
-## ResNet-18 (Multi-Resolution: 28x28 / 224x224)
+<h2>ResNet-18 (Multi-Resolution: 28x28 / 224x224)</h2>
 
 Adaptive ResNet-18 that automatically selects the appropriate stem configuration based on `cfg.dataset.resolution`.
 
-### 28x28 Mode (Low-Resolution)
+<h3>28x28 Mode (Low-Resolution)</h3>
 
 Standard ResNet-18 is optimized for 224x224 ImageNet inputs. Direct application to 28x28 domains causes catastrophic information loss. The 28x28 mode performs architectural surgery on the ResNet-18 stem:
 
@@ -61,7 +61,7 @@ W_{\text{gray}} = \frac{1}{3} \sum_{c=1}^{3} W[:, c, :, :]
 
 This two-step process (channel compress + spatial resize) preserves learned edge detectors while adapting to both single-channel input and smaller kernel geometry.
 
-### 224x224 Mode (High-Resolution)
+<h3>224x224 Mode (High-Resolution)</h3>
 
 At 224x224, ResNet-18 uses the standard architecture with no structural modifications:
 
@@ -80,7 +80,7 @@ W_{\text{gray}} = \frac{1}{3} \sum_{c=1}^{3} W[:, c, :, :] \quad \text{where} \q
 
 ---
 
-## MiniCNN (28x28)
+<h2>MiniCNN (28x28)</h2>
 
 A compact, custom architecture designed specifically for low-resolution medical imaging. No pretrained weights — trained from scratch.
 
@@ -98,7 +98,7 @@ A compact, custom architecture designed specifically for low-resolution medical 
 
 ---
 
-## EfficientNet-B0 (224x224)
+<h2>EfficientNet-B0 (224x224)</h2>
 
 Implements compound scaling (depth, width, resolution) for optimal parameter efficiency.
 
@@ -118,7 +118,7 @@ W_{\text{gray}} = \frac{1}{3} \sum_{c=1}^{3} W[:, c, :, :] \quad \text{where} \q
 
 ---
 
-## Vision Transformer Tiny (ViT-Tiny) (224x224)
+<h2>Vision Transformer Tiny (ViT-Tiny) (224x224)</h2>
 
 Patch-based attention architecture with multiple pretrained weight variants.
 
@@ -143,7 +143,7 @@ W_{\text{gray}} = \frac{1}{3} \sum_{c=1}^{3} W[:, c, :, :] \quad \text{where} \q
 
 ---
 
-## ConvNeXt-Tiny (224x224)
+<h2>ConvNeXt-Tiny (224x224)</h2>
 
 Modern ConvNet architecture incorporating design principles from Vision Transformers.
 

@@ -1,10 +1,10 @@
 ← [Back to Main README](../README.md)
 
-# Orchard Package
+<h1 align="center">Orchard Package</h1>
 
 **Orchard ML core package** - Type-safe deep learning framework components.
 
-## Package Structure
+<h2>Package Structure</h2>
 
 ```
 orchard/
@@ -100,9 +100,9 @@ orchard/
     └── early_stopping.py       # Convergence detection
 ```
 
-## 🏗 Architecture Principles
+<h2>Architecture Principles</h2>
 
-### 1. Dependency Injection
+<h3>1. Dependency Injection</h3>
 All modules receive `Config` as dependency - no global state:
 ```python
 model = get_model(device=device, cfg=cfg)
@@ -110,13 +110,13 @@ loaders = get_dataloaders(data, cfg)
 trainer = ModelTrainer(model=model, cfg=cfg, ...)
 ```
 
-### 2. Single Source of Truth (SSOT)
+<h3>2. Single Source of Truth (SSOT)</h3>
 `Config` is the immutable configuration manifest validated by Pydantic V2:
 - Cross-domain validation (AMP ↔ device, pretrained ↔ RGB)
 - Late-binding metadata injection (dataset specs from registry)
 - Path portability (relative anchoring from PROJECT_ROOT)
 
-### 3. Separation of Concerns
+<h3>3. Separation of Concerns</h3>
 - **core/**: Framework infrastructure (config, hardware, logging)
 - **data_handler/**: Data loading only
 - **models/**: Architecture definitions only
@@ -127,7 +127,7 @@ trainer = ModelTrainer(model=model, cfg=cfg, ...)
 - **tracking/**: MLflow experiment tracking (optional)
 - **optimization/**: Optuna wrapper only
 
-### 4. Protocol-Based Design
+<h3>4. Protocol-Based Design</h3>
 Use protocols for testability:
 ```python
 class InfraManagerProtocol(Protocol):
@@ -135,9 +135,9 @@ class InfraManagerProtocol(Protocol):
     def release_resources(self, cfg, logger) -> None: ...
 ```
 
-## Key Extension Points
+<h2>Key Extension Points</h2>
 
-### Adding New Datasets
+<h3>Adding New Datasets</h3>
 Register in the appropriate domain file (e.g., `orchard/core/metadata/domains/medical.py`):
 ```python
 REGISTRY_224: Final[Dict[str, DatasetMetadata]] = {
@@ -155,7 +155,7 @@ REGISTRY_224: Final[Dict[str, DatasetMetadata]] = {
 ```
 Export from `orchard/core/metadata/domains/__init__.py` to make it available.
 
-### Adding New Architectures
+<h3>Adding New Architectures</h3>
 1. Create builder in `orchard/models/your_model.py`:
 ```python
 def build_your_model(device, cfg, in_channels, num_classes):
@@ -168,7 +168,7 @@ def build_your_model(device, cfg, in_channels, num_classes):
 _MODEL_REGISTRY["your_model"] = build_your_model
 ```
 
-### Adding New Optimizers
+<h3>Adding New Optimizers</h3>
 Extend `orchard/trainer/setup.py`:
 ```python
 def get_optimizer(model, cfg):
@@ -177,7 +177,7 @@ def get_optimizer(model, cfg):
     # Add new case
 ```
 
-## Further Reading
+<h2>Further Reading</h2>
 
 - **[Framework Guide](../docs/guide/FRAMEWORK.md)** - System design, technical deep dive
 - **[Architecture Guide](../docs/guide/ARCHITECTURE.md)** - Supported models and weight transfer

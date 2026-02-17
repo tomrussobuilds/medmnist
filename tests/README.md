@@ -1,10 +1,10 @@
 ← [Back to Main README](../README.md)
 
-# Test Suite
+<h1 align="center">Test Suite</h1>
 
 Orchard ML's comprehensive testing infrastructure ensures reliability and maintainability across all components.
 
-## Test Organization
+<h2>Test Organization</h2>
 
 ```
 tests/                          # Test suite (~1,100 tests, 100% coverage)
@@ -27,9 +27,9 @@ tests/                          # Test suite (~1,100 tests, 100% coverage)
 └── test_trainer/               # Training loop tests (engine, trainer, setup)
 ```
 
-## Testing & Quality Assurance
+<h2>Testing & Quality Assurance</h2>
 
-### Test Suite
+<h3>Test Suite</h3>
 
 Orchard ML includes a comprehensive test suite with **1,100+ tests** targeting **100% code coverage**:
 
@@ -48,19 +48,19 @@ pytest tests/ -m integration   # Integration tests only
 pytest tests/ -n auto
 ```
 
-### Test Categories
+<h3>Test Categories</h3>
 
-- **Unit Tests** (~920 tests): Config validation, metadata injection, type safety
-- **Integration Tests** (~40 tests): End-to-end pipeline validation, YAML hydration
+- **Unit Tests** (~950 tests): Config validation, metadata injection, type safety
+- **Integration Tests** (~150 tests): End-to-end pipeline validation, YAML hydration
 - **Smoke Tests**: 1-epoch sanity checks (~30 seconds)
 - **Health Checks**: Dataset integrity verification
 
-### Continuous Integration
+<h3>Continuous Integration</h3>
 
 GitHub Actions automatically run on every push:
 
 - ✅ **Code Quality**: Black, isort, Flake8 formatting and linting checks
-- ✅ **Multi-Python Testing**: Unit tests across Python 3.10, 3.11, 3.12 (~1,000 tests)
+- ✅ **Multi-Python Testing**: Unit tests across Python 3.10, 3.11, 3.12 (1,100+ tests)
 - ✅ **Smoke Test**: 1-epoch end-to-end validation (~30s, CPU-only)
 - ✅ **Documentation**: README.md presence verification
 - ✅ **Security Scanning**: Bandit (code analysis) and Safety (dependency vulnerabilities)
@@ -81,7 +81,7 @@ View the latest build: [![CI/CD](https://github.com/tomrussobuilds/orchard-ml/ac
 
 > **Note**: Health checks are not run in CI to avoid excessive dataset downloads. Run locally with `python -m tests.health_check` for dataset integrity validation.
 
-### Additional CI/CD Workflows
+<h3>Additional CI/CD Workflows</h3>
 
 Beyond the main CI pipeline, the project includes automated release and publishing workflows:
 

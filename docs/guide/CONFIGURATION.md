@@ -1,10 +1,10 @@
 ← [Back to Main README](../../README.md)
 
-# Configuration Guide
+<h1 align="center">Configuration Guide</h1>
 
-## Usage Patterns
+<h2>Usage Patterns</h2>
 
-### Configuration-Driven Execution
+<h3>Configuration-Driven Execution</h3>
 
 **Recommended Method:** YAML recipes ensure full reproducibility and version control.
 
@@ -21,7 +21,7 @@ python forge.py --config recipes/config_efficientnet_b0.yaml       # ~30 min eac
 python forge.py --config recipes/config_vit_tiny.yaml              # ~25-35 min each trial
 ```
 
-### CLI Overrides
+<h3>CLI Overrides</h3>
 
 For rapid experimentation (not recommended for production):
 
@@ -46,9 +46,9 @@ python forge.py --mixup_alpha 0 --no_tta
 
 ---
 
-## Configuration Reference
+<h2>Configuration Reference</h2>
 
-### Core Parameters
+<h3>Core Parameters</h3>
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
@@ -64,7 +64,7 @@ python forge.py --mixup_alpha 0 --no_tta
 | `seed` | int | 42 | - | Global random seed |
 | `reproducible` | bool | False | - | Enable strict determinism |
 
-### Augmentation Parameters
+<h3>Augmentation Parameters</h3>
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -74,7 +74,7 @@ python forge.py --mixup_alpha 0 --no_tta
 | `min_scale` | float | 0.95 | Minimum RandomResizedCrop scale |
 | `no_tta` | bool | False | Disable test-time augmentation |
 
-### Model Parameters
+<h3>Model Parameters</h3>
 
 | Parameter | Type | Default | Options |
 |-----------|------|---------|---------|
@@ -84,7 +84,7 @@ python forge.py --mixup_alpha 0 --no_tta
 | `force_rgb` | bool | True | Convert grayscale to 3-channel |
 | `resolution` | int | 28 | [28, 224] |
 
-### Dataset Parameters
+<h3>Dataset Parameters</h3>
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -95,11 +95,11 @@ python forge.py --mixup_alpha 0 --no_tta
 
 ---
 
-## Extending to New Datasets
+<h2>Extending to New Datasets</h2>
 
 The framework is designed for zero-code dataset integration via the registry system:
 
-### 1. Add Dataset Metadata
+<h3>1. Add Dataset Metadata</h3>
 
 Edit `orchard/core/metadata/medmnist_v2_28x28.py` or `medmnist_v2_224x224.py`:
 
@@ -121,7 +121,7 @@ DATASET_REGISTRY = {
 }
 ```
 
-### 2. Train Immediately
+<h3>2. Train Immediately</h3>
 
 ```bash
 python forge.py --dataset custom_dataset --epochs 30

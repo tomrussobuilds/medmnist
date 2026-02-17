@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- comprehensive documentation overhaul and codebase polish
+- convert markdown headings to HTML and update test counts
+
 ### Build
 
 - bump minimum Pillow and psutil versions

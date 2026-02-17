@@ -1,8 +1,8 @@
 ← [Back to Main README](../../README.md)
 
-# Hyperparameter Optimization Guide
+<h1 align="center">Hyperparameter Optimization Guide</h1>
 
-### Quick Start
+<h3>Quick Start</h3>
 
 ```bash
 # Install Optuna (if not already present)
@@ -27,7 +27,7 @@ python forge.py --config recipes/optuna_vit_tiny.yaml \
     --load_if_exists true
 ```
 
-### Search Space Coverage
+<h3>Search Space Coverage</h3>
 
 Select a preset via `search_space_preset`:
 
@@ -55,7 +55,7 @@ Select a preset via `search_space_preset`:
 
 **Quick Space**: `learning_rate`, `weight_decay`, `batch_size`, `dropout`
 
-### Model Search
+<h3>Model Search</h3>
 
 Enable `enable_model_search` to let Optuna automatically explore all registered architectures for the target resolution alongside hyperparameters:
 
@@ -67,7 +67,7 @@ optuna:
 
 When enabled, the optimizer treats the model architecture as an additional categorical hyperparameter, selecting from all models compatible with the configured resolution. This is the recommended approach for finding the best architecture–hyperparameter combination without manual experimentation.
 
-### Optimization Workflow
+<h3>Optimization Workflow</h3>
 
 ```bash
 # Phase 1: Comprehensive search (configurable trials, early stopping enabled)
@@ -81,13 +81,13 @@ firefox outputs/*/figures/optimization_history.html
 python forge.py --config outputs/*/reports/best_config.yaml
 ```
 
-### Artifacts Generated
+<h3>Artifacts Generated</h3>
 
 See the **[Artifact Reference Guide](ARTIFACTS.md)** for complete documentation of all generated files.
 
-### Customization
+<h3>Customization</h3>
 
-#### Search Space Overrides (YAML-based)
+<h4>Search Space Overrides (YAML-based)</h4>
 
 Override any parameter from the [search space](#search-space-coverage) directly in your recipe YAML, without code changes:
 

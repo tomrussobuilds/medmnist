@@ -1,10 +1,10 @@
 ← [Back to Main README](../../README.md)
 
-# Framework Architecture
+<h1 align="center">Framework Architecture</h1>
 
-## Core Features
+<h2>Core Features</h2>
 
-### RootOrchestrator -- Lifecycle Management
+<h3>RootOrchestrator -- Lifecycle Management</h3>
 
 The `RootOrchestrator` (`orchard/core/orchestrator.py`) is the central coordinator for every ML experiment. It implements a **7-phase initialization protocol** inside a Context Manager, guaranteeing deterministic setup and automatic resource cleanup:
 
@@ -35,7 +35,7 @@ with RootOrchestrator(cfg) as orch:
     # Pipeline execution with guaranteed cleanup
 ```
 
-### Configuration Engine (SSOT)
+<h3>Configuration Engine (SSOT)</h3>
 
 Built on Pydantic V2, the configuration system acts as a **Single Source of Truth**, transforming raw inputs (CLI/YAML) into an immutable, type-safe execution blueprint:
 
@@ -43,7 +43,7 @@ Built on Pydantic V2, the configuration system acts as a **Single Source of Trut
 - **Cross-Domain Validation**: Post-construction logic guards prevent unstable states (e.g., enforcing RGB input for pretrained weights, validating AMP compatibility)
 - **Path Portability**: Automatic serialization converts absolute paths to environment-agnostic anchors for cross-platform reproducibility
 
-### Infrastructure Guard Layer
+<h3>Infrastructure Guard Layer</h3>
 
 The `InfrastructureManager` bridges declarative configs with physical hardware (used by RootOrchestrator in Phase 6):
 
@@ -51,7 +51,7 @@ The `InfrastructureManager` bridges declarative configs with physical hardware (
 - **Process Sanitization**: `psutil` wrapper identifies and terminates ghost Python processes
 - **HPC-Aware Safety**: Auto-detects cluster schedulers (SLURM/PBS/LSF) and suspends aggressive process cleanup to preserve multi-user stability
 
-### Reproducibility Architecture
+<h3>Reproducibility Architecture</h3>
 
 **Dual-Layer Strategy** (enforced by RootOrchestrator Phase 1):
 1. **Standard Mode**: Global seeding (Seed 42) with performance-optimized algorithms
@@ -64,7 +64,7 @@ The `InfrastructureManager` bridges declarative configs with physical hardware (
 - MD5 checksum verification for dataset downloads
 - `validate_npz_keys` structural integrity checks before memory allocation
 
-### Performance Optimization
+<h3>Performance Optimization</h3>
 
 **Hybrid RAM Management:**
 - **Small Datasets**: Full RAM caching for maximum throughput
@@ -74,7 +74,7 @@ The `InfrastructureManager` bridges declarative configs with physical hardware (
 - "Search-up" logic locates project root via markers (`.git`, `README.md`)
 - Ensures absolute path stability regardless of invocation directory
 
-### Intelligent Hyperparameter Search
+<h3>Intelligent Hyperparameter Search</h3>
 
 **Optuna Integration Features:**
 - **TPE Sampling**: Tree-structured Parzen Estimator for efficient search space exploration
@@ -85,7 +85,7 @@ The `InfrastructureManager` bridges declarative configs with physical hardware (
 
 ---
 
-## System Architecture
+<h2>System Architecture</h2>
 
 The framework implements **Separation of Concerns (SoC)** with six core layers:
 
@@ -157,7 +157,7 @@ The framework implements **Separation of Concerns (SoC)** with six core layers:
 
 ---
 
-## Dependency Graph
+<h2>Dependency Graph</h2>
 
 <p align="center">
 <img src="../framework_map.svg?v=4" width="900" alt="System Dependency Graph">

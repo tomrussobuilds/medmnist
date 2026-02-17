@@ -1,8 +1,8 @@
 ← [Back to Main README](../../README.md)
 
-# Experiment Tracking Guide
+<h1 align="center">Experiment Tracking Guide</h1>
 
-## Setup
+<h2>Setup</h2>
 
 MLflow is an **optional** dependency. Install it with:
 
@@ -12,7 +12,7 @@ pip install orchard-ml[tracking]
 pip install mlflow>=2.9.0
 ```
 
-## Configuration
+<h2>Configuration</h2>
 
 Add a `tracking:` section to any recipe YAML:
 
@@ -24,7 +24,7 @@ tracking:
 
 If the section is absent or `enabled: false`, the pipeline runs identically with zero overhead.
 
-## Where Data is Stored
+<h2>Where Data is Stored</h2>
 
 All tracking data is stored in a single SQLite database at the project root:
 
@@ -37,7 +37,7 @@ orchard-ml/
 
 The `mlruns.db` file is created automatically on the first tracked run and is already in `.gitignore`.
 
-## MLflow UI
+<h2>MLflow UI</h2>
 
 Launch the MLflow dashboard to browse experiments:
 
@@ -47,9 +47,9 @@ mlflow ui --backend-store-uri sqlite:///mlruns.db
 
 Then open http://127.0.0.1:5000 in a browser.
 
-## Querying Runs Programmatically
+<h2>Querying Runs Programmatically</h2>
 
-### List All Runs
+<h3>List All Runs</h3>
 
 ```python
 import mlflow
@@ -59,7 +59,7 @@ runs = mlflow.search_runs(experiment_names=["orchard-ml"])
 print(runs[["run_id", "params.dataset.name", "metrics.test_accuracy", "metrics.val_auc"]])
 ```
 
-### Compare Runs by Dataset
+<h3>Compare Runs by Dataset</h3>
 
 ```python
 runs = mlflow.search_runs(
@@ -70,7 +70,7 @@ runs = mlflow.search_runs(
 print(runs[["run_id", "params.architecture.name", "metrics.test_accuracy"]].head(10))
 ```
 
-### Get Best Run
+<h3>Get Best Run</h3>
 
 ```python
 best = mlflow.search_runs(
@@ -85,7 +85,7 @@ print(f"  Accuracy: {best['metrics.test_accuracy']:.4f}")
 print(f"  F1:       {best['metrics.test_macro_f1']:.4f}")
 ```
 
-### Plot Training Curves from a Run
+<h3>Plot Training Curves from a Run</h3>
 
 ```python
 client = mlflow.tracking.MlflowClient()
@@ -104,7 +104,7 @@ plt.title("Validation AUC Over Training")
 plt.show()
 ```
 
-### List Optuna Trials (Nested Runs)
+<h3>List Optuna Trials (Nested Runs)</h3>
 
 ```python
 parent_run_id = "your_parent_run_id"
@@ -116,7 +116,7 @@ trials = mlflow.search_runs(
 print(trials[["tags.mlflow.runName", "metrics.best_trial_metric", "params.lr"]].head(10))
 ```
 
-## What Gets Tracked
+<h2>What Gets Tracked</h2>
 
 | Phase        | Metrics                                                  | Artifacts                    |
 |-------------|----------------------------------------------------------|------------------------------|

@@ -1,8 +1,8 @@
-# Model Export Guide
+<h1 align="center">Model Export Guide</h1>
 
 Convert trained Orchard ML models to ONNX format for production deployment.
 
-## Quick Start
+<h2>Quick Start</h2>
 
 Export a trained model by specifying the checkpoint and architecture parameters:
 
@@ -36,11 +36,11 @@ python forge.py \
 
 **Important**: The `--dataset` parameter is used only to determine model architecture metadata (resolution, channels, classes). No actual data is loaded during export.
 
-## Dataset Registry
+<h2>Dataset Registry</h2>
 
 Use `--dataset` to specify architecture metadata for your trained model.
 
-### Supported Datasets
+<h3>Supported Datasets</h3>
 
 **MedMNIST** (28x28 and 224x224):
 - `bloodmnist`, `pathmnist`, `chestmnist`, `dermamnist`, etc.
@@ -50,9 +50,9 @@ Use `--dataset` to specify architecture metadata for your trained model.
 
 For datasets **not** in the registry, use any dataset name with matching resolution and class count - only the metadata is used.
 
-## Common Options
+<h2>Common Options</h2>
 
-### Quantization (Reduce model size)
+<h3>Quantization (Reduce model size)</h3>
 
 **Mobile deployment:**
 ```bash
@@ -78,7 +78,7 @@ python forge.py \
     --quantization_backend fbgemm
 ```
 
-### Custom output path
+<h3>Custom output path</h3>
 
 ```bash
 python forge.py \
@@ -90,7 +90,7 @@ python forge.py \
     --output_path /path/to/production/model_v1.0.onnx
 ```
 
-### Strict validation
+<h3>Strict validation</h3>
 
 ```bash
 python forge.py \
@@ -103,7 +103,7 @@ python forge.py \
     --max_deviation 1e-7
 ```
 
-### Skip validation (faster export)
+<h3>Skip validation (faster export)</h3>
 
 ```bash
 python forge.py \
@@ -115,16 +115,16 @@ python forge.py \
     --validate_export False
 ```
 
-## CLI Reference
+<h2>CLI Reference</h2>
 
-### Required Arguments
+<h3>Required Arguments</h3>
 
 | Argument | Description |
 |----------|-------------|
 | `--checkpoint` / `--resume` | Path to trained `.pth` checkpoint |
 | `--format` | Export format: `onnx`, `torchscript`, or `both` |
 
-### Model Architecture (required)
+<h3>Model Architecture (required)</h3>
 
 | Argument | Description | Example |
 |----------|-------------|---------|
@@ -132,7 +132,7 @@ python forge.py \
 | `--dataset` | Dataset for metadata | `pathmnist`, `bloodmnist` |
 | `--resolution` | Input size | `28`, `224` |
 
-### ONNX Options
+<h3>ONNX Options</h3>
 
 | Argument | Default | Description |
 |----------|---------|-------------|
@@ -140,14 +140,14 @@ python forge.py \
 | `--dynamic_axes` | `True` | Variable batch size |
 | `--do_constant_folding` | `True` | Optimize constants |
 
-### Quantization Options
+<h3>Quantization Options</h3>
 
 | Argument | Default | Description |
 |----------|---------|-------------|
 | `--quantize` | `False` | Enable INT8 quantization |
 | `--quantization_backend` | `qnnpack` | `qnnpack` (mobile) or `fbgemm` (server) |
 
-### Validation Options
+<h3>Validation Options</h3>
 
 | Argument | Default | Description |
 |----------|---------|-------------|
@@ -155,39 +155,39 @@ python forge.py \
 | `--validation_samples` | `10` | Number of test samples |
 | `--max_deviation` | `1e-5` | Max allowed difference |
 
-## Troubleshooting
+<h2>Troubleshooting</h2>
 
-### Checkpoint not found
+<h3>Checkpoint not found</h3>
 Checkpoints are in the `models/` subdirectory:
 ```bash
 --checkpoint outputs/run_xyz/models/best_model.pth
 ```
 
-### Class count mismatch
+<h3>Class count mismatch</h3>
 Match `--dataset` to your trained model:
 - Galaxy10 → `--dataset galaxy10` (10 classes)
 - PathMNIST → `--dataset pathmnist` (9 classes)
 - BloodMNIST → `--dataset bloodmnist` (8 classes)
 
-### Validation failed
+<h3>Validation failed</h3>
 Relax tolerance with `--max_deviation 1e-4` or skip with `--validate_export False`
 
-### Missing onnxscript
+<h3>Missing onnxscript</h3>
 ```bash
 pip install onnx onnxruntime onnxscript
 ```
 
-### Export warnings
+<h3>Export warnings</h3>
 Default `--opset_version 18` produces clean output with no warnings. If using lower versions (<18), you may see opset conversion warnings that are safe to ignore.
 
-## Dataset Reference
+<h2>Dataset Reference</h2>
 
 | Resolution | Medical Datasets | Space/Astronomy |
 |------------|------------------|-----------------|
 | 28x28 | `bloodmnist`, `dermamnist`, `organmnist_axial` | - |
 | 224x224 | `pathmnist`, `chestmnist`, `octmnist` | `galaxy10` |
 
-## What Happens During Export
+<h2>What Happens During Export</h2>
 
 1. **Checkpoint loading**: Loads trained weights from `.pth` file
 2. **Model reconstruction**: Rebuilds architecture from config/CLI args
@@ -203,7 +203,7 @@ outputs/run_xyz/models/best_efficientnetb0.pth
                      → best_efficientnetb0.onnx
 ```
 
-## Next Steps
+<h2>Next Steps</h2>
 
 - Deploy with [ONNX Runtime](https://onnxruntime.ai/)
 - Optimize for edge devices with [ONNX Runtime Mobile](https://onnxruntime.ai/docs/tutorials/mobile/)
