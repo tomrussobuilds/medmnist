@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add dynamic code quality badges via GitHub Gist
 - feat(tests): use tmp_path and standardize test paths
 - add YAML-configurable search space overrides
+- add generic timm backbone integration
 
 ### Changed
 

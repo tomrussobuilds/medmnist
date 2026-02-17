@@ -37,7 +37,7 @@ jobs:
 
       - name: Install linting tools
         run: |
-          pip install black flake8 isort mypy types-PyYAML types-requests
+          pip install black flake8 isort mypy==1.19.1 types-PyYAML types-requests
 
       - name: Run Black
         run: black --check --diff .

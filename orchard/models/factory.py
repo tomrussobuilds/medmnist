@@ -115,11 +115,12 @@ def get_model(device: torch.device, cfg: Config, verbose: bool = True) -> nn.Mod
     if model_name_lower.startswith("timm/"):
         builder = build_timm_model
     else:
-        builder = _MODEL_REGISTRY.get(model_name_lower)
-        if not builder:
+        _builder = _MODEL_REGISTRY.get(model_name_lower)
+        if _builder is None:
             error_msg = f"Architecture '{cfg.architecture.name}' is not registered in the Factory."
             logger.error(f" [!] {error_msg}")
             raise ValueError(error_msg)
+        builder = _builder
 
     # Instance construction and adaptation
     # When verbose=False (e.g. export phase), suppress builder-internal logs
