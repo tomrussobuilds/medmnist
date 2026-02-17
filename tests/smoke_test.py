@@ -1,5 +1,5 @@
 """
-Smoke Test Module for VisionForge Pipeline.
+Smoke Test Module for Orchard ML Pipeline.
 
 Performs rapid end-to-end validation of the complete training pipeline
 with minimal computational overhead. Verifies all 5 orchestration stages:

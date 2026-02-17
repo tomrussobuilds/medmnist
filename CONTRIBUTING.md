@@ -1,6 +1,6 @@
-# Contributing to VisionForge
+# Contributing to Orchard ML
 
-Thank you for considering contributing to VisionForge!
+Thank you for considering contributing to Orchard ML!
 
 ## Project Direction
 

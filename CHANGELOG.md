@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add YAML-configurable search space overrides
 - add generic timm backbone integration
 - add Colab demo notebooks for training and model search
+- rename project to Orchard ML and add PyPI publishing
 
 ### Changed
 
@@ -41,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2026-02-15
 
-First public release of VisionForge — a type-safe, reproducible deep learning
+First public release of Orchard ML — a type-safe, reproducible deep learning
 framework for computer vision research.
 
 ### Added

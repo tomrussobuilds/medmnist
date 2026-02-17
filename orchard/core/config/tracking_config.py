@@ -21,6 +21,6 @@ class TrackingConfig(BaseModel):
 
     enabled: bool = Field(default=True, description="Enable MLflow tracking")
     experiment_name: str = Field(
-        default="visionforge",
+        default="orchard-ml",
         description="MLflow experiment name",
     )

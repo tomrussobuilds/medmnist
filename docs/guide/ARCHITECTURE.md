@@ -18,7 +18,7 @@ All models except MiniCNN are initialized with **pretrained weights** — parame
 ImageNet-21k provides a broader visual vocabulary at the cost of noisier labels. ViT-Tiny benefits from this larger pretraining because transformers are more data-hungry than CNNs. The `augreg_in21k_ft_in1k` variant combines the best of both: pretrained on 21k, then fine-tuned on the cleaner 1k labels.
 
 > [!IMPORTANT]
-> **Data leakage**: when using ImageNet-pretrained weights, ensure your target dataset has no overlap with ImageNet. All datasets currently supported by VisionForge (MedMNIST, Galaxy10) come from entirely different domains (medical imaging, astronomy) and share zero samples with ImageNet. If you add a custom dataset of natural images, verify that it does not contain ImageNet samples — otherwise evaluation metrics will be inflated because the model has already seen those images during pretraining.
+> **Data leakage**: when using ImageNet-pretrained weights, ensure your target dataset has no overlap with ImageNet. All datasets currently supported by Orchard ML (MedMNIST, Galaxy10) come from entirely different domains (medical imaging, astronomy) and share zero samples with ImageNet. If you add a custom dataset of natural images, verify that it does not contain ImageNet samples — otherwise evaluation metrics will be inflated because the model has already seen those images during pretraining.
 
 ### Weight Morphing
 
@@ -39,7 +39,7 @@ Adaptive ResNet-18 that automatically selects the appropriate stem configuration
 
 Standard ResNet-18 is optimized for 224x224 ImageNet inputs. Direct application to 28x28 domains causes catastrophic information loss. The 28x28 mode performs architectural surgery on the ResNet-18 stem:
 
-| Layer | Standard ResNet-18 | VisionForge 28x28 Mode | Rationale |
+| Layer | Standard ResNet-18 | Orchard ML 28x28 Mode | Rationale |
 |-------|-------------------|----------------------|-----------|
 | **Input Conv** | 7x7, stride=2, pad=3 | **3x3, stride=1, pad=1** | Preserve spatial resolution |
 | **Max Pooling** | 3x3, stride=2 | **Identity (bypassed)** | Prevent 75% feature loss |

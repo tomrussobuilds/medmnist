@@ -1,6 +1,6 @@
 # Model Export Guide
 
-Convert trained VisionForge models to ONNX format for production deployment.
+Convert trained Orchard ML models to ONNX format for production deployment.
 
 ## Quick Start
 

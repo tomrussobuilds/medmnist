@@ -31,7 +31,7 @@ sudo systemctl restart docker
 bash docker/build.sh
 
 # Option 2: manual build (from repo root)
-docker build -t visionforge:latest -f docker/Dockerfile .
+docker build -t orchard-ml:latest -f docker/Dockerfile .
 ```
 
 ### Execution Modes
@@ -44,7 +44,7 @@ docker run -it --rm \
   -u $(id -u):$(id -g) \
   -v $(pwd)/dataset:/app/dataset \
   -v $(pwd)/outputs:/app/outputs \
-  visionforge:latest \
+  orchard-ml:latest \
   --config recipes/config_resnet_18.yaml
 ```
 
@@ -58,7 +58,7 @@ docker run -it --rm \
   -e PYTHONHASHSEED=42 \
   -v $(pwd)/dataset:/app/dataset \
   -v $(pwd)/outputs:/app/outputs \
-  visionforge:latest \
+  orchard-ml:latest \
   --config recipes/config_resnet_18.yaml
 ```
 

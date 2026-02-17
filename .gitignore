@@ -11,7 +11,7 @@ __pycache__/
 # =========================================================================== #
 *.egg
 *.egg-info/
-visionforge.egg-info/ 
+orchard_ml.egg-info/
 dist/
 build/
 .Python
@@ -39,6 +39,7 @@ ENV/
 env.bak/
 venv.bak/
 .python-version
+.conda/
 
 # =========================================================================== #
 #                           JUPYTER NOTEBOOKS                                 #
@@ -66,6 +67,9 @@ coverage.xml
 # =========================================================================== #
 #                           IDE & EDITORS                                     #
 # =========================================================================== #
+# Claude Code
+.claude/
+
 # VSCode
 .vscode/
 *.code-workspace
@@ -126,7 +130,7 @@ $RECYCLE.BIN/
 # =========================================================================== #
 #                           PROJECT OUTPUTS                                   #
 # =========================================================================== #
-# Experiment outputs (managed by VisionForge RunPaths)
+# Experiment outputs (managed by Orchard ML RunPaths)
 outputs/
 runs/
 

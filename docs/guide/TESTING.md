@@ -34,7 +34,7 @@ python -m tests.health_check --dataset organcmnist --resolution 224
 
 ## 🔧 Code Quality Checks
 
-VisionForge includes automated quality check scripts that run all code quality tools in sequence.
+Orchard ML includes automated quality check scripts that run all code quality tools in sequence.
 
 ### Quick Check (Recommended)
 
@@ -159,7 +159,7 @@ pip install -e ".[dev]"
 
 ### Test Suite
 
-VisionForge includes a comprehensive test suite with **1,000+ tests** targeting **→100% code coverage**:
+Orchard ML includes a comprehensive test suite with **1,000+ tests** targeting **→100% code coverage**:
 
 ```bash
 # Run full test suite
@@ -206,7 +206,7 @@ GitHub Actions automatically run on every push:
 | **Security Scan** | Bandit + pip-audit | Continue-on-error (advisory) |
 | **Build Status** | Aggregate summary | ✅ Fails if pytest or smoke test fails |
 
-View the latest build: [![CI/CD](https://github.com/tomrussobuilds/visionforge/actions/workflows/ci.yml/badge.svg)](https://github.com/tomrussobuilds/visionforge/actions/workflows/ci.yml)
+View the latest build: [![CI/CD](https://github.com/tomrussobuilds/orchard-ml/actions/workflows/ci.yml/badge.svg)](https://github.com/tomrussobuilds/orchard-ml/actions/workflows/ci.yml)
 
 > **Note**: Health checks are not run in CI to avoid excessive dataset downloads. Run locally with `python -m tests.health_check` for dataset integrity validation.
 

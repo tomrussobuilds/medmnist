@@ -20,7 +20,7 @@ from typing import Final, List
 
 # GLOBAL CONSTANTS
 # Global logger identity used by all modules to ensure log synchronization
-LOGGER_NAME: Final[str] = "VisionForge"
+LOGGER_NAME: Final[str] = "OrchardML"
 
 # Health check logger identity for dataset validation utilities
 HEALTHCHECK_LOGGER_NAME: Final[str] = "healthcheck"

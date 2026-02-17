@@ -1,5 +1,5 @@
 """
-Pytest Configuration and Shared Fixtures for VisionForge Test Suite.
+Pytest Configuration and Shared Fixtures for Orchard ML Test Suite.
 
 This module provides reusable test fixtures for configuration testing, including:
 - Mock dataset metadata for different resolutions (28×28, 224×224)

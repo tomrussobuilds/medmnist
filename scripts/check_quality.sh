@@ -4,7 +4,7 @@
 
 set -e
 
-echo "🔍 VisionForge Quality Checks"
+echo "🔍 Orchard ML Quality Checks"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 

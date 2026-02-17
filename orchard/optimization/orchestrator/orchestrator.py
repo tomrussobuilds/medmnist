@@ -54,12 +54,12 @@ class OptunaOrchestrator:
     High-level manager for Optuna hyperparameter optimization studies.
 
     Coordinates the complete optimization lifecycle: study creation, trial execution,
-    and post-processing artifact generation. Integrates with VisionForge's Config
+    and post-processing artifact generation. Integrates with Orchard ML's Config
     and RunPaths infrastructure, delegating specialized tasks (sampler/pruner building,
     visualization, export) to focused submodules.
 
     This orchestrator serves as the entry point for hyperparameter tuning, wrapping
-    Optuna's API with VisionForge-specific configuration and output management.
+    Optuna's API with Orchard ML-specific configuration and output management.
 
     Attributes:
         cfg (Config): Template configuration that will be overridden per trial

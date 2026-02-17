@@ -1,5 +1,5 @@
 """
-VisionForge: Unified ML Pipeline Entry Point.
+Orchard ML: Unified ML Pipeline Entry Point.
 
 Single entry point orchestrating the complete ML lifecycle:
     1. Hyperparameter Optimization (if optuna: section in config)

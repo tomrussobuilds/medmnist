@@ -306,7 +306,7 @@ class Logger:
 
         Example:
             >>> logger = Logger.setup(
-            ...     name="VisionForge",
+            ...     name="OrchardML",
             ...     log_dir=Path("./outputs/run_123/logs"),
             ...     level="INFO"
             ... )

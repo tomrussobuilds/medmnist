@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "visionforge"
+name = "orchard-ml"
 version = "0.1.0"
 description = "Type-Safe Deep Learning Framework for Computer Vision"
 readme = "README.md"
@@ -23,6 +23,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
+
 dependencies = [
     "torch>=2.0.0",
     "torchvision>=0.15.0",
@@ -36,9 +37,6 @@ dependencies = [
     "optuna>=4.0.0",
     "plotly>=6.0.0",
     "kaleido>=1.0.0",
-    "pytest>=8.0.0",
-    "pytest-cov>=6.0.0",
-    "pytest-xdist>=3.5.0",
     "matplotlib>=3.9.0",
     "seaborn>=0.13.0",
     "xlsxwriter>=3.2.0",
@@ -52,6 +50,12 @@ dependencies = [
     "onnxscript>=0.5.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/tomrussobuilds/orchard-ml"
+Repository = "https://github.com/tomrussobuilds/orchard-ml"
+Issues = "https://github.com/tomrussobuilds/orchard-ml/issues"
+Documentation = "https://github.com/tomrussobuilds/orchard-ml/tree/main/docs/guide"
+
 [project.optional-dependencies]
 tracking = [
     "mlflow>=2.9.0",
@@ -59,7 +63,13 @@ tracking = [
 notebooks = [
     "ipython>=9.0.0",
 ]
+test = [
+    "pytest>=9.0.0",
+    "pytest-cov>=7.0.0",
+    "pytest-xdist>=3.5.0",
+]
 dev = [
+    "orchard-ml[test]",
     "black>=25.0.0",
     "flake8>=7.0.0",
     "isort>=6.0.0",

@@ -2,7 +2,7 @@
 Galaxy10 DECals Dataset Converter
 
 Downloads and converts Galaxy10 DECals HDF5 dataset to NPZ format
-compatible with the VisionForge pipeline. Creates train/val/test splits.
+compatible with the Orchard ML pipeline. Creates train/val/test splits.
 """
 
 import logging

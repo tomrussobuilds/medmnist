@@ -2,7 +2,7 @@
 
 # Orchard Package
 
-**VisionForge core package** - Type-safe deep learning framework components.
+**Orchard ML core package** - Type-safe deep learning framework components.
 
 ## 📦 Package Structure
 

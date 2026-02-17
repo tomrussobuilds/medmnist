@@ -65,7 +65,7 @@ class DataLoaderFactory:
 
         wrapper = DatasetRegistryWrapper(resolution=cfg.dataset.resolution)
         self.ds_meta = wrapper.get_dataset(cfg.dataset.dataset_name)
-        self.logger = logging.getLogger("visionforge")
+        self.logger = logging.getLogger("orchard-ml")
 
     def _get_transformation_pipelines(self) -> Tuple[torch.nn.Module, torch.nn.Module]:
         """Retrieves specialized vision pipelines.

@@ -2,7 +2,7 @@
 
 # Test Suite
 
-VisionForge's comprehensive testing infrastructure ensures reliability and maintainability across all components.
+Orchard ML's comprehensive testing infrastructure ensures reliability and maintainability across all components.
 
 ## Test Organization
 
@@ -26,7 +26,7 @@ tests/                          # Test suite (~1,000 tests, 100% coverage)
 
 ### Test Suite
 
-VisionForge includes a comprehensive test suite with **nearly 1,000 tests** targeting **100% code coverage**:
+Orchard ML includes a comprehensive test suite with **nearly 1,000 tests** targeting **100% code coverage**:
 
 ```bash
 # Run full test suite
@@ -72,6 +72,6 @@ GitHub Actions automatically run on every push:
 | **Security Scan** | Bandit + Safety | Continue-on-error (advisory) |
 | **Build Status** | Aggregate summary | ✅ Fails if pytest or smoke test fails |
 
-View the latest build: [![CI/CD](https://github.com/tomrussobuilds/visionforge/actions/workflows/ci.yml/badge.svg)](https://github.com/tomrussobuilds/visionforge/actions/workflows/ci.yml)
+View the latest build: [![CI/CD](https://github.com/tomrussobuilds/orchard-ml/actions/workflows/ci.yml/badge.svg)](https://github.com/tomrussobuilds/orchard-ml/actions/workflows/ci.yml)
 
 > **Note**: Health checks are not run in CI to avoid excessive dataset downloads. Run locally with `python -m tests.health_check` for dataset integrity validation.

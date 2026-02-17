@@ -85,7 +85,7 @@ evaluation:
 
 tracking:
   enabled: true
-  experiment_name: "visionforge"
+  experiment_name: "orchard-ml"
 
 export:
   format: onnx

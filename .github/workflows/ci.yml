@@ -82,7 +82,7 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          pip install pytest pytest-cov pytest-xdist
+          pip install -e ".[test]"
 
       - name: Verify orchard is importable
         run: |

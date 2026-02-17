@@ -100,7 +100,7 @@ class NoOpTracker:  # pragma: no cover
 
 
 class MLflowTracker:  # pragma: no cover
-    """MLflow-based experiment tracker for VisionForge runs.
+    """MLflow-based experiment tracker for Orchard ML runs.
 
     Manages a single MLflow run lifecycle: parameter logging, per-epoch metrics,
     final test metrics, and artifact collection. Supports nested runs for
@@ -110,7 +110,7 @@ class MLflowTracker:  # pragma: no cover
         experiment_name: MLflow experiment name.
     """
 
-    def __init__(self, experiment_name: str = "visionforge") -> None:
+    def __init__(self, experiment_name: str = "orchard-ml") -> None:
         self.experiment_name = experiment_name
         self._parent_run_id: Optional[str] = None
 
@@ -240,7 +240,7 @@ def create_tracker(cfg: Any) -> TrackerProtocol:
     if not _MLFLOW_AVAILABLE:
         logger.warning(
             "Tracking enabled in config but mlflow is not installed. "
-            "Install with: pip install visionforge[tracking]"
+            "Install with: pip install orchard-ml[tracking]"
         )
         return NoOpTracker()
 

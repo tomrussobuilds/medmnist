@@ -1,4 +1,4 @@
-# 🔮 VisionForge: Type-Safe Deep Learning Framework
+# 🔮 Orchard ML: Type-Safe Deep Learning Framework
 
 ---
 
@@ -7,28 +7,33 @@
 <tr>
 <td align="right"><strong>CI/CD & Coverage</strong></td>
 <td>
-  <a href="https://github.com/tomrussobuilds/visionforge/actions/workflows/ci.yml"><img src="https://github.com/tomrussobuilds/visionforge/actions/workflows/ci.yml/badge.svg" alt="CI/CD Pipeline"></a>
-  <a href="https://codecov.io/gh/tomrussobuilds/visionforge"><img src="https://codecov.io/gh/tomrussobuilds/visionforge/branch/main/graph/badge.svg" alt="Coverage"></a>
-  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_visionforge"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_visionforge&metric=alert_status" alt="Quality Gate"></a>
-  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_visionforge"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_visionforge&metric=coverage" alt="SonarCloud Coverage"></a>
+  <a href="https://github.com/tomrussobuilds/orchard-ml/actions/workflows/ci.yml"><img src="https://github.com/tomrussobuilds/orchard-ml/actions/workflows/ci.yml/badge.svg" alt="CI/CD Pipeline"></a>
+  <a href="https://codecov.io/gh/tomrussobuilds/orchard-ml"><img src="https://codecov.io/gh/tomrussobuilds/orchard-ml/branch/main/graph/badge.svg" alt="Coverage"></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_orchard-ml"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_orchard-ml&metric=alert_status" alt="Quality Gate"></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_orchard-ml"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_orchard-ml&metric=coverage" alt="SonarCloud Coverage"></a>
 </td>
 </tr>
 <tr>
 <td align="right"><strong>Code Quality</strong></td>
 <td>
-  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_visionforge"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_visionforge&metric=reliability_rating" alt="Reliability"></a>
-  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_visionforge"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_visionforge&metric=security_rating" alt="Security"></a>
-  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_visionforge"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_visionforge&metric=sqale_rating" alt="Maintainability"></a>
-  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_visionforge"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_visionforge&metric=bugs" alt="Bugs"></a>
-  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_visionforge"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_visionforge&metric=code_smells" alt="Code Smells"></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_orchard-ml"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_orchard-ml&metric=reliability_rating" alt="Reliability"></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_orchard-ml"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_orchard-ml&metric=security_rating" alt="Security"></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_orchard-ml"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_orchard-ml&metric=sqale_rating" alt="Maintainability"></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_orchard-ml"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_orchard-ml&metric=bugs" alt="Bugs"></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_orchard-ml"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_orchard-ml&metric=code_smells" alt="Code Smells"></a>
+</td>
+</tr>
+<tr>
+<td align="right"><strong>Platform</strong></td>
+<td>
+  <img src="https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12%20|%203.13%20|%203.14--dev-blue?logo=python&logoColor=white" alt="Python">
+  <a href="https://pypi.org/project/orchard-ml/"><img src="https://img.shields.io/pypi/v/orchard-ml?color=blue&logo=pypi&logoColor=white" alt="PyPI"></a>
+  <a href="docs/guide/DOCKER.md"><img src="https://img.shields.io/badge/Docker-CUDA%2012.1-2496ED?logo=docker&logoColor=white" alt="Docker"></a>
 </td>
 </tr>
 <tr>
 <td align="right"><strong>Tech Stack</strong></td>
 <td>
-  <img src="https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12%20|%203.13%20|%203.14--dev-blue?logo=python&logoColor=white" alt="Python">
-  <a href="docs/guide/DOCKER.md"><img src="https://img.shields.io/badge/Docker-CUDA%2012.1-2496ED?logo=docker&logoColor=white" alt="Docker"></a>
-  <br>
   <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-2.0%2B-orange?logo=pytorch&logoColor=white" alt="PyTorch"></a>
   <a href="https://docs.pydantic.dev/"><img src="https://img.shields.io/badge/Pydantic-v2-e92063?logo=pydantic&logoColor=white" alt="Pydantic"></a>
   <a href="https://optuna.org/"><img src="https://img.shields.io/badge/Optuna-3.0%2B-00ADD8?logo=optuna&logoColor=white" alt="Optuna"></a>
@@ -55,7 +60,7 @@
   <img src="https://img.shields.io/badge/Architecture-Decoupled-blueviolet" alt="Architecture">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
   <img src="https://img.shields.io/badge/status-Active-success" alt="Status">
-  <a href="https://github.com/tomrussobuilds/visionforge/issues"><img src="https://img.shields.io/github/issues/tomrussobuilds/visionforge" alt="GitHub Issues"></a>
+  <a href="https://github.com/tomrussobuilds/orchard-ml/issues"><img src="https://img.shields.io/github/issues/tomrussobuilds/orchard-ml" alt="GitHub Issues"></a>
 </td>
 </tr>
 </table>
@@ -78,7 +83,7 @@
 
 ## 🎯 Overview
 
-**VisionForge** is a research-grade PyTorch training framework engineered for reproducible, scalable computer vision experiments across diverse domains. Built on [MedMNIST v2](https://zenodo.org/records/6496656) medical imaging datasets and expanded to astronomical imaging ([Galaxy10 DECals](https://zenodo.org/records/10845026)), it provides a domain-agnostic platform supporting multi-resolution architectures (28×28 to 224×224+), automated hyperparameter optimization, and cluster-safe execution.
+**Orchard ML** is a research-grade PyTorch training framework engineered for reproducible, scalable computer vision experiments across diverse domains. Built on [MedMNIST v2](https://zenodo.org/records/6496656) medical imaging datasets and expanded to astronomical imaging ([Galaxy10 DECals](https://zenodo.org/records/10845026)), it provides a domain-agnostic platform supporting multi-resolution architectures (28×28 to 224×224+), automated hyperparameter optimization, and cluster-safe execution.
 
 **Key Differentiators:**
 - **Type-Safe Configuration Engine**: Pydantic V2-based declarative manifests eliminate runtime errors
@@ -150,10 +155,16 @@
 
 ### Step 1: Environment Setup
 ```bash
-# Clone and install dependencies
-git clone https://github.com/tomrussobuilds/visionforge.git
-cd visionforge
-pip install -r requirements.txt
+# Option A: Install from PyPI
+pip install orchard-ml
+
+# Option B: Install from source
+git clone https://github.com/tomrussobuilds/orchard-ml.git
+cd orchard-ml
+pip install -e .
+
+# With development tools (linting, testing, type checking)
+pip install -e ".[dev]"
 ```
 
 ### Step 2: Verify Installation (Optional)
@@ -167,7 +178,7 @@ python -m tests.smoke_test
 
 ### Step 3: Training Workflow
 
-VisionForge uses `forge.py` as the **single entry point** for all workflows. The pipeline behavior is controlled entirely by the YAML configuration:
+Orchard ML uses `forge.py` as the **single entry point** for all workflows. The pipeline behavior is controlled entirely by the YAML configuration:
 
 - **Training only**: Use a `config_*.yaml` file (no `optuna:` section)
 - **Optimization + Training**: Use an `optuna_*.yaml` file (has `optuna:` section)
@@ -236,12 +247,12 @@ See the [Export Guide](docs/guide/EXPORT.md) for configuration options (format, 
 
 ## 🧪 Colab Notebooks
 
-Try VisionForge directly in Google Colab — no local setup required:
+Try Orchard ML directly in Google Colab — no local setup required:
 
 | Notebook | Description | Runtime | Time |
 |----------|-------------|---------|------|
-| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomrussobuilds/visionforge/blob/main/notebooks/01_quickstart_bloodmnist_cpu.ipynb) **[Quick Start: BloodMNIST CPU](notebooks/01_quickstart_bloodmnist_cpu.ipynb)** | MiniCNN training on BloodMNIST 28×28 — end-to-end training, evaluation, and ONNX export | CPU | ~15 min |
-| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomrussobuilds/visionforge/blob/main/notebooks/02_galaxy10_optuna_model_search.ipynb) **[Optuna Model Search: Galaxy10 GPU](notebooks/02_galaxy10_optuna_model_search.ipynb)** | Automatic architecture search (EfficientNet-B0, ViT-Tiny, ConvNeXt-Tiny, ResNet-18) on Galaxy10 224×224 with Optuna | T4 GPU | ~30-45 min |
+| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomrussobuilds/orchard-ml/blob/main/notebooks/01_quickstart_bloodmnist_cpu.ipynb) **[Quick Start: BloodMNIST CPU](notebooks/01_quickstart_bloodmnist_cpu.ipynb)** | MiniCNN training on BloodMNIST 28×28 — end-to-end training, evaluation, and ONNX export | CPU | ~15 min |
+| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomrussobuilds/orchard-ml/blob/main/notebooks/02_galaxy10_optuna_model_search.ipynb) **[Optuna Model Search: Galaxy10 GPU](notebooks/02_galaxy10_optuna_model_search.ipynb)** | Automatic architecture search (EfficientNet-B0, ViT-Tiny, ConvNeXt-Tiny, ResNet-18) on Galaxy10 224×224 with Optuna | T4 GPU | ~30-45 min |
 
 ---
 
@@ -337,11 +348,11 @@ Comprehensive guides for advanced usage and system internals:
 ## 📖 Citation
 
 ```bibtex
-@software{visionforge2026,
+@software{orchardml2026,
   author = {Tommaso Russo},
-  title  = {VisionForge: Type-Safe Deep Learning Framework},
+  title  = {Orchard ML: Type-Safe Deep Learning Framework},
   year   = {2026},
-  url    = {https://github.com/tomrussobuilds/visionforge},
+  url    = {https://github.com/tomrussobuilds/orchard-ml},
   note   = {PyTorch framework with Pydantic configuration and Optuna optimization}
 }
 ```
@@ -375,4 +386,4 @@ For detailed guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 📧 Contact
 
-For questions or collaboration: [GitHub Issues](https://github.com/tomrussobuilds/visionforge/issues)
+For questions or collaboration: [GitHub Issues](https://github.com/tomrussobuilds/orchard-ml/issues)

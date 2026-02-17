@@ -1,7 +1,7 @@
 """
 Filesystem Authority and Path Orchestration Package.
 
-Centralizes all path-related logic for VisionForge using a dual-layer approach:
+Centralizes all path-related logic for Orchard ML using a dual-layer approach:
 
 1. **Static Layer** (constants module):
    - PROJECT_ROOT: Dynamically resolved project root
@@ -16,7 +16,7 @@ Centralizes all path-related logic for VisionForge using a dual-layer approach:
 Example:
     >>> from orchard.core.paths import PROJECT_ROOT, RunPaths
     >>> print(PROJECT_ROOT)
-    PosixPath('/home/user/VisionForge')
+    PosixPath('/home/user/orchard-ml')
     >>> paths = RunPaths.create(
     ...     dataset_slug="organcmnist",
     ...     model_name="EfficientNet-B0",

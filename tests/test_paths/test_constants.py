@@ -26,7 +26,7 @@ from orchard.core.paths import (
 @pytest.mark.unit
 def test_logger_name_constant():
     """Test LOGGER_NAME is correctly defined."""
-    assert LOGGER_NAME == "VisionForge"
+    assert LOGGER_NAME == "OrchardML"
     assert isinstance(LOGGER_NAME, str)
 
 

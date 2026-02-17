@@ -7,7 +7,7 @@
 MLflow is an **optional** dependency. Install it with:
 
 ```bash
-pip install visionforge[tracking]
+pip install orchard-ml[tracking]
 # or directly
 pip install mlflow>=2.9.0
 ```
@@ -29,7 +29,7 @@ If the section is absent or `enabled: false`, the pipeline runs identically with
 All tracking data is stored in a single SQLite database at the project root:
 
 ```
-VisionForge/
+orchard-ml/
 ├── mlruns.db          # MLflow tracking database
 ├── outputs/
 │   └── 20260215_.../  # Run artifacts (figures, models, reports)
@@ -55,7 +55,7 @@ Then open http://127.0.0.1:5000 in a browser.
 import mlflow
 
 mlflow.set_tracking_uri("sqlite:///mlruns.db")
-runs = mlflow.search_runs(experiment_names=["visionforge"])
+runs = mlflow.search_runs(experiment_names=["orchard-ml"])
 print(runs[["run_id", "params.dataset.name", "metrics.test_accuracy", "metrics.val_auc"]])
 ```
 
@@ -63,7 +63,7 @@ print(runs[["run_id", "params.dataset.name", "metrics.test_accuracy", "metrics.v
 
 ```python
 runs = mlflow.search_runs(
-    experiment_names=["visionforge"],
+    experiment_names=["orchard-ml"],
     filter_string="params.dataset.name = 'pathmnist'",
     order_by=["metrics.test_accuracy DESC"],
 )
@@ -74,7 +74,7 @@ print(runs[["run_id", "params.architecture.name", "metrics.test_accuracy"]].head
 
 ```python
 best = mlflow.search_runs(
-    experiment_names=["visionforge"],
+    experiment_names=["orchard-ml"],
     order_by=["metrics.test_accuracy DESC"],
     max_results=1,
 ).iloc[0]
@@ -109,7 +109,7 @@ plt.show()
 ```python
 parent_run_id = "your_parent_run_id"
 trials = mlflow.search_runs(
-    experiment_names=["visionforge"],
+    experiment_names=["orchard-ml"],
     filter_string=f"tags.mlflow.parentRunId = '{parent_run_id}'",
     order_by=["metrics.best_trial_metric DESC"],
 )
