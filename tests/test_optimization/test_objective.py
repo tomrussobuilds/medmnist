@@ -781,7 +781,7 @@ def test_cleanup_with_cuda_unavailable(monkeypatch):
 
 @pytest.mark.unit
 def test_cleanup_with_mps(monkeypatch):
-    """Test _cleanup with MPS device (currently only CUDA is supported)."""
+    """Test _cleanup clears MPS cache when MPS is available."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
     mock_cfg.optuna.metric_name = "auc"
@@ -797,9 +797,24 @@ def test_cleanup_with_mps(monkeypatch):
         dataset_loader=mock_dataset_loader,
     )
 
+    mps_cache_cleared = False
+
+    def mock_mps_empty_cache():
+        nonlocal mps_cache_cleared
+        mps_cache_cleared = True
+
+    mock_mps_backend = MagicMock()
+    mock_mps_backend.is_available.return_value = True
+    mock_mps = MagicMock()
+    mock_mps.empty_cache = mock_mps_empty_cache
+
     monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    monkeypatch.setattr(torch.backends, "mps", mock_mps_backend)
+    monkeypatch.setattr(torch, "mps", mock_mps)
 
     objective._cleanup()
+
+    assert mps_cache_cleared
 
 
 @pytest.mark.unit

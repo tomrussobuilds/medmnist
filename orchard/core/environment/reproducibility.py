@@ -10,14 +10,15 @@ Two reproducibility levels are supported:
     Standard (strict=False):
         Seeds all PRNGs and disables cuDNN auto-tuner. Sufficient for
         most experiments — results are reproducible across runs on the
-        same hardware, but non-deterministic CUDA kernels (e.g. atomicAdd
+        same hardware, but non-deterministic kernels (e.g. atomicAdd
         in cuBLAS) may cause minor floating-point variations.
 
     Strict (strict=True):
-        Enables ``torch.use_deterministic_algorithms(True)`` and configures
-        ``CUBLAS_WORKSPACE_CONFIG`` for bit-perfect reproducibility. Forces
-        ``num_workers=0`` via HardwareConfig to eliminate multiprocessing
-        non-determinism. Incurs a 5-30% performance penalty on GPU workloads.
+        Enables ``torch.use_deterministic_algorithms(True)`` on all backends
+        (CUDA, MPS, CPU) and configures ``CUBLAS_WORKSPACE_CONFIG`` when CUDA
+        is available. Forces ``num_workers=0`` via HardwareConfig to eliminate
+        multiprocessing non-determinism. Incurs a 5-30% performance penalty
+        on GPU workloads.
 
 Detection:
     Strict mode is activated by either a CLI flag (``--reproducible``) or the
@@ -53,8 +54,8 @@ def is_repro_mode_requested(cli_flag: bool = False) -> bool:
 def set_seed(seed: int, strict: bool = False) -> None:
     """Seed all PRNGs and optionally enforce deterministic algorithms.
 
-    Seeds Python's ``random``, NumPy, and PyTorch (CPU + all CUDA devices).
-    In strict mode, additionally forces deterministic CUDA kernels at the
+    Seeds Python's ``random``, NumPy, and PyTorch (CPU + CUDA + MPS).
+    In strict mode, additionally forces deterministic kernels at the
     cost of reduced performance.
 
     Note:
@@ -78,18 +79,18 @@ def set_seed(seed: int, strict: bool = False) -> None:
 
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
 
         if strict:
-            # Bit-perfect reproducibility: deterministic cuDNN + cuBLAS
-            torch.backends.cudnn.deterministic = True
-            torch.backends.cudnn.benchmark = False
             os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
-            torch.use_deterministic_algorithms(True)
-            logging.info("STRICT REPRODUCIBILITY ENABLED: Using deterministic algorithms.")
-        else:
-            # Standard mode: deterministic cuDNN only (cuBLAS may vary)
-            torch.backends.cudnn.deterministic = True
-            torch.backends.cudnn.benchmark = False
+
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        torch.mps.manual_seed(seed)
+
+    if strict:
+        torch.use_deterministic_algorithms(True)
+        logging.info("STRICT REPRODUCIBILITY ENABLED: Using deterministic algorithms.")
 
 
 def worker_init_fn(worker_id: int) -> None:

@@ -245,9 +245,12 @@ class OptunaObjective:
 
     def _cleanup(self) -> None:
         """
-        Clean up GPU memory between trials.
+        Clean up GPU/MPS memory between trials.
 
-        Note: Orchestrator handles full resource cleanup. This only clears GPU cache.
+        Note: Orchestrator handles full resource cleanup. This only clears accelerator cache.
         """
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
+
+        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            torch.mps.empty_cache()

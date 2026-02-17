@@ -256,10 +256,10 @@ def mixup_data(
     lam: float = float(_mixup_rng.beta(alpha, alpha))
     batch_size: int = x.size(0)
 
-    # Generate random permutation (device-aware)
+    # Generate random permutation (device-aware: CUDA and MPS)
     # GPU branch excluded from coverage — CI runs CPU-only, covered in local GPU testing
     index = torch.randperm(batch_size)
-    if x.is_cuda:  # pragma: no cover
+    if x.is_cuda or x.is_mps:  # pragma: no cover
         index = index.to(x.device)
 
     # Create mixed input

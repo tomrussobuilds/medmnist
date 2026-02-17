@@ -31,11 +31,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - replace --prepend with custom script to prevent duplicate Unreleased sections
 - resolve mypy type errors and pin version to 1.19.1
 - default recipe to mini_cnn without pretrained/strict mode
+- add MPS support to reproducibility, mixup, and memory cleanup
 
 ### Miscellaneous
 
 - add automated changelog with git-cliff and pre-commit hook
 - add pre-commit linting hooks, centralize flake8 config
+- add pre-commit hook to strip notebook outputs and remove ipython from requirements
 
 ## [0.1.0] - 2026-02-15
 

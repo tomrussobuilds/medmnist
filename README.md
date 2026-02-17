@@ -121,6 +121,9 @@
 > [!WARNING]
 > **224×224 training on CPU is not recommended** - it would take 10+ hours per trial. High-resolution training requires GPU acceleration. Only 28×28 resolution has been tested and validated for CPU training.
 
+> [!NOTE]
+> **Apple Silicon (MPS)**: The codebase includes MPS backend support (device detection, seeding, memory management), but it has not been tested on real hardware. If you encounter issues, please open an issue.
+
 **Representative Benchmarks** (RTX 5070 Laptop GPU):
 
 | Task | Architecture | Resolution | Device | Time | Notes |
@@ -175,7 +178,7 @@ VisionForge uses `forge.py` as the **single entry point** for all workflows. The
 ```bash
 # 28×28 resolution (CPU-compatible)
 python forge.py --config recipes/config_mini_cnn.yaml              # ~2-3 min GPU, ~10 min CPU
-python forge.py --config recipes/config_resnet_18.yaml     # ~10-15 min GPU, ~2.5h CPU
+python forge.py --config recipes/config_resnet_18.yaml             # ~10-15 min GPU, ~2.5h CPU
 
 # 224×224 resolution (GPU required)
 python forge.py --config recipes/config_efficientnet_b0.yaml       # ~30 min GPU
@@ -194,7 +197,7 @@ python forge.py --config recipes/config_vit_tiny.yaml              # ~25-35 min 
 ```bash
 # 28×28 resolution - fast iteration
 python forge.py --config recipes/optuna_mini_cnn.yaml              # ~5 min GPU, ~10 min CPU
-python forge.py --config recipes/optuna_resnet_18.yaml     # ~15-20 min GPU
+python forge.py --config recipes/optuna_resnet_18.yaml             # ~15-20 min GPU
 
 # 224×224 resolution - requires GPU
 python forge.py --config recipes/optuna_efficientnet_b0.yaml       # ~1.5-5h*, GPU
