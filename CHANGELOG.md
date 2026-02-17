@@ -7,40 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- add ANSI color formatting, fix early-stop trials-saved count
-- add dynamic code quality badges via GitHub Gist
-- feat(tests): use tmp_path and standardize test paths
-- add YAML-configurable search space overrides
-- add generic timm backbone integration
-- add Colab demo notebooks for training and model search
-- rename project to Orchard ML and add PyPI publishing
-
-### Changed
-
-- extract domain fetchers into fetchers/ sub-package
-- add TrackerProtocol, unify environment log sections
-
-### Documentation
-
-- update ConvNeXt-Tiny params to ~27.8M, clarify per-trial timings, add tracking module to package docs and architecture diagram
-- streamline OPTIMIZATION.md, remove duplicate sections
-
-### Fixed
-
-- replace --prepend with custom script to prevent duplicate Unreleased sections
-- resolve mypy type errors and pin version to 1.19.1
-- default recipe to mini_cnn without pretrained/strict mode
-- add MPS support to reproducibility, mixup, and memory cleanup
-- use [[ in changelog script, move permissions to job level
-
-### Miscellaneous
-
-- add automated changelog with git-cliff and pre-commit hook
-- add pre-commit linting hooks, centralize flake8 config
-- add pre-commit hook to strip notebook outputs and remove ipython from requirements
-
 ## [0.1.0] - 2026-02-15
 
 First public release of Orchard ML — a type-safe, reproducible deep learning

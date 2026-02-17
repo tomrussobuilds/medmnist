@@ -20,7 +20,7 @@ jobs:
 
       - name: Generate release notes with git-cliff
         id: changelog
-        uses: orhun/git-cliff-action@4a4a951bc43fbbe4abe53f227ad75b7174692163  # v4
+        uses: orhun/git-cliff-action@e16f179f0be49ecdfe63753837f20b9531642772  # v4.7.0
         with:
           config: cliff.toml
           args: --latest --strip header
@@ -28,7 +28,7 @@ jobs:
           OUTPUT: RELEASE_NOTES.md
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631  # v2
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b  # v2.5.0
         with:
           body_path: RELEASE_NOTES.md
           generate_release_notes: false
