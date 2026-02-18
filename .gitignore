@@ -293,3 +293,6 @@ package.json
 target/.git-backup/
 target/
 .git-backup
+
+# Personal notes (non-tracked)
+/notes.txt

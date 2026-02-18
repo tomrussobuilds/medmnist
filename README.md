@@ -133,6 +133,9 @@
 > [!NOTE]
 > **Apple Silicon (`MPS`)**: The codebase includes `MPS` backend support (device detection, seeding, memory management), but it has not been tested on real hardware. If you encounter issues, please open an issue.
 
+> [!NOTE]
+> **Data Format**: Orchard ML operates on `NPZ` archives as its canonical data format. All datasets are downloaded or converted to `NPZ` before entering the training pipeline. Custom datasets in other formats (HDF5, DICOM, TIFF) can be integrated by adding a conversion step in a dedicated fetcher module — see the [Galaxy10 fetcher](orchard/data_handler/fetchers/) for a reference implementation.
+
 **Representative Benchmarks** (RTX 5070 Laptop GPU):
 
 | Task | Architecture | Resolution | Device | Time | Notes |
@@ -159,16 +162,12 @@
 
 <h3>Step 1: Environment Setup</h3>
 
-**Option A**: Install from PyPI
-```bash
-pip install orchard-ml
-```
-
-**Option B**: Install from source
+**Option A**: Install from source (recommended)
 ```bash
 git clone https://github.com/tomrussobuilds/orchard-ml.git
 ```
 
+Navigate into the project directory and install in editable mode:
 ```bash
 cd orchard-ml
 pip install -e .
@@ -177,6 +176,11 @@ pip install -e .
 With development tools (linting, testing, type checking):
 ```bash
 pip install -e ".[dev]"
+```
+
+**Option B**: Install from PyPI
+```bash
+pip install orchard-ml
 ```
 
 <h3>Step 2: Verify Installation (Optional)</h3>

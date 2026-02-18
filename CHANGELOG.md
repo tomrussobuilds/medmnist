@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add rank-aware orchestration and normalize relative imports
 - add Typer CLI entry point and modernize project tooling
 
+### Documentation
+
+- improve readability and fix outdated references
+
 ### Fixed
 
 - strip ANSI codes in CLI help test to fix Rich markup assertion
