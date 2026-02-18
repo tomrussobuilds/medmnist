@@ -14,11 +14,25 @@ from pydantic import BaseModel, ConfigDict, Field
 # METADATA SCHEMA
 class DatasetMetadata(BaseModel):
     """
-    Metadata container for a MedMNIST dataset.
+    Immutable metadata container for a dataset entry.
 
-    Ensures dataset-specific constants are grouped and immutable throughout
+    Ensures dataset-specific constants are grouped and frozen throughout
     pipeline execution. Serves as static definition feeding into dynamic
     DatasetConfig.
+
+    Attributes:
+        name: Short identifier (e.g., ``'pathmnist'``, ``'galaxy10'``).
+        display_name: Human-readable name for reporting.
+        md5_checksum: MD5 hash for download integrity verification.
+        url: Source URL for dataset download.
+        path: Local path to the ``.npz`` archive.
+        classes: Class labels in index order.
+        in_channels: Number of image channels (1=grayscale, 3=RGB).
+        native_resolution: Native pixel resolution (e.g., 28, 224).
+        mean: Channel-wise normalization mean.
+        std: Channel-wise normalization standard deviation.
+        is_anatomical: Whether images have fixed anatomical orientation.
+        is_texture_based: Whether classification relies on texture patterns.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid", arbitrary_types_allowed=True)

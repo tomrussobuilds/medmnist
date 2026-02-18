@@ -18,11 +18,15 @@ from .domains import MEDICAL_28, MEDICAL_224, SPACE_224
 # WRAPPER DEFINITION
 class DatasetRegistryWrapper(BaseModel):
     """
-    Pydantic wrapper for dynamic dataset registries.
+    Pydantic wrapper for multi-domain dataset registries.
+
+    Merges domain-specific registries (medical, space) based on the
+    selected resolution and provides validated, deep-copied access to
+    dataset metadata entries.
 
     Attributes:
-        resolution: Target dataset resolution (28 or 224)
-        registry: Deep copy of metadata registry for selected resolution
+        resolution: Target dataset resolution (28 or 224).
+        registry: Deep-copied metadata registry for the selected resolution.
     """
 
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)

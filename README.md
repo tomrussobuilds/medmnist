@@ -142,7 +142,7 @@
 |------|-------------|-----------|--------|------|-------|
 | **Smoke Test** | `MiniCNN` | 28×28 | CPU/GPU | <30s | 1-epoch sanity check |
 | **Quick Training** | `MiniCNN` | 28×28 | GPU | ~2-3 min | 60 epochs |
-| **Quick Training** | `MiniCNN` | 28×28 | CPU (16 cores) | ~30 min | 60 epochs, CPU-validated |
+| **Quick Training** | `MiniCNN` | 28×28 | CPU (16 cores) | ~5-10 min | 60 epochs, CPU-validated |
 | **Transfer Learning** | `ResNet-18` | 28×28 | GPU | ~5 min | 60 epochs |
 | **Transfer Learning** | `ResNet-18` | 28×28 | CPU (16 cores) | ~2.5h | 60 epochs, CPU-validated |
 | **High-Res Training** | `EfficientNet-B0` | 224×224 | GPU | ~30 min/trial | 15 epochs per trial, **GPU required** |
@@ -150,11 +150,11 @@
 | **Optimization Study** | `EfficientNet-B0` | 224×224 | GPU | ~2h | 4 trials (early stop at AUC≥0.9999) |
 | **Optimization Study** | Various | 224×224 | GPU | ~1.5-5h | 20 trials, highly variable |
 
->[!Note]
->**Timing Variance**: Optimization times are highly dependent on early stopping criteria, pruning configuration, and dataset complexity:
->- **Early Stopping**: Studies may finish in 1-3 hours if performance thresholds are met quickly (e.g., AUC ≥ 0.9999 after 4 trials)
->- **Full Exploration**: Without early stopping, 20 trials can extend to 5+ hours
->- **Pruning Impact**: Median pruning can save 30-50% of total time by terminating underperforming trials
+> [!NOTE]
+> **Timing Variance**: Optimization times are highly dependent on early stopping criteria, pruning configuration, and dataset complexity:
+> - **Early Stopping**: Studies may finish in 1-3 hours if performance thresholds are met quickly (e.g., AUC ≥ 0.9999 after 4 trials)
+> - **Full Exploration**: Without early stopping, 20 trials can extend to 5+ hours
+> - **Pruning Impact**: Median pruning can save 30-50% of total time by terminating underperforming trials
 
 ---
 
@@ -178,7 +178,7 @@ With development tools (linting, testing, type checking):
 pip install -e ".[dev]"
 ```
 
-**Option B**: Install from PyPI
+**Option B**: Install from PyPI (package only — recipe files and tests require cloning the repository)
 ```bash
 pip install orchard-ml
 ```
@@ -210,7 +210,7 @@ orchard run --help                         # Show available options
 
 ```bash
 # 28×28 resolution (CPU-compatible)
-orchard run recipes/config_mini_cnn.yaml              # ~2-3 min GPU, ~10 min CPU
+orchard run recipes/config_mini_cnn.yaml              # ~2-3 min GPU, ~5-10 min CPU
 orchard run recipes/config_resnet_18.yaml             # ~10-15 min GPU, ~2.5h CPU
 
 # 224×224 resolution (GPU required)
@@ -232,7 +232,7 @@ orchard run recipes/config_mini_cnn.yaml --set training.epochs=20 --set training
 
 ```bash
 # 28×28 resolution - fast iteration
-orchard run recipes/optuna_mini_cnn.yaml              # ~5 min GPU, ~10 min CPU
+orchard run recipes/optuna_mini_cnn.yaml              # ~5 min GPU, ~5-10 min CPU
 orchard run recipes/optuna_resnet_18.yaml             # ~15-20 min GPU
 
 # 224×224 resolution - requires GPU
@@ -329,11 +329,9 @@ orchard run my_run.yaml
 
 <h2>Roadmap</h2>
 
-- **Additional Architectures**: `EfficientNet-V2`, `DeiT`
 - **Expanded Dataset Domains**: Climate, remote sensing, microscopy
 - **Multi-modal Support**: Detection, segmentation hooks
 - **Distributed Training**: `DDP`, `FSDP` support for multi-GPU
-
 
 ---
 
