@@ -36,7 +36,8 @@ import torch
 
 # REPRODUCIBILITY LOGIC
 def is_repro_mode_requested(cli_flag: bool = False) -> bool:
-    """Detect if strict reproducibility mode is requested.
+    """
+    Detect if strict reproducibility mode is requested.
 
     Checks both the CLI flag and the ``DOCKER_REPRODUCIBILITY_MODE``
     environment variable. Either source is sufficient to enable strict mode.
@@ -52,7 +53,8 @@ def is_repro_mode_requested(cli_flag: bool = False) -> bool:
 
 
 def set_seed(seed: int, strict: bool = False) -> None:
-    """Seed all PRNGs and optionally enforce deterministic algorithms.
+    """
+    Seed all PRNGs and optionally enforce deterministic algorithms.
 
     Seeds Python's ``random``, NumPy, and PyTorch (CPU + CUDA + MPS).
     In strict mode, additionally forces deterministic kernels at the
@@ -107,7 +109,8 @@ def set_seed(seed: int, strict: bool = False) -> None:
 
 
 def worker_init_fn(worker_id: int) -> None:
-    """Initialize PRNGs for a DataLoader worker subprocess.
+    """
+    Initialize PRNGs for a DataLoader worker subprocess.
 
     Each worker receives a unique but deterministic sub-seed derived from
     the parent seed, ensuring augmentation diversity while maintaining

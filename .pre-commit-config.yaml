@@ -19,6 +19,26 @@ repos:
         entry: flake8
         types: [python]
 
+      - id: mypy
+        name: mypy (type checking)
+        language: system
+        entry: mypy
+        types: [python]
+        pass_filenames: false
+        args: [orchard/]
+
+      - id: bandit
+        name: bandit (security scan)
+        language: system
+        entry: bandit -c pyproject.toml -r
+        types: [python]
+
+      - id: no-env-files
+        name: block .env files
+        language: fail
+        entry: ".env files must not be committed"
+        files: '\.env($|\.)'
+
       - id: nbstripout
         name: strip notebook outputs
         language: system

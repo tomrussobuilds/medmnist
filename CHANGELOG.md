@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - comprehensive documentation overhaul and codebase polish
 - convert markdown headings to HTML and update test counts
 
+### Fixed
+
+- harden reproducibility, training safety, and type correctness
+
 ### Build
 
 - bump minimum Pillow and psutil versions
