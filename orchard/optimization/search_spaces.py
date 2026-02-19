@@ -11,7 +11,7 @@ fully customized via YAML through OptunaConfig.search_space_overrides.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional
 
 import optuna
 
@@ -269,6 +269,7 @@ def get_search_space(
     preset: str = "quick",
     resolution: int = 28,
     include_models: bool = False,
+    model_pool: Optional[List[str]] = None,
     overrides: Optional[SearchSpaceOverrides] = None,
 ):
     """
@@ -278,6 +279,8 @@ def get_search_space(
         preset: Name of the preset ("quick", "full", etc.)
         resolution: Input image resolution (affects batch_size choices)
         include_models: If True, includes model architecture selection
+        model_pool: Restrict model search to these architectures.
+            When None, uses all built-in models for the target resolution.
         overrides: Configurable search range bounds (uses defaults if None)
 
     Returns:
@@ -299,10 +302,43 @@ def get_search_space(
         )
 
     if include_models:
-        if resolution >= 224:
+        if model_pool is not None:
+            space.update(_build_model_space_from_pool(model_pool))
+        elif resolution >= 224:
             space.update(registry.get_model_space_224())
         else:
             space.update(registry.get_model_space_28())
+
+    return space
+
+
+def _build_model_space_from_pool(pool: List[str]) -> Dict[str, Callable]:
+    """
+    Build model search space from a user-specified pool of architectures.
+
+    Args:
+        pool: List of model names to include in the search.
+
+    Returns:
+        Dict with model_name sampler (and weight_variant if vit_tiny is in pool).
+    """
+    space: Dict[str, Callable] = {
+        "model_name": lambda trial, _p=pool: trial.suggest_categorical("model_name", _p),
+    }
+
+    if "vit_tiny" in pool:
+        space["weight_variant"] = lambda trial: (
+            trial.suggest_categorical(
+                "weight_variant",
+                [
+                    None,
+                    "vit_tiny_patch16_224.augreg_in21k_ft_in1k",
+                    "vit_tiny_patch16_224.augreg_in21k",
+                ],
+            )
+            if trial.params.get("model_name") == "vit_tiny"
+            else None
+        )
 
     return space
 

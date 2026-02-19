@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - improve readability and fix outdated references
 - clarify install order, add NPZ data format note
+- fix MiniCNN CPU timing, update metadata docstrings, remove stale roadmap entry
 
 ### Fixed
 

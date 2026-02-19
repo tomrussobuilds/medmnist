@@ -24,6 +24,7 @@ Typical Usage:
 from __future__ import annotations
 
 import logging
+import time
 from typing import TYPE_CHECKING
 
 import optuna
@@ -36,7 +37,7 @@ from ...core import (
 )
 
 if TYPE_CHECKING:  # pragma: no cover
-    from ....tracking import TrackerProtocol
+    from ...tracking import TrackerProtocol
 
 from ..objective.objective import OptunaObjective
 from ..search_spaces import get_search_space
@@ -129,6 +130,7 @@ class OptunaOrchestrator:
             self.cfg.optuna.search_space_preset,
             resolution=self.cfg.dataset.resolution,
             include_models=self.cfg.optuna.enable_model_search,
+            model_pool=self.cfg.optuna.model_pool,
             overrides=self.cfg.optuna.search_space_overrides,
         )
 
@@ -146,6 +148,7 @@ class OptunaOrchestrator:
 
         study.set_user_attr("n_trials", self.cfg.optuna.n_trials)
 
+        interrupted = False
         try:
             study.optimize(
                 objective,
@@ -156,9 +159,14 @@ class OptunaOrchestrator:
                 callbacks=callbacks,
             )
         except KeyboardInterrupt:
+            interrupted = True
             logger.warning("Optimization interrupted by user. Saving partial results...")
 
         self._post_optimization_processing(study)
+
+        if interrupted:
+            logger.info("Continuing to training in 10 seconds... (Ctrl+C again to abort pipeline)")
+            time.sleep(10)
 
         return study
 

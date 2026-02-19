@@ -329,6 +329,64 @@ def test_enable_model_search_can_be_enabled():
     assert config.enable_model_search is True
 
 
+# OPTUNA CONFIG: MODEL POOL
+@pytest.mark.unit
+def test_model_pool_defaults_to_none():
+    """Test model_pool defaults to None."""
+    config = OptunaConfig()
+    assert config.model_pool is None
+
+
+@pytest.mark.unit
+def test_model_pool_valid_with_model_search():
+    """Test model_pool is accepted when enable_model_search=True."""
+    config = OptunaConfig(
+        enable_model_search=True,
+        model_pool=["resnet_18", "efficientnet_b0"],
+    )
+    assert config.model_pool == ["resnet_18", "efficientnet_b0"]
+
+
+@pytest.mark.unit
+def test_model_pool_without_model_search_rejected():
+    """Test model_pool requires enable_model_search=True."""
+    with pytest.raises(ValidationError, match="model_pool requires enable_model_search"):
+        OptunaConfig(
+            enable_model_search=False,
+            model_pool=["resnet_18", "mini_cnn"],
+        )
+
+
+@pytest.mark.unit
+def test_model_pool_single_entry_rejected():
+    """Test model_pool must contain at least 2 architectures."""
+    with pytest.raises(ValidationError, match="at least 2 architectures"):
+        OptunaConfig(
+            enable_model_search=True,
+            model_pool=["resnet_18"],
+        )
+
+
+@pytest.mark.unit
+def test_model_pool_empty_list_rejected():
+    """Test model_pool rejects empty list."""
+    with pytest.raises(ValidationError, match="at least 2 architectures"):
+        OptunaConfig(
+            enable_model_search=True,
+            model_pool=[],
+        )
+
+
+@pytest.mark.unit
+def test_model_pool_with_timm_prefix():
+    """Test model_pool accepts timm/ prefixed names."""
+    config = OptunaConfig(
+        enable_model_search=True,
+        model_pool=["resnet_18", "timm/mobilenetv3_small_100"],
+    )
+    assert "timm/mobilenetv3_small_100" in config.model_pool
+
+
 # OPTUNA CONFIG: IMMUTABILITY
 @pytest.mark.unit
 def test_config_is_frozen():

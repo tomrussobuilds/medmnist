@@ -252,6 +252,7 @@ def test_log_optimization_header_basic():
     mock_cfg.optuna.metric_name = "auc"
     mock_cfg.optuna.enable_pruning = True
     mock_cfg.optuna.enable_early_stopping = False
+    mock_cfg.optuna.model_pool = None
 
     log_optimization_header(cfg=mock_cfg, logger_instance=mock_logger)
 
@@ -276,6 +277,7 @@ def test_log_optimization_header_with_early_stopping():
     mock_cfg.optuna.enable_early_stopping = True
     mock_cfg.optuna.early_stopping_threshold = 0.95
     mock_cfg.optuna.early_stopping_patience = 5
+    mock_cfg.optuna.model_pool = None
 
     log_optimization_header(cfg=mock_cfg, logger_instance=mock_logger)
 
@@ -297,6 +299,7 @@ def test_log_optimization_header_logs_only_search_params():
     mock_cfg.optuna.metric_name = "auc"
     mock_cfg.optuna.enable_pruning = False
     mock_cfg.optuna.enable_early_stopping = False
+    mock_cfg.optuna.model_pool = None
 
     log_optimization_header(cfg=mock_cfg, logger_instance=mock_logger)
 
@@ -322,12 +325,37 @@ def test_log_optimization_header_early_stop_auto_threshold():
     mock_cfg.optuna.enable_early_stopping = True
     mock_cfg.optuna.early_stopping_threshold = None
     mock_cfg.optuna.early_stopping_patience = 3
+    mock_cfg.optuna.model_pool = None
 
     log_optimization_header(cfg=mock_cfg, logger_instance=mock_logger)
 
     calls = [str(call) for call in mock_logger.info.call_args_list]
     log_output = " ".join(calls)
     assert "auto" in log_output
+
+
+@pytest.mark.unit
+def test_log_optimization_header_with_model_pool():
+    """Test log_optimization_header logs model pool when active."""
+    mock_logger = MagicMock()
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.search_space_preset = "full"
+    mock_cfg.optuna.n_trials = 20
+    mock_cfg.optuna.epochs = 15
+    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.optuna.enable_pruning = True
+    mock_cfg.optuna.enable_early_stopping = False
+    mock_cfg.optuna.model_pool = ["vit_tiny", "efficientnet_b0"]
+
+    log_optimization_header(cfg=mock_cfg, logger_instance=mock_logger)
+
+    # 10 lines: 9 base + model_pool
+    assert mock_logger.info.call_count == 10
+    calls = [str(call) for call in mock_logger.info.call_args_list]
+    log_output = " ".join(calls)
+    assert "Model Pool" in log_output
+    assert "vit_tiny" in log_output
+    assert "efficientnet_b0" in log_output
 
 
 # LOG TRIAL START

@@ -341,5 +341,99 @@ def test_search_space_overrides_forbids_extra():
         SearchSpaceOverrides(unknown_param=FloatRange(low=0.0, high=1.0))
 
 
+# MODEL POOL FILTERING
+@pytest.mark.unit
+def test_get_search_space_with_model_pool():
+    """Test get_search_space uses model_pool when provided."""
+    pool = ["resnet_18", "mini_cnn"]
+    space = get_search_space(
+        preset="quick",
+        resolution=28,
+        include_models=True,
+        model_pool=pool,
+    )
+
+    assert "model_name" in space
+    assert "weight_variant" not in space
+
+    trial_mock = MagicMock(spec=Trial)
+    trial_mock.suggest_categorical = MagicMock(return_value="resnet_18")
+
+    space["model_name"](trial_mock)
+    trial_mock.suggest_categorical.assert_called_with("model_name", pool)
+
+
+@pytest.mark.unit
+def test_get_search_space_model_pool_with_vit():
+    """Test model_pool includes weight_variant when vit_tiny is in pool."""
+    pool = ["efficientnet_b0", "vit_tiny"]
+    space = get_search_space(
+        preset="full",
+        resolution=224,
+        include_models=True,
+        model_pool=pool,
+    )
+
+    assert "model_name" in space
+    assert "weight_variant" in space
+
+    trial_mock = MagicMock(spec=Trial)
+    trial_mock.suggest_categorical = MagicMock(return_value="vit_tiny")
+    trial_mock.params = {"model_name": "vit_tiny"}
+
+    space["model_name"](trial_mock)
+    trial_mock.suggest_categorical.assert_called_with("model_name", pool)
+
+
+@pytest.mark.unit
+def test_get_search_space_model_pool_without_vit():
+    """Test model_pool excludes weight_variant when vit_tiny is absent."""
+    pool = ["resnet_18", "efficientnet_b0"]
+    space = get_search_space(
+        preset="full",
+        resolution=224,
+        include_models=True,
+        model_pool=pool,
+    )
+
+    assert "model_name" in space
+    assert "weight_variant" not in space
+
+
+@pytest.mark.unit
+def test_get_search_space_model_pool_none_uses_defaults():
+    """Test model_pool=None falls back to resolution-based defaults."""
+    space_224 = get_search_space(
+        preset="quick", resolution=224, include_models=True, model_pool=None
+    )
+    space_28 = get_search_space(preset="quick", resolution=28, include_models=True, model_pool=None)
+
+    # 224 default includes weight_variant (vit_tiny is in default pool)
+    assert "weight_variant" in space_224
+    # 28 default does not include weight_variant
+    assert "weight_variant" not in space_28
+
+
+@pytest.mark.unit
+def test_get_search_space_model_pool_with_timm():
+    """Test model_pool works with timm/ prefixed names."""
+    pool = ["resnet_18", "timm/mobilenetv3_small_100"]
+    space = get_search_space(
+        preset="quick",
+        resolution=224,
+        include_models=True,
+        model_pool=pool,
+    )
+
+    assert "model_name" in space
+    assert "weight_variant" not in space
+
+    trial_mock = MagicMock(spec=Trial)
+    trial_mock.suggest_categorical = MagicMock(return_value="timm/mobilenetv3_small_100")
+
+    space["model_name"](trial_mock)
+    trial_mock.suggest_categorical.assert_called_with("model_name", pool)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

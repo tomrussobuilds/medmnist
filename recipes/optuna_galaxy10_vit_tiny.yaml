@@ -122,7 +122,8 @@ optuna:
   sampler_type: "tpe"
   search_space_preset: "full"
   enable_model_search: true     # Compare efficientnet_b0 vs vit_tiny + weight variants
-
+  # model_pool: ["efficientnet_b0", "vit_tiny"]  # Restrict search to these (default: all 224px models)
+  
   # Pruning
   enable_pruning: true
   pruner_type: "median"

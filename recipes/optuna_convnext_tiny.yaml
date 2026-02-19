@@ -121,6 +121,7 @@ optuna:
   sampler_type: "tpe"
   search_space_preset: "full"
   enable_model_search: false    # Optimize ConvNeXt-Tiny only
+  # model_pool: ["efficientnet_b0", "convnext_tiny"]  # Subset of models to search (requires enable_model_search: true)
 
   # Pruning
   enable_pruning: true

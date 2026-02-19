@@ -121,6 +121,7 @@ optuna:
   sampler_type: "tpe"
   search_space_preset: "full"
   enable_model_search: false    # Optimize ResNet-18 only
+  # model_pool: ["mini_cnn", "resnet_18"]  # Subset of models to search (requires enable_model_search: true)
 
   # Pruning
   enable_pruning: true

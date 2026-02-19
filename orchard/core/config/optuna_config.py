@@ -139,6 +139,7 @@ class OptunaConfig(BaseModel):
         sampler_type: Sampling algorithm ('tpe', 'cmaes', 'random', 'grid').
         search_space_preset: Predefined search space ('quick', 'full', etc.).
         enable_model_search: Include architecture in search space.
+        model_pool: Restrict model search to these architectures (None=all).
         enable_early_stopping: Stop study when target performance reached.
         early_stopping_threshold: Metric threshold for early stopping.
         early_stopping_patience: Consecutive trials meeting threshold before stop.
@@ -196,6 +197,16 @@ class OptunaConfig(BaseModel):
         ),
     )
 
+    model_pool: Optional[List[str]] = Field(
+        default=None,
+        description=(
+            "Restrict model search to a subset of architectures. "
+            "When None, all built-in models for the target resolution are searched. "
+            "Requires enable_model_search=True. Minimum 2 entries. "
+            "Each name must be a valid model factory key or use 'timm/' prefix."
+        ),
+    )
+
     # ==================== Early Stopping ====================
     enable_early_stopping: bool = Field(
         default=True, description="Stop study when target performance is reached"
@@ -250,6 +261,27 @@ class OptunaConfig(BaseModel):
         default_factory=SearchSpaceOverrides,
         description="Configurable bounds for hyperparameter search ranges",
     )
+
+    @model_validator(mode="after")
+    def check_model_pool(self) -> "OptunaConfig":
+        """
+        Validate model_pool constraints.
+
+        Raises:
+            ValueError: If model_pool set without enable_model_search,
+                        or contains fewer than 2 entries.
+
+        Returns:
+            Validated OptunaConfig instance.
+        """
+        if self.model_pool is not None:
+            if not self.enable_model_search:
+                raise ValueError("model_pool requires enable_model_search=True")
+            if len(self.model_pool) < 2:
+                raise ValueError(
+                    "model_pool must contain at least 2 architectures for meaningful search"
+                )
+        return self
 
     @model_validator(mode="after")
     def validate_storage(self) -> "OptunaConfig":

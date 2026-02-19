@@ -248,7 +248,7 @@ orchard run recipes/optuna_vit_tiny.yaml              # ~3-5h*, GPU
 3. **Artifacts**: Interactive plots, best_config.yaml, model weights
 
 > [!TIP]
-> **Model Search**: Enable `optuna.enable_model_search: true` in your `YAML` config to let `Optuna` automatically explore all registered architectures for the target resolution. The optimizer will select the best model alongside the best hyperparameters.
+> **Model Search**: Enable `optuna.enable_model_search: true` in your `YAML` config to let `Optuna` automatically explore all registered architectures for the target resolution. Use `optuna.model_pool` to restrict the search to a subset of architectures (e.g. `["vit_tiny", "efficientnet_b0"]`).
 
 **View optimization results:**
 ```bash

@@ -64,6 +64,11 @@ def log_optimization_header(cfg: "Config", logger_instance: logging.Logger | Non
         f"{LogStyle.INDENT}{LogStyle.ARROW} Model Search : "
         f"{'Enabled' if cfg.optuna.enable_model_search else 'Disabled'}"
     )
+    if cfg.optuna.model_pool is not None:
+        log.info(
+            f"{LogStyle.INDENT}{LogStyle.ARROW} Model Pool   : "
+            f"{', '.join(cfg.optuna.model_pool)}"
+        )
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Search Space : {cfg.optuna.search_space_preset}")
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Trials       : {cfg.optuna.n_trials}")
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Epochs/Trial : {cfg.optuna.epochs}")

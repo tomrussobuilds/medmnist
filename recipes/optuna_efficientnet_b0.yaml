@@ -121,6 +121,7 @@ optuna:
   sampler_type: "tpe"
   search_space_preset: "full"
   enable_model_search: false    # Optimize EfficientNet-B0 only
+  # model_pool: ["efficientnet_b0", "vit_tiny"]  # Subset of models to search (requires enable_model_search: true)
 
   # Pruning
   enable_pruning: true
