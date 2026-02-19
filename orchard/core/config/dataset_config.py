@@ -61,7 +61,7 @@ class DatasetConfig(BaseModel):
     force_rgb: bool = Field(
         default=True, description="Convert grayscale to RGB for ImageNet weights"
     )
-    resolution: int = Field(default=28, description="Target dataset resolution (28 or 224)")
+    resolution: int = Field(default=28, description="Target dataset resolution (28, 64, or 224)")
 
     @model_validator(mode="before")
     @classmethod

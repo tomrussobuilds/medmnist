@@ -56,9 +56,13 @@ class MetricExtractor:
             raise KeyError(f"Metric '{self.metric_name}' not found. Available: {available}")
         return val_metrics[self.metric_name]
 
+    def reset(self) -> None:
+        """Reset best metric tracking for a new trial."""
+        self.best_metric = -float("inf")
+
     def update_best(self, current_metric: float) -> float:
         """
-        Update and return best metric achieved.
+        Update and return best metric achieved within current trial.
 
         Args:
             current_metric: Current metric value

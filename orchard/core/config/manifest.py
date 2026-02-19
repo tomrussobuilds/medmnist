@@ -252,9 +252,9 @@ class _CrossDomainValidator:
         Validate architecture-resolution compatibility.
 
         Enforces that each built-in model is used with its supported resolution(s):
-            - 28x28 only: mini_cnn
+            - Low-resolution (28, 64): mini_cnn
             - 224x224 only: efficientnet_b0, vit_tiny, convnext_tiny
-            - Multi-resolution (28x28, 224x224): resnet_18
+            - Multi-resolution (28, 64, 224): resnet_18
 
         timm models (prefixed with ``timm/``) bypass this check as they
         support variable resolutions managed by the user.
@@ -270,15 +270,15 @@ class _CrossDomainValidator:
 
         resolution = config.dataset.resolution
 
-        resolution_28_only = {"mini_cnn"}
+        resolution_low = {"mini_cnn"}
         resolution_224_only = {"efficientnet_b0", "vit_tiny", "convnext_tiny"}
         multi_resolution = {"resnet_18"}
 
-        if model_name in resolution_28_only and resolution != 28:
+        if model_name in resolution_low and resolution not in (28, 64):
             raise ValueError(
-                f"'{config.architecture.name}' requires resolution=28, got {resolution}. "
-                f"Use a 224x224 architecture (efficientnet_b0, vit_tiny, convnext_tiny) "
-                f"or resnet_18 for high resolution."
+                f"'{config.architecture.name}' requires resolution 28 or 64, "
+                f"got {resolution}. Use a 224x224 architecture "
+                f"(efficientnet_b0, vit_tiny, convnext_tiny) or resnet_18."
             )
 
         if model_name in resolution_224_only and resolution != 224:
@@ -287,9 +287,9 @@ class _CrossDomainValidator:
                 f"Use resnet_18 or mini_cnn for low resolution."
             )
 
-        if model_name in multi_resolution and resolution not in (28, 224):
+        if model_name in multi_resolution and resolution not in (28, 64, 224):
             raise ValueError(
-                f"'{config.architecture.name}' supports resolutions 28 or 224, "
+                f"'{config.architecture.name}' supports resolutions 28, 64, or 224, "
                 f"got {resolution}."
             )
 

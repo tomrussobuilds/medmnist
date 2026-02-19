@@ -84,7 +84,7 @@
 
 <h2>Overview</h2>
 
-**Orchard ML** is a research-grade `PyTorch` training framework engineered for reproducible, scalable computer vision experiments across diverse domains. Built on [MedMNIST v2](https://zenodo.org/records/6496656) medical imaging datasets and expanded to astronomical imaging ([Galaxy10 DECals](https://zenodo.org/records/10845026)), it provides a domain-agnostic platform supporting multi-resolution architectures (28×28 to 224×224+), automated hyperparameter optimization, and cluster-safe execution.
+**Orchard ML** is a research-grade `PyTorch` training framework engineered for reproducible, scalable computer vision experiments across diverse domains. Built on [MedMNIST v2](https://zenodo.org/records/6496656) medical imaging datasets and expanded to astronomical imaging ([Galaxy10 DECals](https://zenodo.org/records/10845026)), it provides a domain-agnostic platform supporting multi-resolution architectures (28×28, 64×64, 224×224), automated hyperparameter optimization, and cluster-safe execution.
 
 **Key Differentiators:**
 - **Type-Safe Configuration Engine**: `Pydantic V2`-based declarative manifests eliminate runtime errors
@@ -98,8 +98,8 @@
 
 | Resolution | Architectures | Parameters | Use Case |
 |-----------|--------------|-----------|----------|
-| **28×28 / 224×224** | `ResNet-18` | ~11M | Multi-resolution baseline, transfer learning |
-| **28×28** | `MiniCNN` | ~95K | Fast prototyping, ablation studies |
+| **28 / 64 / 224** | `ResNet-18` | ~11M | Multi-resolution baseline, transfer learning |
+| **28 / 64** | `MiniCNN` | ~95K | Fast prototyping, ablation studies |
 | **224×224** | `EfficientNet-B0` | ~4.0M | Efficient compound scaling |
 | **224×224** | `ConvNeXt-Tiny` | ~27.8M | Modern ConvNet design |
 | **224×224** | `ViT-Tiny` | ~5.5M | Patch-based attention, multiple weight variants |
@@ -117,11 +117,11 @@
 
 <h2>Hardware Requirements</h2>
 
-<h3>CPU Training (28×28 Only)</h3>
+<h3>CPU Training (28×28 / 64×64)</h3>
 
-- **Supported Resolution**: 28×28 **only**
-- **Time**: ~2.5 hours (`ResNet-18`, 60 epochs, 16 cores)
-- **Time**: ~5-10 minutes (`MiniCNN`, 60 epochs, 16 cores)
+- **Supported Resolutions**: 28×28, 64×64
+- **Time**: ~2.5 hours (`ResNet-18`, 28×28, 60 epochs, 16 cores)
+- **Time**: ~5-10 minutes (`MiniCNN`, 28×28, 60 epochs, 16 cores)
 - **Architectures**: `ResNet-18`, `MiniCNN`
 - **Use Case**: Development, testing, limited hardware environments
 
@@ -130,6 +130,9 @@
 - **28×28 Resolution**:
   - `MiniCNN`: ~2-3 minutes (60 epochs)
   - `ResNet-18`: ~10-15 minutes (60 epochs)
+- **64×64 Resolution**:
+  - `MiniCNN`: ~3-5 minutes (60 epochs)
+  - `ResNet-18`: ~15-20 minutes (60 epochs)
 - **224×224 Resolution**:
   - `EfficientNet-B0`: ~30 minutes per trial (15 epochs)
   - `ViT-Tiny`: ~25-35 minutes per trial (15 epochs)
@@ -152,6 +155,7 @@
 | **Smoke Test** | `MiniCNN` | 28×28 | CPU/GPU | <30s | 1-epoch sanity check |
 | **Quick Training** | `MiniCNN` | 28×28 | GPU | ~2-3 min | 60 epochs |
 | **Quick Training** | `MiniCNN` | 28×28 | CPU (16 cores) | ~5-10 min | 60 epochs, CPU-validated |
+| **Mid-Res Training** | `MiniCNN` | 64×64 | GPU | ~3-5 min | 60 epochs |
 | **Transfer Learning** | `ResNet-18` | 28×28 | GPU | ~5 min | 60 epochs |
 | **Transfer Learning** | `ResNet-18` | 28×28 | CPU (16 cores) | ~2.5h | 60 epochs, CPU-validated |
 | **High-Res Training** | `EfficientNet-B0` | 224×224 | GPU | ~30 min/trial | 15 epochs per trial, **GPU required** |
@@ -221,6 +225,9 @@ orchard run --help                         # Show available options
 # 28×28 resolution (CPU-compatible)
 orchard run recipes/config_mini_cnn.yaml              # ~2-3 min GPU, ~5-10 min CPU
 orchard run recipes/config_resnet_18.yaml             # ~10-15 min GPU, ~2.5h CPU
+
+# 64×64 resolution (CPU/GPU)
+orchard run recipes/config_mini_cnn_64.yaml           # ~3-5 min GPU
 
 # 224×224 resolution (GPU required)
 orchard run recipes/config_efficientnet_b0.yaml       # ~30 min GPU

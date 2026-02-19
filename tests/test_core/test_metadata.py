@@ -59,11 +59,11 @@ def test_registry_wrapper_get_dataset_not_found():
 def test_registry_wrapper_invalid_resolution():
     """Test DatasetRegistryWrapper raises ValueError for invalid resolution."""
     with pytest.raises(ValueError) as exc_info:
-        DatasetRegistryWrapper(resolution=64)
+        DatasetRegistryWrapper(resolution=128)
 
     error_msg = str(exc_info.value)
-    assert "Unsupported resolution 64" in error_msg
-    assert "[28, 224]" in error_msg
+    assert "Unsupported resolution 128" in error_msg
+    assert "[28, 64, 224]" in error_msg
 
 
 @pytest.mark.unit
@@ -76,6 +76,18 @@ def test_registry_wrapper_resolution_28():
 
     for metadata in wrapper.registry.values():
         assert metadata.native_resolution == 28
+
+
+@pytest.mark.unit
+def test_registry_wrapper_resolution_64():
+    """Test DatasetRegistryWrapper loads 64x64 registry correctly."""
+    wrapper = DatasetRegistryWrapper(resolution=64)
+
+    assert wrapper.resolution == 64
+    assert len(wrapper.registry) > 0
+
+    for metadata in wrapper.registry.values():
+        assert metadata.native_resolution == 64
 
 
 @pytest.mark.unit
@@ -135,13 +147,14 @@ def test_dataset_metadata_normalization_info_property():
 def test_registry_wrapper_empty_source_registry():
     """Test DatasetRegistryWrapper raises ValueError when source registry is empty (line 55 in wrapper.py)."""
     with patch("orchard.core.metadata.wrapper.MEDICAL_28", {}):
-        with patch("orchard.core.metadata.wrapper.MEDICAL_224", {}):
-            with patch("orchard.core.metadata.wrapper.SPACE_224", {}):
-                with pytest.raises(ValueError) as exc_info:
-                    DatasetRegistryWrapper(resolution=28)
+        with patch("orchard.core.metadata.wrapper.MEDICAL_64", {}):
+            with patch("orchard.core.metadata.wrapper.MEDICAL_224", {}):
+                with patch("orchard.core.metadata.wrapper.SPACE_224", {}):
+                    with pytest.raises(ValueError) as exc_info:
+                        DatasetRegistryWrapper(resolution=28)
 
-                error_msg = str(exc_info.value)
-                assert "Dataset registry for resolution 28 is empty" in error_msg
+                    error_msg = str(exc_info.value)
+                    assert "Dataset registry for resolution 28 is empty" in error_msg
 
 
 if __name__ == "__main__":

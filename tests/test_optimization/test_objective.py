@@ -203,6 +203,21 @@ def test_metric_extractor_tracks_best():
     assert extractor.best_metric == pytest.approx(0.90)
 
 
+@pytest.mark.unit
+def test_metric_extractor_reset():
+    """Test MetricExtractor.reset() clears best metric between trials."""
+    extractor = MetricExtractor(metric_name="auc")
+
+    extractor.update_best(0.95)
+    assert extractor.best_metric == pytest.approx(0.95)
+
+    extractor.reset()
+    assert extractor.best_metric == -float("inf")
+
+    best = extractor.update_best(0.70)
+    assert best == pytest.approx(0.70)
+
+
 # TRAINING EXECUTOR TESTS
 @pytest.mark.unit
 def test_training_executor_should_prune_warmup():

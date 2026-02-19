@@ -157,6 +157,9 @@ class OptunaObjective:
         Raises:
             optuna.TrialPruned: If trial is pruned during training
         """
+        # Reset per-trial metric tracking
+        self.metric_extractor.reset()
+
         # Sample parameters
         params = self._sample_params(trial)
 

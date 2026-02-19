@@ -2,8 +2,8 @@
 Pydantic Wrapper for Multi-Domain Dataset Registries.
 
 Type-safe, validated access to multiple dataset domains (medical, space)
-and resolutions (28x28, 224x224). Merges domain registries based on selected
-resolution while avoiding global metadata overwrites.
+and resolutions (28x28, 64x64, 224x224). Merges domain registries based on
+selected resolution while avoiding global metadata overwrites.
 """
 
 import copy
@@ -12,7 +12,7 @@ from typing import Dict
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .base import DatasetMetadata
-from .domains import MEDICAL_28, MEDICAL_224, SPACE_224
+from .domains import MEDICAL_28, MEDICAL_64, MEDICAL_224, SPACE_224
 
 
 # WRAPPER DEFINITION
@@ -25,13 +25,13 @@ class DatasetRegistryWrapper(BaseModel):
     dataset metadata entries.
 
     Attributes:
-        resolution: Target dataset resolution (28 or 224).
+        resolution: Target dataset resolution (28, 64, or 224).
         registry: Deep-copied metadata registry for the selected resolution.
     """
 
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
-    resolution: int = Field(default=28, description="Target resolution (28 or 224)")
+    resolution: int = Field(default=28, description="Target resolution (28, 64, or 224)")
 
     registry: Dict[str, DatasetMetadata] = Field(
         default_factory=dict, description="Dataset registry for selected resolution"
@@ -46,12 +46,14 @@ class DatasetRegistryWrapper(BaseModel):
         """
         res = values.get("resolution", 28)
 
-        if res not in (28, 224):
-            raise ValueError(f"Unsupported resolution {res}. Supported: [28, 224]")
+        if res not in (28, 64, 224):
+            raise ValueError(f"Unsupported resolution {res}. Supported: [28, 64, 224]")
 
         # Merge domain registries based on resolution
         if res == 28:
             merged = {**MEDICAL_28}
+        elif res == 64:
+            merged = {**MEDICAL_64}
         else:  # res == 224
             merged = {**MEDICAL_224, **SPACE_224}
 

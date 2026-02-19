@@ -1,6 +1,6 @@
 """
 Unit and integration tests for the ResNet-18 multi-resolution architecture.
-Tests both 28x28 (adapted stem) and 224x224 (standard stem) configurations.
+Tests 28x28 (adapted stem), 64x64 (standard stem), and 224x224 (standard stem).
 """
 
 from unittest.mock import MagicMock, patch
@@ -19,6 +19,16 @@ def mock_cfg_28():
     cfg.architecture.pretrained = False
     cfg.architecture.dropout = 0.5
     cfg.dataset.resolution = 28
+    return cfg
+
+
+@pytest.fixture
+def mock_cfg_64():
+    """Provides a configuration mock for 64x64 resolution."""
+    cfg = MagicMock()
+    cfg.architecture.pretrained = False
+    cfg.architecture.dropout = 0.5
+    cfg.dataset.resolution = 64
     return cfg
 
 
@@ -129,6 +139,48 @@ class TestResNet18Low:
 
             assert activations["conv1"][2] == 28
             assert activations["conv1"][3] == 28
+
+
+# UNIT TESTS — 64x64 MODE
+@pytest.mark.unit
+class TestResNet18Mid:
+    """Test suite for ResNet-18 at 64x64 resolution (standard stem)."""
+
+    @pytest.mark.parametrize(
+        "in_channels, num_classes, batch_size",
+        [
+            (3, 10, 1),
+            (1, 5, 2),
+        ],
+    )
+    def test_output_shape_64(self, mock_cfg_64, device, in_channels, num_classes, batch_size):
+        """Verify output shape matches expected dimensions for 64x64 inputs."""
+        model = build_resnet18(
+            device, num_classes=num_classes, in_channels=in_channels, cfg=mock_cfg_64
+        )
+        model.eval()
+
+        dummy_input = torch.randn(batch_size, in_channels, 64, 64)
+
+        with torch.no_grad():
+            output = model(dummy_input)
+
+        assert output.shape == (batch_size, num_classes)
+
+    def test_standard_stem_at_64(self, mock_cfg_64, device):
+        """Verify 64x64 uses standard 7x7 conv1 with stride 2 (same as 224)."""
+        model = build_resnet18(device, num_classes=10, in_channels=3, cfg=mock_cfg_64)
+
+        assert model.conv1.kernel_size == (7, 7)
+        assert model.conv1.stride == (2, 2)
+        assert not isinstance(model.maxpool, torch.nn.Identity)
+
+    def test_grayscale_input_64(self, mock_cfg_64, device):
+        """Verify grayscale channel adaptation at 64x64."""
+        model = build_resnet18(device, num_classes=10, in_channels=1, cfg=mock_cfg_64)
+
+        assert model.conv1.kernel_size == (7, 7)
+        assert model.conv1.in_channels == 1
 
 
 # UNIT TESTS — 224x224 MODE

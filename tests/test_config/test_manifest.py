@@ -26,11 +26,10 @@ def test_config_defaults():
 # CONFIG: CROSS-VALIDATION
 @pytest.mark.unit
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
-def test_resnet_18_supports_both_resolutions(device):
+def test_resnet_18_supports_all_resolutions(device):
     """
-    resnet_18 supports both 28x28 and 224x224 resolutions.
+    resnet_18 supports 28x28, 64x64, and 224x224 resolutions.
     """
-    # Should work at 28x28
     config_28 = Config(
         dataset=DatasetConfig(name="bloodmnist", resolution=28),
         architecture=ArchitectureConfig(name="resnet_18", pretrained=False),
@@ -39,7 +38,14 @@ def test_resnet_18_supports_both_resolutions(device):
     )
     assert config_28.dataset.resolution == 28
 
-    # Should work at 224x224
+    config_64 = Config(
+        dataset=DatasetConfig(name="bloodmnist", resolution=64, force_rgb=True),
+        architecture=ArchitectureConfig(name="resnet_18", pretrained=False),
+        training=TrainingConfig(),
+        hardware=HardwareConfig(device=device),
+    )
+    assert config_64.dataset.resolution == 64
+
     config_224 = Config(
         dataset=DatasetConfig(name="bloodmnist", resolution=224, force_rgb=True),
         architecture=ArchitectureConfig(name="resnet_18", pretrained=False),
@@ -75,11 +81,11 @@ def test_224_models_require_resolution_224(architecture_name):
 
 
 @pytest.mark.unit
-def test_mini_cnn_requires_resolution_28():
-    """mini_cnn only supports 28x28 resolution."""
+def test_mini_cnn_rejects_224():
+    """mini_cnn only supports 28x28 and 64x64 resolutions."""
     with pytest.raises(
         ValidationError,
-        match="'mini_cnn' requires resolution=28",
+        match="'mini_cnn' requires resolution 28 or 64",
     ):
         Config(
             dataset=DatasetConfig(name="bloodmnist", resolution=224, force_rgb=True),
@@ -91,10 +97,10 @@ def test_mini_cnn_requires_resolution_28():
 
 @pytest.mark.unit
 def test_resnet_18_rejects_invalid_resolution():
-    """resnet_18 only supports 28 or 224, not arbitrary resolutions."""
+    """resnet_18 only supports 28, 64, or 224, not arbitrary resolutions."""
     with pytest.raises(
         ValidationError,
-        match="'resnet_18' supports resolutions 28 or 224",
+        match="'resnet_18' supports resolutions 28, 64, or 224",
     ):
         Config(
             dataset=DatasetConfig(name="bloodmnist", resolution=112),

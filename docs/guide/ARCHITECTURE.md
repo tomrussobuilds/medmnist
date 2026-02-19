@@ -22,7 +22,7 @@ ImageNet-21k provides a broader visual vocabulary at the cost of noisier labels.
 
 <h3>Weight Morphing</h3>
 
-Pretrained weights assume RGB input (3 channels) at a specific resolution. When the target domain differs — grayscale medical images (1 channel) or lower resolution (28x28 instead of 224x224) — the weights must be **adapted** rather than discarded:
+Pretrained weights assume RGB input (3 channels) at 224x224 resolution. When the target domain differs — grayscale medical images (1 channel) or lower resolution (28x28, 64x64) — the weights must be **adapted** rather than discarded:
 
 - **Channel averaging**: compresses 3-channel filters into 1-channel by averaging across the RGB dimension, preserving the learned spatial patterns
 - **Spatial interpolation** (ResNet-18 28x28 only): resizes 7x7 kernel weights to 3x3 via bicubic interpolation to match the smaller stem
@@ -31,7 +31,7 @@ The exact transformations and tensor dimensions are documented under each model 
 
 ---
 
-<h2>ResNet-18 (Multi-Resolution: 28x28 / 224x224)</h2>
+<h2>ResNet-18 (Multi-Resolution: 28x28 / 64x64 / 224x224)</h2>
 
 Adaptive ResNet-18 that automatically selects the appropriate stem configuration based on `cfg.dataset.resolution`.
 
@@ -61,16 +61,21 @@ W_{\text{gray}} = \frac{1}{3} \sum_{c=1}^{3} W[:, c, :, :]
 
 This two-step process (channel compress + spatial resize) preserves learned edge detectors while adapting to both single-channel input and smaller kernel geometry.
 
-<h3>224x224 Mode (High-Resolution)</h3>
+<h3>64x64 / 224x224 Mode (Standard Stem)</h3>
 
-At 224x224, ResNet-18 uses the standard architecture with no structural modifications:
+At 64x64 and 224x224, ResNet-18 uses the standard architecture with no structural modifications. The standard stem (7x7 conv stride-2 + MaxPool) produces valid spatial maps at both resolutions:
+
+| Resolution | Spatial progression | Final feature map |
+|-----------|-------------------|------------------|
+| **64x64** | 64→32→16→8→4→2→1 | 1x1 (via AdaptiveAvgPool) |
+| **224x224** | 224→112→56→28→14→7→1 | 1x1 (via AdaptiveAvgPool) |
 
 | Layer | Specification | Notes |
 |-------|--------------|-------|
 | **Input Conv** | 7x7, stride=2, pad=3 | Standard ImageNet configuration |
 | **Max Pooling** | 3x3, stride=2 | Full downsampling pipeline |
 
-**Weight Transfer (224x224):**
+**Weight Transfer (64x64 / 224x224):**
 
 No spatial interpolation is needed. For grayscale inputs, the pretrained RGB weights are compressed via channel averaging:
 
@@ -80,15 +85,15 @@ W_{\text{gray}} = \frac{1}{3} \sum_{c=1}^{3} W[:, c, :, :] \quad \text{where} \q
 
 ---
 
-<h2>MiniCNN (28x28)</h2>
+<h2>MiniCNN (28x28 / 64x64)</h2>
 
-A compact, custom architecture designed specifically for low-resolution medical imaging. No pretrained weights — trained from scratch.
+A compact, custom architecture designed for low-resolution imaging. No pretrained weights — trained from scratch. Uses `AdaptiveAvgPool2d((1,1))` so it works at any spatial resolution.
 
 | Component | Specification | Purpose |
 |-----------|--------------|---------|
 | **Architecture** | 3 conv blocks + global pooling | Fast convergence with minimal parameters |
 | **Parameters** | ~95K | 220x fewer than ResNet-18 |
-| **Input Processing** | 28x28 → 14x14 → 7x7 → 1x1 | Progressive spatial compression |
+| **Input Processing** | Adaptive (e.g., 28→14→7→1 or 64→32→16→1) | Progressive spatial compression |
 | **Regularization** | Configurable dropout before FC | Overfitting prevention |
 
 **Advantages:**

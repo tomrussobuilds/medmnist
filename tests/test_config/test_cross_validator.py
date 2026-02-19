@@ -26,11 +26,30 @@ class TestCheckArchitectureResolution:
     def test_mini_cnn_rejects_224(self):
         with pytest.raises(
             ValidationError,
-            match="'mini_cnn' requires resolution=28",
+            match="'mini_cnn' requires resolution 28 or 64",
         ):
             Config(
                 dataset=DatasetConfig(name="bloodmnist", resolution=224, force_rgb=True),
                 architecture=ArchitectureConfig(name="mini_cnn", pretrained=False),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+    def test_mini_cnn_accepts_64(self):
+        cfg = Config(
+            dataset=DatasetConfig(name="bloodmnist", resolution=64, force_rgb=True),
+            architecture=ArchitectureConfig(name="mini_cnn", pretrained=False),
+            hardware=HardwareConfig(device="cpu"),
+        )
+        assert cfg.dataset.resolution == 64
+
+    def test_efficientnet_rejects_64(self):
+        with pytest.raises(
+            ValidationError,
+            match="'efficientnet_b0' requires resolution=224",
+        ):
+            Config(
+                dataset=DatasetConfig(name="bloodmnist", resolution=64, force_rgb=True),
+                architecture=ArchitectureConfig(name="efficientnet_b0", pretrained=False),
                 hardware=HardwareConfig(device="cpu"),
             )
 
@@ -53,6 +72,14 @@ class TestCheckArchitectureResolution:
         )
         assert cfg.dataset.resolution == 28
 
+    def test_resnet_18_accepts_64(self):
+        cfg = Config(
+            dataset=DatasetConfig(name="bloodmnist", resolution=64, force_rgb=True),
+            architecture=ArchitectureConfig(name="resnet_18", pretrained=False),
+            hardware=HardwareConfig(device="cpu"),
+        )
+        assert cfg.dataset.resolution == 64
+
     def test_resnet_18_accepts_224(self):
         cfg = Config(
             dataset=DatasetConfig(name="bloodmnist", resolution=224, force_rgb=True),
@@ -64,7 +91,7 @@ class TestCheckArchitectureResolution:
     def test_resnet_18_rejects_112(self):
         with pytest.raises(
             ValidationError,
-            match="'resnet_18' supports resolutions 28 or 224",
+            match="'resnet_18' supports resolutions 28, 64, or 224",
         ):
             Config(
                 dataset=DatasetConfig(name="bloodmnist", resolution=112),
