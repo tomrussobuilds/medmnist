@@ -239,9 +239,12 @@ def test_run_export_phase_returns_none_when_format_is_none(mock_orchestrator):
 
 
 @pytest.mark.unit
+@patch("orchard.pipeline.phases.validate_export")
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
-def test_run_export_phase_exports_onnx(mock_export_onnx, mock_get_model, mock_orchestrator):
+def test_run_export_phase_exports_onnx(
+    mock_export_onnx, mock_get_model, mock_validate, mock_orchestrator
+):
     """Test run_export_phase calls export_to_onnx with correct parameters."""
     mock_model = MagicMock()
     mock_get_model.return_value = mock_model
@@ -261,12 +264,16 @@ def test_run_export_phase_exports_onnx(mock_export_onnx, mock_get_model, mock_or
     assert call_kwargs["checkpoint_path"] == checkpoint_path
     assert call_kwargs["opset_version"] == 17
     assert call_kwargs["input_shape"] == (3, 28, 28)
+    mock_validate.assert_called_once()
 
 
 @pytest.mark.unit
+@patch("orchard.pipeline.phases.validate_export")
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
-def test_run_export_phase_grayscale_input(mock_export_onnx, _mock_get_model, mock_orchestrator):
+def test_run_export_phase_grayscale_input(
+    mock_export_onnx, _mock_get_model, _mock_validate, mock_orchestrator
+):
     """Test run_export_phase determines input channels from config."""
     mock_orchestrator.cfg.dataset.force_rgb = False
     mock_orchestrator.cfg.dataset.effective_in_channels = 1
@@ -283,9 +290,12 @@ def test_run_export_phase_grayscale_input(mock_export_onnx, _mock_get_model, moc
 
 
 @pytest.mark.unit
+@patch("orchard.pipeline.phases.validate_export")
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
-def test_run_export_phase_with_custom_config(mock_export_onnx, _mock_get_model, mock_orchestrator):
+def test_run_export_phase_with_custom_config(
+    mock_export_onnx, _mock_get_model, _mock_validate, mock_orchestrator
+):
     """Test run_export_phase uses provided config override."""
     custom_cfg = MagicMock()
     custom_cfg.dataset.resolution = 64
@@ -303,9 +313,12 @@ def test_run_export_phase_with_custom_config(mock_export_onnx, _mock_get_model, 
 
 
 @pytest.mark.unit
+@patch("orchard.pipeline.phases.validate_export")
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
-def test_run_export_phase_logs_output_path(_mock_export_onnx, _mock_get_model, mock_orchestrator):
+def test_run_export_phase_logs_output_path(
+    _mock_export_onnx, _mock_get_model, _mock_validate, mock_orchestrator
+):
     """Test run_export_phase logs the export path."""
     run_export_phase(
         mock_orchestrator,

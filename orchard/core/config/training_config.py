@@ -16,7 +16,7 @@ Strict boundary validation (probability ranges, LR bounds) prevents unstable
 training states before first batch processing.
 """
 
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -92,8 +92,8 @@ class TrainingConfig(BaseModel):
     use_tta: bool = Field(default=True, description="Test-time augmentation")
 
     # ==================== Scheduler ====================
-    scheduler_type: str = Field(
-        default="cosine", description="LR scheduler: 'cosine', 'plateau', 'step', 'none'"
+    scheduler_type: Literal["cosine", "plateau", "step", "none"] = Field(
+        default="cosine", description="LR scheduler type"
     )
     cosine_fraction: Probability = Field(default=0.5, description="Cosine annealing fraction")
     scheduler_patience: NonNegativeInt = Field(default=5, description="Plateau patience")
@@ -102,8 +102,8 @@ class TrainingConfig(BaseModel):
     use_amp: bool = Field(default=True, description="Automatic Mixed Precision")
 
     # ==================== Loss ====================
-    criterion_type: str = Field(
-        default="cross_entropy", description="Loss: 'cross_entropy', 'focal', 'bce_logit'"
+    criterion_type: Literal["cross_entropy", "focal", "bce_logit"] = Field(
+        default="cross_entropy", description="Loss function type"
     )
     weighted_loss: bool = Field(default=False, description="Class-frequency weighting")
     focal_gamma: NonNegativeFloat = Field(default=2.0, description="Focal Loss gamma")

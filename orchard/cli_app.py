@@ -129,6 +129,8 @@ def run(
         tracking_uri = f"sqlite:///{MLRUNS_DB}"
         tracker.start_run(cfg=cfg, run_name=paths.run_id, tracking_uri=tracking_uri)
 
+        orchestrator.log_environment_report()
+
         training_cfg = cfg
 
         try:

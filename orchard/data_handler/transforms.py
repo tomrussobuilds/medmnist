@@ -15,22 +15,27 @@ from ..core import Config, DatasetMetadata
 
 
 # TRANSFORMATION UTILITIES
-def get_augmentations_description(cfg: Config) -> str:
+def get_augmentations_description(cfg: Config, ds_meta: DatasetMetadata | None = None) -> str:
     """
     Generates descriptive string of augmentations for logging.
 
     Args:
         cfg: Global configuration
+        ds_meta: Dataset metadata (if provided, respects domain flags)
 
     Returns:
         Human-readable augmentation summary
     """
-    params = {
-        "HFlip": cfg.augmentation.hflip,
-        "Rotation": f"{cfg.augmentation.rotation_angle}°",
-        "Jitter": cfg.augmentation.jitter_val,
-        "ResizedCrop": f"{cfg.dataset.img_size} ({cfg.augmentation.min_scale}, 1.0)",
-    }
+    is_anatomical = ds_meta.is_anatomical if ds_meta else False
+    is_texture = ds_meta.is_texture_based if ds_meta else False
+
+    params = {}
+    if not is_anatomical:
+        params["HFlip"] = cfg.augmentation.hflip
+        params["Rotation"] = f"{cfg.augmentation.rotation_angle}°"
+    if not is_texture:
+        params["Jitter"] = cfg.augmentation.jitter_val
+    params["ResizedCrop"] = f"{cfg.dataset.img_size} ({cfg.augmentation.min_scale}, 1.0)"
 
     descr = [f"{k}({v})" for k, v in params.items()]
 
@@ -93,17 +98,26 @@ def get_pipeline_transforms(cfg: Config, ds_meta: DatasetMetadata) -> Tuple[v2.C
         return ops
 
     # --- TRAINING PIPELINE ---
-    # Includes spatial and photometric augmentations
-    train_transform = v2.Compose(
-        [
-            *get_base_ops(),
-            v2.RandomHorizontalFlip(p=cfg.augmentation.hflip),
-            v2.RandomRotation(cfg.augmentation.rotation_angle),
+    # Domain-aware augmentations: respects is_anatomical and is_texture_based flags
+    train_ops = [*get_base_ops()]
+
+    # Geometric: disabled for anatomical datasets (orientation is diagnostic)
+    if not ds_meta.is_anatomical:
+        train_ops.append(v2.RandomHorizontalFlip(p=cfg.augmentation.hflip))
+        train_ops.append(v2.RandomRotation(cfg.augmentation.rotation_angle))
+
+    # Photometric: reduced for texture-based datasets (fine patterns are fragile)
+    if not ds_meta.is_texture_based:
+        train_ops.append(
             v2.ColorJitter(
                 brightness=cfg.augmentation.jitter_val,
                 contrast=cfg.augmentation.jitter_val,
                 saturation=cfg.augmentation.jitter_val if is_rgb else 0.0,
-            ),
+            )
+        )
+
+    train_ops.extend(
+        [
             v2.RandomResizedCrop(
                 size=cfg.dataset.img_size,
                 scale=(cfg.augmentation.min_scale, 1.0),
@@ -113,6 +127,8 @@ def get_pipeline_transforms(cfg: Config, ds_meta: DatasetMetadata) -> Tuple[v2.C
             v2.Normalize(mean=mean, std=std),
         ]
     )
+
+    train_transform = v2.Compose(train_ops)
 
     # --- VALIDATION/INFERENCE PIPELINE ---
     # Deterministic transformations only (no augmentation)

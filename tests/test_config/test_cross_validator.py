@@ -91,7 +91,7 @@ class TestCheckArchitectureResolution:
     def test_resnet_18_rejects_112(self):
         with pytest.raises(
             ValidationError,
-            match="'resnet_18' supports resolutions 28, 64, or 224",
+            match=r"'resnet_18' supports resolutions \[28, 64, 224\]",
         ):
             Config(
                 dataset=DatasetConfig(name="bloodmnist", resolution=112),

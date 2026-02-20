@@ -16,9 +16,12 @@ Module Attributes:
 
 import os
 from pathlib import Path
-from typing import Final, List
+from typing import Final, FrozenSet, List
 
 # GLOBAL CONSTANTS
+# Supported image resolutions across all model architectures
+SUPPORTED_RESOLUTIONS: Final[FrozenSet[int]] = frozenset({28, 64, 224})
+
 # Global logger identity used by all modules to ensure log synchronization
 LOGGER_NAME: Final[str] = "OrchardML"
 

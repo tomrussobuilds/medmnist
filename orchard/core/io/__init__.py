@@ -8,12 +8,13 @@ integrity verification via MD5 checksums and schema validation.
 
 from .checkpoints import load_model_weights
 from .data_io import md5_checksum, validate_npz_keys
-from .serialization import load_config_from_yaml, save_config_as_yaml
+from .serialization import dump_requirements, load_config_from_yaml, save_config_as_yaml
 
 __all__ = [
     # Serialization
     "save_config_as_yaml",
     "load_config_from_yaml",
+    "dump_requirements",
     # Checkpoints
     "load_model_weights",
     # Data Integrity

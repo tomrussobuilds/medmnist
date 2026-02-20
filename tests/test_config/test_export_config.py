@@ -29,7 +29,7 @@ def test_export_config_defaults():
     assert config.quantization_backend == "qnnpack"
     assert config.validate_export is True
     assert config.validation_samples == 10
-    assert config.max_deviation == pytest.approx(1e-5)
+    assert config.max_deviation == pytest.approx(1e-4)
 
 
 @pytest.mark.unit

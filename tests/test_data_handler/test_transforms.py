@@ -45,6 +45,8 @@ def rgb_metadata():
         in_channels=3,
         mean=[0.485, 0.456, 0.406],
         std=[0.229, 0.224, 0.225],
+        is_anatomical=False,
+        is_texture_based=False,
     )
 
 
@@ -55,6 +57,8 @@ def grayscale_metadata():
         in_channels=1,
         mean=[0.5],
         std=[0.25],
+        is_anatomical=False,
+        is_texture_based=False,
     )
 
 
@@ -154,3 +158,66 @@ def test_val_pipeline_executes_on_grayscale_image(base_cfg, grayscale_metadata, 
     assert isinstance(out, torch.Tensor)
     assert out.shape[0] == 3
     assert out.dtype == torch.float32
+
+
+# TEST: DOMAIN-AWARE AUGMENTATION
+def test_anatomical_disables_flip_and_rotation(base_cfg, rgb_metadata):
+    """Anatomical datasets should not have RandomHorizontalFlip or RandomRotation."""
+    rgb_metadata.is_anatomical = True
+    train_tf, _ = get_pipeline_transforms(base_cfg, rgb_metadata)
+
+    train_types = [type(t) for t in train_tf.transforms]
+    assert v2.RandomHorizontalFlip not in train_types
+    assert v2.RandomRotation not in train_types
+
+
+def test_texture_based_disables_color_jitter(base_cfg, rgb_metadata):
+    """Texture-based datasets should not have ColorJitter."""
+    rgb_metadata.is_texture_based = True
+    train_tf, _ = get_pipeline_transforms(base_cfg, rgb_metadata)
+
+    train_types = [type(t) for t in train_tf.transforms]
+    assert v2.ColorJitter not in train_types
+
+
+def test_standard_dataset_has_all_augmentations(base_cfg, rgb_metadata):
+    """Non-anatomical, non-texture datasets should have full augmentations."""
+    train_tf, _ = get_pipeline_transforms(base_cfg, rgb_metadata)
+
+    train_types = [type(t) for t in train_tf.transforms]
+    assert v2.RandomHorizontalFlip in train_types
+    assert v2.RandomRotation in train_types
+    assert v2.ColorJitter in train_types
+
+
+def test_anatomical_texture_minimal_augmentation(base_cfg, rgb_metadata):
+    """Anatomical + texture datasets get minimal augmentation (crop + normalize only)."""
+    rgb_metadata.is_anatomical = True
+    rgb_metadata.is_texture_based = True
+    train_tf, _ = get_pipeline_transforms(base_cfg, rgb_metadata)
+
+    train_types = [type(t) for t in train_tf.transforms]
+    assert v2.RandomHorizontalFlip not in train_types
+    assert v2.RandomRotation not in train_types
+    assert v2.ColorJitter not in train_types
+    assert v2.RandomResizedCrop in train_types
+    assert v2.Normalize in train_types
+
+
+def test_augmentation_description_anatomical(base_cfg):
+    """Anatomical datasets should omit HFlip and Rotation from description."""
+    meta = SimpleNamespace(is_anatomical=True, is_texture_based=False)
+    descr = get_augmentations_description(base_cfg, ds_meta=meta)
+
+    assert "HFlip" not in descr
+    assert "Rotation" not in descr
+    assert "Jitter" in descr
+
+
+def test_augmentation_description_texture(base_cfg):
+    """Texture-based datasets should omit Jitter from description."""
+    meta = SimpleNamespace(is_anatomical=False, is_texture_based=True)
+    descr = get_augmentations_description(base_cfg, ds_meta=meta)
+
+    assert "Jitter" not in descr
+    assert "HFlip" in descr

@@ -117,13 +117,13 @@ class InfrastructureManager(BaseModel):
 
             if not is_shared:
                 num_zombies = cleaner.terminate_duplicates(logger=log)
-                log.info(f" » Duplicate processes terminated: {num_zombies}.")
+                log.debug(f" » Duplicate processes terminated: {num_zombies}.")
             else:
                 log.debug(" » Shared environment detected: skipping process kill.")
 
         # Concurrency guard
         ensure_single_instance(lock_file=cfg.hardware.lock_file_path, logger=log)
-        log.info(f" » Lock acquired at {cfg.hardware.lock_file_path}")
+        log.debug(f" » Lock acquired at {cfg.hardware.lock_file_path}")
 
     def release_resources(
         self, cfg: HardwareAwareConfig, logger: Optional[logging.Logger] = None
@@ -152,7 +152,7 @@ class InfrastructureManager(BaseModel):
         # Release lock
         try:
             release_single_instance(cfg.hardware.lock_file_path)
-            log.info(f" » Lock released at {cfg.hardware.lock_file_path}")
+            log.info("  » System lock released")
         except OSError as e:
             log.warning(f" » Failed to release lock: {e}")
 

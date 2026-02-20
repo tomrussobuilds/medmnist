@@ -42,7 +42,7 @@ from .environment import (
     to_device_obj,
 )
 from .environment.timing import TimeTracker, TimeTrackerProtocol
-from .io import save_config_as_yaml
+from .io import dump_requirements, save_config_as_yaml
 from .logger import Logger, Reporter
 from .logger.reporter import ReporterProtocol
 from .paths import LOGGER_NAME, RunPaths, setup_static_directories
@@ -150,6 +150,7 @@ class RootOrchestrator:
         system_configurator: Callable | None = None,
         static_dir_setup: Callable | None = None,
         config_saver: Callable | None = None,
+        requirements_dumper: Callable | None = None,
         device_resolver: Callable | None = None,
         rank: int | None = None,
     ) -> None:
@@ -167,6 +168,7 @@ class RootOrchestrator:
             system_configurator: System library setup (default: configure_system_libraries)
             static_dir_setup: Static directory creation (default: setup_static_directories)
             config_saver: Config persistence (default: save_config_as_yaml)
+            requirements_dumper: Dependency snapshot (default: dump_requirements)
             device_resolver: Device resolution (default: to_device_obj)
             rank: Global rank of this process (default: auto-detected from RANK env var).
                 Rank 0 executes all phases; rank N skips filesystem, logging,
@@ -186,10 +188,12 @@ class RootOrchestrator:
         self._system_configurator = system_configurator or configure_system_libraries
         self._static_dir_setup = static_dir_setup or setup_static_directories
         self._config_saver = config_saver or save_config_as_yaml
+        self._requirements_dumper = requirements_dumper or dump_requirements
         self._device_resolver = device_resolver or to_device_obj
 
         # Lazy initialization
         self._initialized: bool = False
+        self._applied_threads: int = 0
         self.paths: RunPaths | None = None
         self.run_logger: logging.Logger | None = None
         self._device_cache: torch.device | None = None
@@ -295,16 +299,17 @@ class RootOrchestrator:
             name=LOGGER_NAME, log_dir=self.paths.logs, level=self.cfg.telemetry.log_level
         )
 
-    def _phase_5_config_persistence(self) -> None:
+    def _phase_5_run_manifest(self) -> None:
         """
-        Mirrors hydrated configuration to experiment root.
-        Saves portable YAML manifest for session auditability.
+        Persists run manifest: config YAML and frozen dependency snapshot.
+        Ensures full reproducibility from artifacts alone.
         """
-        logger.debug("Phase 5: Persisting configuration to YAML")
+        logger.debug("Phase 5: Persisting run manifest (config + requirements)")
         assert (
             self.paths is not None
         ), "Paths must be initialized before config persistence"  # nosec B101
         self._config_saver(data=self.cfg, yaml_path=self.paths.get_config_path())
+        self._requirements_dumper(self.paths.reports / "requirements.txt")
 
     def _phase_6_infrastructure_guarding(self) -> None:
         """
@@ -319,7 +324,7 @@ class RootOrchestrator:
             except (OSError, RuntimeError) as e:
                 phase_logger.warning(f"Infra guard failed: {e}")
 
-    def _phase_7_environment_reporting(self, applied_threads: int) -> None:
+    def _phase_7_environment_report(self, applied_threads: int) -> None:
         """
         Emits baseline environment report to active logging streams.
         Summarizes hardware, dataset metadata, and execution policies.
@@ -408,14 +413,26 @@ class RootOrchestrator:
             assert self.paths is not None, "Paths not initialized after phase 3"  # nosec B101
             assert self.run_logger is not None, "Logger not initialized after phase 4"  # nosec B101
 
-            self._phase_5_config_persistence()
+            self._phase_5_run_manifest()
             self._phase_6_infrastructure_guarding()
-            self._phase_7_environment_reporting(applied_threads)
+            self._applied_threads = applied_threads
         else:
+            self._applied_threads = applied_threads
             logger.debug("Rank %d: skipping phases 3-7 (non-main process).", self.rank)
 
         self._initialized = True
         return self.paths
+
+    def log_environment_report(self) -> None:
+        """
+        Emit the environment initialization report (phase 7).
+
+        Designed to be called explicitly by the CLI after external services
+        (e.g. MLflow tracker) have been started, so that all enter/exit log
+        messages appear in the correct chronological order.
+        """
+        if self.is_main_process:
+            self._phase_7_environment_report(self._applied_threads)
 
     def cleanup(self) -> None:
         """

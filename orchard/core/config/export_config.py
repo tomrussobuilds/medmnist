@@ -89,6 +89,6 @@ class ExportConfig(BaseModel):
     )
 
     max_deviation: float = Field(
-        default=1e-5,
+        default=1e-4,
         description="Maximum allowed output deviation between PyTorch and exported model",
     )

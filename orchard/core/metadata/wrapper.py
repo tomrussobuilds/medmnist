@@ -11,6 +11,7 @@ from typing import Dict
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from ..paths import SUPPORTED_RESOLUTIONS
 from .base import DatasetMetadata
 from .domains import MEDICAL_28, MEDICAL_64, MEDICAL_224, SPACE_224
 
@@ -46,8 +47,10 @@ class DatasetRegistryWrapper(BaseModel):
         """
         res = values.get("resolution", 28)
 
-        if res not in (28, 64, 224):
-            raise ValueError(f"Unsupported resolution {res}. Supported: [28, 64, 224]")
+        if res not in SUPPORTED_RESOLUTIONS:
+            raise ValueError(
+                f"Unsupported resolution {res}. Supported: {sorted(SUPPORTED_RESOLUTIONS)}"
+            )
 
         # Merge domain registries based on resolution
         if res == 28:

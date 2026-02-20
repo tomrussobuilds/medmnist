@@ -66,12 +66,41 @@ def save_config_as_yaml(data: Any, yaml_path: Path) -> Path:
     # 2. Persistence Phase (Atomic Write)
     try:
         _persist_yaml_atomic(final_data, yaml_path)
-        logger.info(f"Configuration frozen successfully at → {yaml_path.name}")
+        logger.debug(f"Configuration frozen at → {yaml_path.name}")
         return yaml_path
 
     except OSError as e:
         logger.error(f"IO Error: Could not write YAML to {yaml_path}. Error: {e}")
         raise
+
+
+def dump_requirements(output_path: Path) -> None:
+    """
+    Freeze installed packages to a requirements file for reproducibility.
+
+    Invokes ``pip freeze --local`` to capture the exact dependency versions
+    of the current environment. The output is prefixed with a Python version
+    header for auditability.
+
+    Args:
+        output_path: Filesystem path where the requirements file is written.
+    """
+    import subprocess  # nosec B404
+    import sys
+
+    logger = logging.getLogger(LOGGER_NAME)
+
+    try:
+        result = subprocess.run(  # nosec B603
+            [sys.executable, "-m", "pip", "freeze", "--local"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        header = f"# Python {sys.version.split()[0]}\n"
+        output_path.write_text(header + result.stdout, encoding="utf-8")
+    except (subprocess.TimeoutExpired, OSError) as e:
+        logger.warning(f"Failed to dump requirements: {e}")
 
 
 def load_config_from_yaml(yaml_path: Path) -> Dict[str, Any]:

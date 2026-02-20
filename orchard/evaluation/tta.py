@@ -44,6 +44,14 @@ def _get_tta_transforms(is_anatomical: bool, is_texture_based: bool, cfg: Config
     """
     tta_mode = cfg.augmentation.tta_mode
 
+    # Scale TTA intensity relative to resolution (224 as baseline).
+    # A 2px shift on 224x224 (~0.9%) should map to ~0.25px on 28x28 (~0.9%).
+    resolution = cfg.dataset.resolution
+    scale_factor = resolution / 224.0
+    tta_translate = cfg.augmentation.tta_translate * scale_factor
+    tta_scale = 1.0 + (cfg.augmentation.tta_scale - 1.0) * scale_factor
+    tta_blur_sigma = cfg.augmentation.tta_blur_sigma * scale_factor
+
     # 1. BASE TRANSFORMS: Always include identity
     t_list = [
         (lambda x: x),  # Original (always first)
@@ -61,28 +69,21 @@ def _get_tta_transforms(is_anatomical: bool, is_texture_based: bool, cfg: Config
         # Only identity (+ flip if non-anatomical) is applied
         pass
     else:
+        # Capture scaled values for closures
+        _translate = tta_translate
+        _scale = tta_scale
+        _sigma = max(tta_blur_sigma, 0.01)  # blur sigma must be > 0
+
         # Non-texture datasets can tolerate geometric/photometric perturbations
         t_list.extend(
             [
                 (
                     lambda x: TF.affine(
-                        x,
-                        angle=0,
-                        translate=(cfg.augmentation.tta_translate, cfg.augmentation.tta_translate),
-                        scale=1.0,
-                        shear=0,
+                        x, angle=0, translate=(_translate, _translate), scale=1.0, shear=0
                     )
                 ),
-                (
-                    lambda x: TF.affine(
-                        x, angle=0, translate=(0, 0), scale=cfg.augmentation.tta_scale, shear=0
-                    )
-                ),
-                (
-                    lambda x: TF.gaussian_blur(
-                        x, kernel_size=3, sigma=cfg.augmentation.tta_blur_sigma
-                    )
-                ),
+                (lambda x: TF.affine(x, angle=0, translate=(0, 0), scale=_scale, shear=0)),
+                (lambda x: TF.gaussian_blur(x, kernel_size=3, sigma=_sigma)),
             ]
         )
 

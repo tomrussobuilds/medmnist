@@ -32,6 +32,7 @@ from .constants import (
     OUTPUTS_ROOT,
     PROJECT_ROOT,
     STATIC_DIRS,
+    SUPPORTED_RESOLUTIONS,
     get_project_root,
     setup_static_directories,
 )
@@ -45,6 +46,7 @@ __all__ = [
     "LOGGER_NAME",
     "HEALTHCHECK_LOGGER_NAME",
     "STATIC_DIRS",
+    "SUPPORTED_RESOLUTIONS",
     "get_project_root",
     "setup_static_directories",
     "RunPaths",

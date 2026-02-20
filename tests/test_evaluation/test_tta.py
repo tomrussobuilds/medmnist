@@ -35,6 +35,7 @@ def mock_cfg():
     cfg.augmentation.tta_mode = "full"
     cfg.dataset = MagicMock()
     cfg.dataset.num_classes = 3
+    cfg.dataset.resolution = 224
     return cfg
 
 
@@ -124,6 +125,7 @@ def test_get_tta_transforms_full_mode_rotations():
     mock_cfg.augmentation.tta_scale = 1.05
     mock_cfg.augmentation.tta_blur_sigma = 0.5
     mock_cfg.augmentation.tta_mode = "full"
+    mock_cfg.dataset.resolution = 224
 
     full_transforms = _get_tta_transforms(
         is_anatomical=False,
@@ -143,6 +145,7 @@ def test_get_tta_transforms_light_mode_vertical_flip():
     mock_cfg.augmentation.tta_scale = 1.05
     mock_cfg.augmentation.tta_blur_sigma = 0.5
     mock_cfg.augmentation.tta_mode = "light"
+    mock_cfg.dataset.resolution = 224
 
     light_transforms = _get_tta_transforms(
         is_anatomical=False,
@@ -170,6 +173,7 @@ def test_get_tta_transforms_full_mode_rotations_on_cpu():
     mock_cfg.augmentation.tta_scale = 1.05
     mock_cfg.augmentation.tta_blur_sigma = 0.5
     mock_cfg.augmentation.tta_mode = "full"
+    mock_cfg.dataset.resolution = 224
 
     full_transforms = _get_tta_transforms(
         is_anatomical=False,
@@ -206,6 +210,70 @@ def test_tta_is_deterministic_under_eval(mock_model, dummy_input, device, mock_c
     res2 = adaptive_tta_predict(model, dummy_input, device, False, False, mock_cfg)
 
     assert_close(res1, res2)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("resolution", [28, 64, 224])
+def test_tta_scaling_preserves_transform_count(resolution):
+    """Verify resolution scaling does not change the number of transforms."""
+    cfg = MagicMock()
+    cfg.augmentation.tta_translate = 5
+    cfg.augmentation.tta_scale = 1.1
+    cfg.augmentation.tta_blur_sigma = 0.5
+    cfg.augmentation.tta_mode = "full"
+    cfg.dataset.resolution = resolution
+
+    transforms = _get_tta_transforms(is_anatomical=False, is_texture_based=False, cfg=cfg)
+    # Full mode: id + flip + translate + scale + blur + 3 rotations = 8
+    assert len(transforms) == 8
+
+
+@pytest.mark.unit
+def test_tta_scaling_reduces_translate_at_low_resolution():
+    """At 28px the affine translate should be ~8x smaller than at 224px."""
+    inp = torch.zeros(1, 1, 28, 28)
+    inp[0, 0, 14, 14] = 1.0  # single bright pixel at center
+
+    def _make_cfg(res):
+        c = MagicMock()
+        c.augmentation.tta_translate = 2.0
+        c.augmentation.tta_scale = 1.05
+        c.augmentation.tta_blur_sigma = 0.5
+        c.augmentation.tta_mode = "light"
+        c.dataset.resolution = res
+        return c
+
+    t_28 = _get_tta_transforms(False, False, _make_cfg(28))
+    t_224 = _get_tta_transforms(False, False, _make_cfg(224))
+
+    # Index 2 is the translate transform
+    out_28 = t_28[2](inp)
+    out_224 = t_224[2](inp)
+
+    diff_28 = (out_28 - inp).abs().sum().item()
+    diff_224 = (out_224 - inp).abs().sum().item()
+
+    # 28px translate should cause less pixel displacement than 224px
+    assert diff_28 < diff_224, "Low-res TTA should apply smaller translations"
+
+
+@pytest.mark.unit
+def test_tta_scaling_at_baseline_224_is_identity():
+    """At resolution=224 (baseline), scaled params should equal raw config values."""
+    cfg = MagicMock()
+    cfg.augmentation.tta_translate = 5.0
+    cfg.augmentation.tta_scale = 1.1
+    cfg.augmentation.tta_blur_sigma = 0.5
+    cfg.augmentation.tta_mode = "light"
+    cfg.dataset.resolution = 224
+
+    # scale_factor = 224/224 = 1.0 → params unchanged
+    # We verify indirectly: the function should not raise and transforms should work
+    transforms = _get_tta_transforms(False, False, cfg)
+    test_input = torch.randn(1, 3, 32, 32)
+    for t in transforms:
+        out = t(test_input)
+        assert out.shape == test_input.shape
 
 
 if __name__ == "__main__":

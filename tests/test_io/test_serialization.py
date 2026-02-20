@@ -14,6 +14,7 @@ import yaml
 from orchard.core.io.serialization import (
     _persist_yaml_atomic,
     _sanitize_for_yaml,
+    dump_requirements,
     load_config_from_yaml,
     save_config_as_yaml,
 )
@@ -248,6 +249,29 @@ def test_persist_yaml_atomic_creates_parent_dir(tmp_path):
 
     assert yaml_path.parent.exists()
     assert yaml_path.exists()
+
+
+# DUMP REQUIREMENTS
+@pytest.mark.unit
+def test_dump_requirements_writes_file(tmp_path):
+    """Test dump_requirements creates a file with Python version header."""
+    output = tmp_path / "requirements.txt"
+    dump_requirements(output)
+
+    assert output.exists()
+    content = output.read_text()
+    assert content.startswith("# Python")
+
+
+@pytest.mark.unit
+def test_dump_requirements_handles_subprocess_failure(tmp_path):
+    """Test dump_requirements gracefully handles subprocess failure."""
+    output = tmp_path / "requirements.txt"
+
+    with patch("subprocess.run", side_effect=OSError("mock pip failure")):
+        dump_requirements(output)  # should not raise
+
+    assert not output.exists()
 
 
 if __name__ == "__main__":

@@ -23,7 +23,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ..io import load_config_from_yaml
 from ..metadata.wrapper import DatasetRegistryWrapper
-from ..paths import PROJECT_ROOT
+from ..paths import PROJECT_ROOT, SUPPORTED_RESOLUTIONS
 from .architecture_config import ArchitectureConfig
 from .augmentation_config import AugmentationConfig
 from .dataset_config import DatasetConfig
@@ -287,10 +287,10 @@ class _CrossDomainValidator:
                 f"Use resnet_18 or mini_cnn for low resolution."
             )
 
-        if model_name in multi_resolution and resolution not in (28, 64, 224):
+        if model_name in multi_resolution and resolution not in SUPPORTED_RESOLUTIONS:
             raise ValueError(
-                f"'{config.architecture.name}' supports resolutions 28, 64, or 224, "
-                f"got {resolution}."
+                f"'{config.architecture.name}' supports resolutions "
+                f"{sorted(SUPPORTED_RESOLUTIONS)}, got {resolution}."
             )
 
     @classmethod

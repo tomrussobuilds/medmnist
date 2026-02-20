@@ -150,7 +150,7 @@ def test_prepare_environment_with_logger(tmp_path):
     class MockConfig:
         hardware = MockHardware()
 
-    mock_logger = SimpleNamespace(info=lambda _: None, warning=lambda _: None)
+    mock_logger = SimpleNamespace(info=lambda _: None, warning=lambda _: None, debug=lambda _: None)
 
     manager.prepare_environment(MockConfig(), logger=mock_logger)
     manager.release_resources(MockConfig())
@@ -231,8 +231,8 @@ def test_prepare_environment_with_process_kill_enabled(tmp_path, monkeypatch):
 
     manager.prepare_environment(config, logger=logger)
 
-    info_messages = [msg for level, msg in logger.messages if level == "info"]
-    assert any("Duplicate processes terminated" in msg for msg in info_messages)
+    debug_messages = [msg for level, msg in logger.messages if level == "debug"]
+    assert any("Duplicate processes terminated" in msg for msg in debug_messages)
 
     manager.release_resources(config)
 

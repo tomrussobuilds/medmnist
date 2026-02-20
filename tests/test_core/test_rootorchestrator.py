@@ -390,16 +390,18 @@ def test_phase_4_logging_initialization_sets_logger():
 
 
 @pytest.mark.unit
-def test_phase_5_config_persistence_saves_config():
+def test_phase_5_run_manifest_saves_config(tmp_path):
     mock_cfg = MagicMock()
-    orch = RootOrchestrator(cfg=mock_cfg)
+    mock_saver = MagicMock()
+    mock_dumper = MagicMock()
+    orch = RootOrchestrator(cfg=mock_cfg, config_saver=mock_saver, requirements_dumper=mock_dumper)
     orch.paths = MagicMock()
     orch.paths.get_config_path = MagicMock(return_value="/mock/config.yaml")
-    mock_saver = MagicMock()
-    orch._config_saver = mock_saver
+    orch.paths.reports = tmp_path
 
-    orch._phase_5_config_persistence()
+    orch._phase_5_run_manifest()
     mock_saver.assert_called_once_with(data=mock_cfg, yaml_path="/mock/config.yaml")
+    mock_dumper.assert_called_once_with(tmp_path / "requirements.txt")
 
 
 @pytest.mark.unit
@@ -427,7 +429,7 @@ def test_phase_6_infra_prepare_raises_warning_no_logger(caplog):
 
 @pytest.mark.unit
 def test_phase_7_device_resolver_fails_fallback_to_cpu(caplog):
-    """Test _phase_7_environment_reporting falls back to CPU if device resolver fails."""
+    """Test _phase_7_environment_report falls back to CPU if device resolver fails."""
     import logging
 
     mock_cfg = MagicMock()
@@ -447,7 +449,7 @@ def test_phase_7_device_resolver_fails_fallback_to_cpu(caplog):
     fallback_logger.propagate = True
 
     with caplog.at_level(logging.WARNING, logger="OrchardML"):
-        orch._phase_7_environment_reporting(applied_threads=1)
+        orch._phase_7_environment_report(applied_threads=1)
 
     assert orch._device_cache.type == "cpu"
     assert any("fallback to CPU" in rec.message for rec in caplog.records)
@@ -564,7 +566,7 @@ def test_phase_7_device_already_cached_with_logger(caplog):
     orch.paths = MagicMock()
 
     with caplog.at_level(logging.WARNING):
-        orch._phase_7_environment_reporting(applied_threads=1)
+        orch._phase_7_environment_report(applied_threads=1)
 
     assert orch._device_cache.type == "cpu"
     mock_reporter.log_initial_status.assert_called_once()
@@ -586,7 +588,7 @@ def test_phase_7_device_resolution_fails_with_logger():
     orch.run_logger = mock_logger
     orch.paths = MagicMock()
 
-    orch._phase_7_environment_reporting(applied_threads=1)
+    orch._phase_7_environment_report(applied_threads=1)
 
     assert orch._device_cache.type == "cpu"
     mock_logger.warning.assert_called_once()
@@ -609,7 +611,7 @@ def test_phase_7_device_resolution_succeeds():
     orch.run_logger = mock_logger
     orch.paths = MagicMock()
 
-    orch._phase_7_environment_reporting(applied_threads=4)
+    orch._phase_7_environment_report(applied_threads=4)
 
     assert orch._device_cache.type == "cuda"
     mock_resolver.assert_called_once()
@@ -703,6 +705,9 @@ def test_full_lifecycle_with_all_phases(tmp_path):
 
         # Initialize all services
         paths = orch.initialize_core_services()
+
+        # Phase 7 is deferred — call it explicitly (like CLI does after tracker.start_run)
+        orch.log_environment_report()
 
         # Verify all phases were executed
         mock_seed_setter.assert_called_once_with(42, strict=True)
@@ -910,6 +915,7 @@ def test_rank_zero_executes_all_phases(tmp_path):
         )
 
         paths = orch.initialize_core_services()
+        orch.log_environment_report()
 
     # All phases executed
     mock_seed_setter.assert_called_once()

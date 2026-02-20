@@ -76,7 +76,7 @@ def ensure_single_instance(lock_file: Path, logger: logging.Logger) -> None:
             # Attempt to acquire an exclusive lock without blocking
             fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
             _lock_fd = f
-            logger.info("Exclusive system lock acquired.")
+            logger.info("  » System lock acquired")
 
         except (IOError, BlockingIOError):
             logger.error(" [!] CRITICAL: Another instance is already running. Aborting.")

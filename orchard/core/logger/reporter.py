@@ -123,6 +123,9 @@ class Reporter(BaseModel):
         # Filesystem Section
         logger_instance.info("[FILESYSTEM]")
         logger_instance.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Run Root':<18}: {paths.root}")
+        logger_instance.info(
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Manifest':<18}: config.yaml, requirements.txt"
+        )
 
         # Closing separator
         logger_instance.info(LogStyle.HEAVY)

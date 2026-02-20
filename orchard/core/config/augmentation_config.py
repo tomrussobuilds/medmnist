@@ -15,6 +15,8 @@ Key Features:
       ranges for medical imaging
 """
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from .types import BlurSigma, NonNegativeFloat, PixelShift, Probability, RotationDegrees, ZoomScale
@@ -49,7 +51,7 @@ class AugmentationConfig(BaseModel):
     min_scale: Probability = Field(default=0.9, description="Minimum random resize scale")
 
     # TTA parameters
-    tta_mode: str = Field(
+    tta_mode: Literal["full", "light"] = Field(
         default="full",
         description="TTA ensemble complexity: 'full' (with rotations) or 'light' (no rotations)",
     )

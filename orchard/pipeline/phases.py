@@ -39,7 +39,7 @@ from ..data_handler import (
     show_samples_for_dataset,
 )
 from ..evaluation import run_final_evaluation
-from ..export import export_to_onnx
+from ..export import export_to_onnx, validate_export
 from ..models import get_model
 from ..optimization import run_optimization
 from ..trainer import ModelTrainer, get_criterion, get_optimizer, get_scheduler
@@ -202,7 +202,7 @@ def run_training_phase(
         class_names=ds_meta.classes,
         paths=paths,
         cfg=cfg,
-        aug_info=get_augmentations_description(cfg),
+        aug_info=get_augmentations_description(cfg, ds_meta=ds_meta),
         log_path=paths.logs / "session.log",
         tracker=tracker,
     )
@@ -273,5 +273,15 @@ def run_export_phase(
         dynamic_axes=True,
         validate=True,
     )
+
+    # Numerical validation: compare PyTorch vs ONNX outputs
+    if cfg.export is not None and cfg.export.validate_export:
+        validate_export(
+            pytorch_model=export_model,
+            onnx_path=onnx_path,
+            input_shape=input_shape,
+            num_samples=cfg.export.validation_samples,
+            max_deviation=cfg.export.max_deviation,
+        )
 
     return onnx_path
