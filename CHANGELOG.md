@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - add `orchard init` command for recipe generation
 
+### Changed
+
+- harden type safety, domain-aware transforms, and log coherence
+
 ## [0.1.4] - 2026-02-19
 
 ### Added
