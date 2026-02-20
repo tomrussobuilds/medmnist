@@ -76,7 +76,7 @@ class TrainingConfig(BaseModel):
     batch_size: PositiveInt = Field(default=16, description="Samples per batch")
     epochs: PositiveInt = Field(default=60, description="Maximum epochs")
     patience: NonNegativeInt = Field(default=15, description="Early stopping patience")
-    use_tqdm: bool = Field(default=True, description="Progress Bar activation / deactivaion")
+    use_tqdm: bool = Field(default=True, description="Progress Bar activation / deactivation")
 
     # ==================== Optimization ====================
     learning_rate: LearningRate = Field(default=0.008, description="Initial learning rate")

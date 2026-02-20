@@ -44,7 +44,7 @@ class DatasetConfig(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid", arbitrary_types_allowed=True)
 
-    name: Optional[str] = Field(
+    name: str = Field(
         default="bloodmnist", description="Dataset identifier (e.g., 'bloodmnist', 'organcmnist')"
     )
     metadata: Optional[DatasetMetadata] = Field(default=None, exclude=True)
@@ -116,7 +116,7 @@ class DatasetConfig(BaseModel):
         """
         if self.metadata is None:
             wrapper = DatasetRegistryWrapper(resolution=self.resolution)
-            ds_name = self.name if self.name else list(wrapper.registry.keys())[0]
+            ds_name = self.name
             metadata = wrapper.get_dataset(ds_name)
             object.__setattr__(self, "metadata", metadata)
         return self.metadata  # type: ignore[return-value]

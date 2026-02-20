@@ -250,7 +250,7 @@ def test_hardware_config_defaults():
     config = HardwareConfig()
 
     assert config.device in ("auto", "cpu", "cuda", "mps")
-    assert config.project_name == "vision_experiment"
+    assert config.project_name == "orchard_ml"
     assert config.allow_process_kill is True
 
 

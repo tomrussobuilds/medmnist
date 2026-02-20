@@ -50,7 +50,7 @@ class HardwareConfig(BaseModel):
     device: DeviceType = Field(
         default="auto", description="Device selection: 'cpu', 'cuda', 'mps', or 'auto'"
     )
-    project_name: ProjectSlug = "vision_experiment"
+    project_name: ProjectSlug = "orchard_ml"
     allow_process_kill: bool = Field(
         default=True, description="Allow terminating duplicate processes for cleanup"
     )
