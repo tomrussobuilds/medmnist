@@ -3,8 +3,19 @@
 # MiniCNN on CIFAR-100 (32x32) with Optuna Optimization
 # ==============================================================================
 # Usage: orchard run recipes/optuna_cifar100_mini_cnn.yaml
-# Estimated Time: ~5 min GPU / ~10 min CPU (50 trials × 10 epochs)
+# Estimated Time: ~1-2h GPU (50 trials × 10 epochs, RTX 5070)
 # Memory Usage: ~1GB VRAM per trial
+#
+# ARCHITECTURE SEARCH:
+#   This recipe uses model_pool to compare lightweight architectures
+#   suited for 32×32 input. All models train from scratch (pretrained: false)
+#   to avoid ImageNet semantic overlap with CIFAR categories.
+#
+#   Pool:
+#     - mini_cnn           : Built-in 3-conv CNN (~95K params, fast baseline)
+#     - resnet_18           : Built-in ResNet-18 with small stem (~11M params)
+#     - timm/mobilenetv3_small_100 : MobileNetV3-Small (~1.5M params, efficient)
+#     - timm/efficientnet_lite0    : EfficientNet-Lite0 (~4.7M, mobile-optimized)
 
 dataset:
   name: "cifar100"
@@ -84,6 +95,12 @@ optuna:
   sampler_type: "tpe"
   search_space_preset: "full"
   enable_model_search: true
+  # Lightweight architectures for 32×32 — from scratch, no ImageNet bias
+  model_pool:
+    - "mini_cnn"
+    - "resnet_18"
+    - "timm/mobilenetv3_small_100"
+    - "timm/efficientnet_lite0"
   enable_pruning: true
   pruner_type: "median"
   pruning_warmup_epochs: 3

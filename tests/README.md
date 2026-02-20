@@ -7,7 +7,7 @@ Orchard ML's comprehensive testing infrastructure ensures reliability and mainta
 <h2>Test Organization</h2>
 
 ```
-tests/                          # Test suite (~1,100 tests, 100% coverage)
+tests/                          # Test suite (~1,175 tests, 100% coverage)
 ├── conftest.py                 # Shared pytest fixtures
 ├── smoke_test.py               # 1-epoch E2E verification (~30s)
 ├── health_check.py             # Dataset integrity validation
@@ -31,7 +31,7 @@ tests/                          # Test suite (~1,100 tests, 100% coverage)
 
 <h3>Test Suite</h3>
 
-Orchard ML includes a comprehensive test suite with **1,100+ tests** targeting **100% code coverage**:
+Orchard ML includes a comprehensive test suite with **1,175+ tests** targeting **100% code coverage**:
 
 ```bash
 # Run full test suite
@@ -60,7 +60,7 @@ pytest tests/ -n auto
 GitHub Actions automatically run on every push:
 
 - ✅ **Code Quality**: Black, isort, Flake8 formatting and linting checks
-- ✅ **Multi-Python Testing**: Unit tests across Python 3.10–3.14 (1,100+ tests)
+- ✅ **Multi-Python Testing**: Unit tests across Python 3.10–3.14 (1,175+ tests)
 - ✅ **Smoke Test**: 1-epoch end-to-end validation (~30s, CPU-only)
 - ✅ **Documentation**: README.md presence verification
 - ✅ **Security Scanning**: Bandit (code analysis) and pip-audit (dependency vulnerabilities)
@@ -70,12 +70,12 @@ GitHub Actions automatically run on every push:
 
 | Job | Description | Status |
 |-----|-------------|--------|
-| **Code Quality** | Black, isort, Flake8 | Continue-on-error (advisory) |
-| **Pytest Suite** | ~1,100 tests, 5 Python versions | ✅ Required to pass |
+| **Code Quality** | Black, isort, Flake8, mypy | ✅ Required to pass |
+| **Pytest Suite** | 1,175+ tests, 5 Python versions | ✅ Required to pass |
 | **Smoke Test** | 1-epoch E2E validation | ✅ Required to pass |
 | **Documentation** | README verification | ✅ Required to pass |
 | **Security Scan** | Bandit + pip-audit | Continue-on-error (advisory) |
-| **Build Status** | Aggregate summary | ✅ Fails if pytest or smoke test fails |
+| **Build Status** | Aggregate summary | ✅ Fails if lint, pytest, or smoke test fails |
 
 View the latest build: [![CI/CD](https://github.com/tomrussobuilds/orchard-ml/actions/workflows/ci.yml/badge.svg)](https://github.com/tomrussobuilds/orchard-ml/actions/workflows/ci.yml)
 

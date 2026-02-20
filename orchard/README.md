@@ -44,7 +44,8 @@ orchard/
 │   │   ├── base.py             # DatasetMetadata schema
 │   │   ├── domains/            # Domain-specific registries
 │   │   │   ├── medical.py      # Medical imaging (MedMNIST)
-│   │   │   └── space.py        # Astronomical imaging
+│   │   │   ├── space.py        # Astronomical imaging
+│   │   │   └── benchmark.py    # Standard benchmarks (CIFAR-10/100)
 │   │   └── wrapper.py          # Multi-resolution registry wrapper
 │   ├── paths/                  # Path management
 │   │   ├── constants.py        # Static paths (PROJECT_ROOT, etc.)
@@ -54,7 +55,8 @@ orchard/
 │   ├── fetcher.py              # Fetch dispatcher + loading interface
 │   ├── fetchers/               # Domain-specific download modules
 │   │   ├── medmnist_fetcher.py # MedMNIST NPZ download with retries & MD5
-│   │   └── galaxy10_converter.py # Galaxy10 HDF5 download & NPZ conversion
+│   │   ├── galaxy10_converter.py # Galaxy10 HDF5 download & NPZ conversion
+│   │   └── cifar_converter.py  # CIFAR-10/100 torchvision → NPZ conversion
 │   ├── dataset.py              # VisionDataset & LazyNPZDataset wrappers
 │   ├── loader.py               # DataLoaderFactory
 │   ├── transforms.py           # Augmentation pipelines (torchvision V2)
@@ -62,8 +64,8 @@ orchard/
 │   └── synthetic.py            # Synthetic data generation
 ├── models/                     # Architecture factory
 │   ├── factory.py              # Model registry & builder
-│   ├── resnet_18.py            # ResNet-18 multi-resolution (28/64/224)
-│   ├── mini_cnn.py             # Compact CNN (~95K params, 28/64)
+│   ├── resnet_18.py            # ResNet-18 multi-resolution (28/32/64/224)
+│   ├── mini_cnn.py             # Compact CNN (~95K params, 28/32/64)
 │   ├── efficientnet_b0.py      # EfficientNet for 224×224
 │   ├── convnext_tiny.py        # ConvNeXt-Tiny for 224×224
 │   ├── vit_tiny.py             # Vision Transformer for 224×224

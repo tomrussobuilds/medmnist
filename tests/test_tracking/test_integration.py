@@ -201,5 +201,7 @@ def test_objective_calls_tracker_nested_runs(mock_tracker):
                         result = objective(mock_trial)
 
     assert result == pytest.approx(0.95, abs=1e-5)
-    mock_tracker.start_optuna_trial.assert_called_once_with(0, {"lr": 0.01})
+    mock_tracker.start_optuna_trial.assert_called_once_with(
+        0, {"lr": 0.01, "pretrained": mock_cfg.architecture.pretrained}
+    )
     mock_tracker.end_optuna_trial.assert_called_once()

@@ -166,12 +166,15 @@ class OptunaObjective:
         # Build trial config
         trial_cfg = self.config_builder.build(params)
 
+        # Inject recipe-level flags for logging (not Optuna params)
+        log_params = {**params, "pretrained": self.cfg.architecture.pretrained}
+
         # Log trial start
-        log_trial_start(trial.number, params)
+        log_trial_start(trial.number, log_params)
 
         # Start nested MLflow run for this trial
         if self.tracker is not None:
-            self.tracker.start_optuna_trial(trial.number, params)
+            self.tracker.start_optuna_trial(trial.number, log_params)
 
         try:
             # Setup training components

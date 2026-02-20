@@ -109,7 +109,7 @@ def log_trial_start(
         "Regularization": ["mixup_alpha", "label_smoothing", "dropout"],
         "Scheduling": ["cosine_fraction", "scheduler_patience", "batch_size"],
         "Augmentation": ["rotation_angle", "jitter_val", "min_scale"],
-        "Architecture": ["model_name", "weight_variant"],
+        "Architecture": ["model_name", "pretrained", "weight_variant"],
     }
 
     for category_name, keys in categories.items():
@@ -190,7 +190,7 @@ def log_trial_params_compact(
         ("Regularization", ["mixup_alpha", "label_smoothing", "dropout"]),
         ("Scheduling", ["cosine_fraction", "scheduler_patience", "batch_size"]),
         ("Augmentation", ["rotation_angle", "jitter_val", "min_scale"]),
-        ("Architecture", ["model_name", "weight_variant"]),
+        ("Architecture", ["model_name", "pretrained", "weight_variant"]),
     ]
 
     for category_name, param_list in categories:

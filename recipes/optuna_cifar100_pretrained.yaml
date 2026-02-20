@@ -1,22 +1,34 @@
 # ==============================================================================
-# FILE: recipes/optuna_cifar100_resnet_18.yaml
-# ResNet-18 on CIFAR-100 (32x32) with Optuna Optimization
+# FILE: recipes/optuna_cifar100_pretrained.yaml
+# Pretrained Architecture Search on CIFAR-100 (32x32) with Optuna
 # ==============================================================================
-# Usage: orchard run recipes/optuna_cifar100_resnet_18.yaml
+# Usage: orchard run recipes/optuna_cifar100_pretrained.yaml
 # Estimated Time: ~3-4h GPU (50 trials × 15 epochs, RTX 5070)
 # Memory Usage: ~2GB VRAM per trial
 #
-# ARCHITECTURE SEARCH:
-#   This recipe uses model_pool to compare mid-size architectures
-#   for 32×32 input. All models train from scratch (pretrained: false)
-#   to avoid ImageNet semantic overlap with CIFAR categories.
+# PURPOSE:
+#   Compare pretrained weight sources on CIFAR-100. All models use
+#   pretrained: true — the timm model name encodes the specific weights.
+#   CIFAR shares semantic categories with ImageNet (cat, dog, bird, etc.)
+#   so results should be interpreted with the overlap caveat in mind.
 #   See ARCHITECTURE.md "Extended Weight Sources via timm" for details.
 #
-#   Pool:
-#     - resnet_18                  : Built-in ResNet-18 with small stem (~11M params)
-#     - timm/resnet18              : timm ResNet-18 (different init/stem handling)
-#     - timm/convnext_femto        : Tiny ConvNeXt variant (~5.2M params)
-#     - timm/mobilenetv3_large_100 : MobileNetV3-Large (~4.2M params)
+# ARCHITECTURE POOL:
+#   - resnet_18                               : Built-in, ImageNet-1k (torchvision)
+#                                               Small stem with 7→3 weight interpolation
+#   - timm/resnet18.a1_in1k                   : timm ImageNet-1k, A1 training recipe
+#                                               (stronger augmentation, longer schedule)
+#   - timm/resnet18.fb_ssl_yfcc100m_ft_in1k   : Self-supervised pretraining on YFCC100M
+#                                               (100M Flickr images), then IN1k fine-tune
+#                                               → Lower ImageNet label bias
+#   - timm/resnet18.fb_swsl_ig1b_ft_in1k      : Semi-weakly supervised on Instagram 1B
+#                                               (1B images, hashtag labels), then IN1k fine-tune
+#                                               → Broadest visual vocabulary
+#
+# NOTE: The built-in resnet_18 uses Orchard's stem adaptation (3x3 stride-1)
+#   for 32×32. timm/ models use their own stem — at 32×32 the standard 7x7
+#   stride-2 stem produces very small feature maps, which may hurt performance.
+#   This is an intentional comparison point.
 
 dataset:
   name: "cifar100"
@@ -26,13 +38,13 @@ dataset:
 
 architecture:
   name: "resnet_18"
-  pretrained: false
+  pretrained: true                 # Use pretrained weights for all pool models
   dropout: 0.3
 
 training:
   seed: 42
   batch_size: 128
-  learning_rate: 0.1
+  learning_rate: 0.01              # Lower LR for fine-tuning pretrained models
   weight_decay: 5e-4
   momentum: 0.9
   min_lr: 1e-6
@@ -84,7 +96,7 @@ evaluation:
   save_predictions_grid: false
 
 optuna:
-  study_name: "cifar100_resnet18_optimized"
+  study_name: "cifar100_pretrained_comparison"
   n_trials: 50
   epochs: 15
   timeout: null
@@ -96,12 +108,12 @@ optuna:
   sampler_type: "tpe"
   search_space_preset: "full"
   enable_model_search: true
-  # Mid-size architectures for 32×32 — from scratch, no ImageNet bias
+  # Compare pretrained weight sources: torchvision vs timm A1 vs SSL vs SWSL
   model_pool:
-    - "resnet_18"
-    - "timm/resnet18"
-    - "timm/convnext_femto"
-    - "timm/mobilenetv3_large_100"
+    - "resnet_18"                             # Built-in ImageNet-1k (stem-adapted)
+    - "timm/resnet18.a1_in1k"                 # timm ImageNet-1k (A1 recipe)
+    - "timm/resnet18.fb_ssl_yfcc100m_ft_in1k" # SSL on YFCC100M → IN1k fine-tune
+    - "timm/resnet18.fb_swsl_ig1b_ft_in1k"    # SWSL on Instagram 1B → IN1k fine-tune
   enable_pruning: true
   pruner_type: "median"
   pruning_warmup_epochs: 5
@@ -116,7 +128,7 @@ optuna:
   search_space_overrides:
       learning_rate:
           low: 1.0e-05
-          high: 0.01
+          high: 0.005               # Narrower range for fine-tuning
           log: true
       weight_decay:
           low: 1.0e-06

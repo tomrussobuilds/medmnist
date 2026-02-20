@@ -36,6 +36,7 @@
 <td align="right"><strong>Tech Stack</strong></td>
 <td>
   <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-2.0%2B-orange?logo=pytorch&logoColor=white" alt="PyTorch"></a>
+  <a href="https://huggingface.co/docs/timm"><img src="https://img.shields.io/badge/timm-1000%2B%20models-FF9D00?logo=huggingface&logoColor=white" alt="timm"></a>
   <a href="https://docs.pydantic.dev/"><img src="https://img.shields.io/badge/Pydantic-v2-e92063?logo=pydantic&logoColor=white" alt="Pydantic"></a>
   <a href="https://optuna.org/"><img src="https://img.shields.io/badge/Optuna-3.0%2B-00ADD8?logo=optuna&logoColor=white" alt="Optuna"></a>
   <a href="https://onnx.ai/"><img src="https://img.shields.io/badge/ONNX-export-005CED?logo=onnx&logoColor=white" alt="ONNX"></a>
@@ -57,7 +58,7 @@
 <td align="right"><strong>Project</strong></td>
 <td>
   <a href="https://docs.pytest.org/"><img src="https://img.shields.io/badge/tested%20with-pytest-blue?logo=pytest&logoColor=white" alt="Tested with pytest"></a>
-  <img src="https://img.shields.io/badge/tests-1150+-success" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-1175+-success" alt="Tests">
   <img src="https://img.shields.io/badge/Architecture-Decoupled-blueviolet" alt="Architecture">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
   <img src="https://img.shields.io/badge/status-Active-success" alt="Status">
@@ -98,8 +99,8 @@
 
 | Resolution | Architectures | Parameters | Use Case |
 |-----------|--------------|-----------|----------|
-| **28 / 64 / 224** | `ResNet-18` | ~11M | Multi-resolution baseline, transfer learning |
-| **28 / 64** | `MiniCNN` | ~95K | Fast prototyping, ablation studies |
+| **28 / 32 / 64 / 224** | `ResNet-18` | ~11M | Multi-resolution baseline, transfer learning |
+| **28 / 32 / 64** | `MiniCNN` | ~95K | Fast prototyping, ablation studies |
 | **224×224** | `EfficientNet-B0` | ~4.0M | Efficient compound scaling |
 | **224×224** | `ConvNeXt-Tiny` | ~27.8M | Modern ConvNet design |
 | **224×224** | `ViT-Tiny` | ~5.5M | Patch-based attention, multiple weight variants |
@@ -117,9 +118,9 @@
 
 <h2>Hardware Requirements</h2>
 
-<h3>CPU Training (28×28 / 64×64)</h3>
+<h3>CPU Training (28×28 / 32×32 / 64×64)</h3>
 
-- **Supported Resolutions**: 28×28, 64×64
+- **Supported Resolutions**: 28×28, 32×32, 64×64
 - **Time**: ~2.5 hours (`ResNet-18`, 28×28, 60 epochs, 16 cores)
 - **Time**: ~5-10 minutes (`MiniCNN`, 28×28, 60 epochs, 16 cores)
 - **Architectures**: `ResNet-18`, `MiniCNN`
@@ -130,6 +131,9 @@
 - **28×28 Resolution**:
   - `MiniCNN`: ~2-3 minutes (60 epochs)
   - `ResNet-18`: ~10-15 minutes (60 epochs)
+- **32×32 Resolution** (CIFAR-10/100):
+  - `MiniCNN`: ~3-5 minutes (60 epochs)
+  - `ResNet-18`: ~15-20 minutes (60 epochs)
 - **64×64 Resolution**:
   - `MiniCNN`: ~3-5 minutes (60 epochs)
   - `ResNet-18`: ~15-20 minutes (60 epochs)
@@ -228,6 +232,10 @@ orchard run --help                         # Show available options
 orchard run recipes/config_mini_cnn.yaml              # ~2-3 min GPU, ~5-10 min CPU
 orchard run recipes/config_resnet_18.yaml             # ~10-15 min GPU, ~2.5h CPU
 
+# 32×32 resolution (CIFAR-10/100)
+orchard run recipes/config_cifar10_mini_cnn.yaml      # ~3-5 min GPU
+orchard run recipes/config_cifar10_resnet_18.yaml     # ~10-15 min GPU
+
 # 64×64 resolution (CPU/GPU)
 orchard run recipes/config_mini_cnn_64.yaml           # ~3-5 min GPU
 
@@ -251,7 +259,11 @@ orchard run recipes/config_mini_cnn.yaml --set training.epochs=20 --set training
 ```bash
 # 28×28 resolution - fast iteration
 orchard run recipes/optuna_mini_cnn.yaml              # ~5 min GPU, ~5-10 min CPU
-orchard run recipes/optuna_resnet_18.yaml             # ~15-20 min GPU
+orchard run recipes/optuna_resnet_18.yaml             # ~15 min GPU
+
+# 32×32 resolution - CIFAR-10/100
+orchard run recipes/optuna_cifar100_mini_cnn.yaml     # ~1-2h GPU
+orchard run recipes/optuna_cifar100_resnet_18.yaml    # ~3-4h GPU
 
 # 224×224 resolution - requires GPU
 orchard run recipes/optuna_efficientnet_b0.yaml       # ~1.5-5h*, GPU
@@ -328,7 +340,7 @@ orchard run my_run.yaml
 | [Export Guide](docs/guide/EXPORT.md) | `ONNX` export pipeline, quantization options, validation and benchmarking |
 | [Tracking Guide](docs/guide/TRACKING.md) | `MLflow` local setup, dashboard and run comparison, programmatic querying |
 | [Artifact Guide](docs/guide/ARTIFACTS.md) | Output directory structure, training vs optimization artifact differences |
-| [Testing Guide](docs/guide/TESTING.md) | 1,150+ test suite, quality automation scripts, CI/CD pipeline details |
+| [Testing Guide](docs/guide/TESTING.md) | 1,175+ test suite, quality automation scripts, CI/CD pipeline details |
 | [`orchard/`](orchard/README.md) / [`tests/`](tests/README.md) | Internal package structure, module responsibilities, extension points |
 
 <h2>Citation</h2>

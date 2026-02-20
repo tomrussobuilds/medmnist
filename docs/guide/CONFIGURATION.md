@@ -13,8 +13,12 @@
 python -m tests.smoke_test
 
 # Train with presets (28×28 resolution, CPU-compatible)
-orchard run recipes/config_resnet_18.yaml     # ~10-15 min GPU, ~2.5h CPU
+orchard run recipes/config_resnet_18.yaml             # ~10-15 min GPU, ~2.5h CPU
 orchard run recipes/config_mini_cnn.yaml              # ~2-3 min GPU, ~10 min CPU
+
+# 32×32 resolution (CIFAR-10/100)
+orchard run recipes/config_cifar10_mini_cnn.yaml      # ~3-5 min GPU
+orchard run recipes/config_cifar10_resnet_18.yaml     # ~10-15 min GPU
 
 # Train with presets (224×224 resolution, GPU required)
 orchard run recipes/config_efficientnet_b0.yaml       # ~30 min each trial
@@ -78,17 +82,17 @@ orchard run recipes/config_resnet_18.yaml --set augmentation.mixup_alpha=0
 
 | Parameter | Type | Default | Options |
 |-----------|------|---------|---------|
-| `model_name` | str | "resnet_18" | `resnet_18`, `mini_cnn` (28×28); `efficientnet_b0`, `vit_tiny` (224×224) |
+| `model_name` | str | "resnet_18" | `resnet_18`, `mini_cnn` (28/32/64); `efficientnet_b0`, `vit_tiny` (224) |
 | `pretrained` | bool | True | Use ImageNet weights (N/A for MiniCNN) |
 | `weight_variant` | str | None | ViT-specific pretrained variant (e.g., `augreg_in21k_ft_in1k`) |
 | `force_rgb` | bool | True | Convert grayscale to 3-channel |
-| `resolution` | int | 28 | [28, 224] |
+| `resolution` | int | 28 | {28, 32, 64, 224} |
 
 <h3>Dataset Parameters</h3>
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `dataset` | str | "bloodmnist" | MedMNIST identifier |
+| `dataset` | str | "bloodmnist" | Dataset identifier (MedMNIST, CIFAR-10/100, Galaxy10) |
 | `data_root` | Path | `./dataset` | Dataset directory |
 | `max_samples` | int | None | Cap training samples (debugging) |
 | `use_weighted_sampler` | bool | True | Balance class distribution |
